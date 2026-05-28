@@ -6,6 +6,7 @@
   "main": "cloudfront/domain-folder-router.js",
   "scripts": {
     "build": "node --check cloudfront/domain-folder-router.js && node --check test/cloudfront-function.test.js",
+    "deploy:global-404": "./bin/upload-global-404.sh",
     "test": "node --test test/cloudfront-function.test.js",
     "test:unit": "npm test",
     "terraform:fmt": "terraform -chdir=infra fmt -check",

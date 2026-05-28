@@ -39,11 +39,28 @@ describe("cloudfront domain-folder-router", () => {
     assert.equal(result.uri, "/customco-site/logo.svg");
   });
 
+  it("leaves global 404 assets at the bucket root", () => {
+    assert.equal(handler(eventFor("hello.com", "/404.html")).uri, "/404.html");
+    assert.equal(handler(eventFor("hello.com", "/404.css")).uri, "/404.css");
+  });
+
   it("returns 404 for unknown hosts", () => {
     const result = handler(eventFor("unknown.com", "/"));
 
     assert.equal(result.statusCode, 404);
     assert.equal(result.body, "Domain not configured");
+  });
+});
+
+describe("global 404 assets", () => {
+  it("ships a standalone HTML page with its stylesheet", () => {
+    const html = fs.readFileSync(path.join(__dirname, "..", "site", "404.html"), "utf8");
+    const css = fs.readFileSync(path.join(__dirname, "..", "site", "404.css"), "utf8");
+
+    assert.match(html, /<link rel="stylesheet" href="\/404\.css">/);
+    assert.match(html, /This page is not available\./);
+    assert.match(css, /\.not-found/);
+    assert.doesNotMatch(html, /https?:\/\//);
   });
 });
 

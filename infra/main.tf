@@ -96,6 +96,20 @@ resource "aws_cloudfront_distribution" "sites" {
     }
   }
 
+  custom_error_response {
+    error_code            = 403
+    response_code         = 404
+    response_page_path    = "/404.html"
+    error_caching_min_ttl = 60
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/404.html"
+    error_caching_min_ttl = 60
+  }
+
   viewer_certificate {
     cloudfront_default_certificate = true
   }

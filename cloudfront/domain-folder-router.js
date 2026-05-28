@@ -2,12 +2,19 @@ function handler(event) {
   var request = event.request;
   var host = request.headers.host.value.toLowerCase();
 
+  if (request.uri === "/404.html" || request.uri === "/404.css") {
+    return request;
+  }
+
   var foldersByHost = {
     "hello.com": "hello-site",
     "www.hello.com": "hello-site",
     "acme.syncpoly.com": "acme-site",
     "customco.com": "customco-site",
-    "www.customco.com": "customco-site"
+    "www.customco.com": "customco-site",
+    // real
+    "d1mp8fjhswh27j.cloudfront.net": "syncpoly"
+
   };
 
   var folder = foldersByHost[host];

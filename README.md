@@ -18,8 +18,10 @@ s3://syncpoly-web-builder-sites/hello-site/about/index.html
 
 - `cloudfront/domain-folder-router.js` is the CloudFront Function source.
 - `test/cloudfront-function.test.js` tests host-to-folder rewrites locally.
+- `site/404.html` and `site/404.css` are the shared CloudFront error page assets.
 - `infra/` creates the private S3 bucket, CloudFront Function, CloudFront distribution, Origin Access Control, and read-only S3 bucket policy.
 - `bin/bootstrap-tf-state.sh` creates the hardcoded Terraform state bucket and DynamoDB lock table.
+- `bin/upload-global-404.sh` uploads the shared 404 assets to the content bucket root.
 
 ## Hardcoded Host Map
 
@@ -40,6 +42,19 @@ CloudFront Functions cannot call DynamoDB directly, so hardcoded mappings or Clo
 npm install
 npm run build
 npm test
+```
+
+Upload the global 404 page after the content bucket exists:
+
+```bash
+npm run deploy:global-404
+```
+
+To upload and invalidate CloudFront locally:
+
+```bash
+CLOUDFRONT_DISTRIBUTION_ID="$(terraform -chdir=infra output -raw cloudfront_distribution_id)" \
+npm run deploy:global-404
 ```
 
 Terraform validation without touching remote state:
@@ -75,6 +90,7 @@ Then run:
 terraform -chdir=infra init
 terraform -chdir=infra plan
 terraform -chdir=infra apply
+npm run deploy:global-404
 ```
 
 ## GitHub Secrets
@@ -89,3 +105,5 @@ AWS_SECRET_ACCESS_KEY
 CI runs build, tests, Terraform formatting, and Terraform validation. The manual `Terraform` workflow bootstraps state, plans, and can apply when you choose `apply`.
 
 Terraform intentionally ignores manual changes to CloudFront aliases and viewer certificates, so adding custom domains later in the AWS console will not be removed by the next apply.
+
+CloudFront is configured to serve `/404.html` as a shared global error page for S3 `403` and `404` misses. The function leaves `/404.html` and `/404.css` at the S3 bucket root so the shared page works for every mapped domain.
