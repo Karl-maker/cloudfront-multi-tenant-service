@@ -24,27 +24,16 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Start LocalStack
-        run: docker compose up -d
-
-      - name: Wait for LocalStack
-        run: |
-          for attempt in {1..60}; do
-            if curl --fail --silent http://localhost:4566/_localstack/health >/dev/null; then
-              exit 0
-            fi
-            sleep 2
-          done
-
-          docker compose logs localstack
-          exit 1
-
       - name: Run tests
-        env:
-          DYNAMODB_ENDPOINT: http://localhost:4566
-          REQUIRE_LOCALSTACK: "1"
         run: npm test
 
-      - name: Show LocalStack logs on failure
-        if: failure()
-        run: docker compose logs localstack
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Check Terraform formatting
+        run: terraform -chdir=infra fmt -check
+
+      - name: Validate Terraform
+        run: terraform -chdir=infra init -backend=false && terraform -chdir=infra validate

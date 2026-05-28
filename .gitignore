@@ -3,3 +3,7 @@ node_modules/
 .DS_Store
 coverage/
 *.log
+.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
