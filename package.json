@@ -5,6 +5,7 @@
   "description": "Lambda proxy that maps Syncpoly subdomains and custom domains to S3 client folders.",
   "main": "proxy/lambda.js",
   "scripts": {
+    "build": "node --check proxy/lambda.js && node --check test/proxy.test.js",
     "test": "node --test test/proxy.test.js",
     "test:unit": "node --test --test-name-pattern='unit' test/proxy.test.js",
     "test:integration": "REQUIRE_LOCALSTACK=1 node --test --test-name-pattern='integration' test/proxy.test.js",
