@@ -1,0 +1,22 @@
+{
+  "name": "syncpoly-site-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lambda proxy that maps Syncpoly subdomains and custom domains to S3 client folders.",
+  "main": "proxy/lambda.js",
+  "scripts": {
+    "test": "node --test test/proxy.test.js",
+    "test:unit": "node --test --test-name-pattern='unit' test/proxy.test.js",
+    "test:integration": "REQUIRE_LOCALSTACK=1 node --test --test-name-pattern='integration' test/proxy.test.js",
+    "test:e2e": "REQUIRE_LOCALSTACK=1 node --test --test-name-pattern='e2e' test/proxy.test.js",
+    "localstack:up": "docker compose up -d",
+    "localstack:down": "docker compose down -v"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.832.0",
+    "@aws-sdk/lib-dynamodb": "^3.832.0"
+  }
+}

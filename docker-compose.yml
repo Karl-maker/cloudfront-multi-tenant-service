@@ -1,0 +1,17 @@
+services:
+  localstack:
+    image: localstack/localstack:3.8.1
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
+      CLIENTS_TABLE_NAME: syncpoly-clients
+      S3_BUCKET_NAME: syncpoly-sites
+      SERVICES: dynamodb,s3
+    volumes:
+      - "./localstack/init/ready.d:/etc/localstack/init/ready.d"
+      - "localstack-data:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+volumes:
+  localstack-data:
