@@ -19,7 +19,7 @@ s3://syncpoly-web-builder-sites/hello-site/about/index.html
 - `cloudfront/domain-folder-router.js` is the CloudFront Function source.
 - `test/cloudfront-function.test.js` tests host-to-folder rewrites locally.
 - `site/404.html` and `site/404.css` are the shared CloudFront error page assets.
-- `infra/` creates the private S3 bucket, CloudFront Function, CloudFront distribution, Origin Access Control, and read-only S3 bucket policy.
+- `infra/` creates the private S3 bucket, CloudFront Function, CloudFront distribution, AWS WAF, cache policies, security headers, Origin Access Control, and read-only S3 bucket policy.
 - `bin/bootstrap-tf-state.sh` creates the hardcoded Terraform state bucket and DynamoDB lock table.
 - `bin/upload-global-404.sh` uploads the shared 404 assets to the content bucket root.
 
@@ -35,6 +35,24 @@ var foldersByHost = {
 ```
 
 CloudFront Functions cannot call DynamoDB directly, so hardcoded mappings or CloudFront KeyValueStore are the practical paths here.
+
+## WAF And Caching
+
+CloudFront includes AWS Shield Standard automatically. Terraform also attaches an AWS WAF Web ACL to the distribution with:
+
+- Amazon IP reputation list
+- AWS common rule set
+- known bad input rules
+- SQL injection rules
+- IP rate limiting at `2,000` requests per 5 minutes
+
+Caching is split by path:
+
+- Pages use a short cache: 5 minute default, 1 hour max.
+- Static assets use a long cache: 1 year default/max.
+- Long-cache paths are `/_next/static/*`, `/assets/*`, `/images/*`, `/fonts/*`, `/favicon.ico`, and `/404.css`.
+
+The distribution also adds baseline browser security headers, including HSTS, frame denial, content type sniffing protection, referrer policy, and a restrictive permissions policy.
 
 ## Local Commands
 

@@ -1,12 +1,17 @@
 locals {
-  project_name        = "syncpoly-web-builder"
-  content_bucket_name = "syncpoly-web-builder-sites"
-  cloudfront_function = "syncpoly-domain-folder-router"
-  s3_origin_id        = "syncpoly-sites-s3-origin"
-}
-
-data "aws_cloudfront_cache_policy" "caching_optimized" {
-  name = "Managed-CachingOptimized"
+  project_name                   = "syncpoly-web-builder"
+  content_bucket_name            = "syncpoly-web-builder-sites"
+  cloudfront_function            = "syncpoly-domain-folder-router"
+  s3_origin_id                   = "syncpoly-sites-s3-origin"
+  waf_rate_limit_per_five_minute = 2000
+  long_cache_path_patterns = [
+    "/_next/static/*",
+    "/assets/*",
+    "/images/*",
+    "/fonts/*",
+    "/favicon.ico",
+    "/404.css"
+  ]
 }
 
 resource "aws_s3_bucket" "sites" {
@@ -64,11 +69,230 @@ resource "aws_cloudfront_function" "domain_folder_router" {
   code    = file("${path.module}/../cloudfront/domain-folder-router.js")
 }
 
+resource "aws_cloudfront_cache_policy" "pages" {
+  name        = "${local.project_name}-pages-cache"
+  comment     = "Short cache for static HTML pages"
+  default_ttl = 300
+  max_ttl     = 3600
+  min_ttl     = 0
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip   = true
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+  }
+}
+
+resource "aws_cloudfront_cache_policy" "static_assets" {
+  name        = "${local.project_name}-static-assets-cache"
+  comment     = "Long cache for versioned static assets"
+  default_ttl = 31536000
+  max_ttl     = 31536000
+  min_ttl     = 0
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip   = true
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+  }
+}
+
+resource "aws_cloudfront_response_headers_policy" "security" {
+  name    = "${local.project_name}-security-headers"
+  comment = "Baseline browser security headers for static sites"
+
+  security_headers_config {
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      override                   = true
+      preload                    = false
+    }
+
+    xss_protection {
+      mode_block = true
+      override   = true
+      protection = true
+    }
+  }
+
+  custom_headers_config {
+    items {
+      header   = "Permissions-Policy"
+      override = true
+      value    = "camera=(), microphone=(), geolocation=()"
+    }
+  }
+}
+
+resource "aws_wafv2_web_acl" "sites" {
+  name        = "${local.project_name}-cloudfront-waf"
+  description = "Managed WAF protections and rate limiting for the shared CloudFront distribution"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWSManagedIpReputationList"
+    priority = 0
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedIpReputationList"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWSManagedCommonRules"
+    priority = 10
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedCommonRules"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWSManagedKnownBadInputs"
+    priority = 20
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedKnownBadInputs"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWSManagedSQLiRules"
+    priority = 30
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesSQLiRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedSQLiRules"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "RateLimitByIp"
+    priority = 40
+
+    action {
+      block {}
+    }
+
+    statement {
+      rate_based_statement {
+        aggregate_key_type = "IP"
+        limit              = local.waf_rate_limit_per_five_minute
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "RateLimitByIp"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${local.project_name}-cloudfront-waf"
+    sampled_requests_enabled   = true
+  }
+}
+
 resource "aws_cloudfront_distribution" "sites" {
   enabled             = true
   comment             = "${local.project_name} domain-to-folder static site distribution"
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
+  web_acl_id          = aws_wafv2_web_acl.sites.arn
 
   origin {
     domain_name              = aws_s3_bucket.sites.bucket_regional_domain_name
@@ -77,16 +301,37 @@ resource "aws_cloudfront_distribution" "sites" {
   }
 
   default_cache_behavior {
-    target_origin_id       = local.s3_origin_id
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods         = ["GET", "HEAD"]
-    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
-    compress               = true
+    target_origin_id           = local.s3_origin_id
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+    cached_methods             = ["GET", "HEAD"]
+    cache_policy_id            = aws_cloudfront_cache_policy.pages.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+    compress                   = true
 
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.domain_folder_router.arn
+    }
+  }
+
+  dynamic "ordered_cache_behavior" {
+    for_each = local.long_cache_path_patterns
+
+    content {
+      path_pattern               = ordered_cache_behavior.value
+      target_origin_id           = local.s3_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+      cached_methods             = ["GET", "HEAD"]
+      cache_policy_id            = aws_cloudfront_cache_policy.static_assets.id
+      response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+      compress                   = true
+
+      function_association {
+        event_type   = "viewer-request"
+        function_arn = aws_cloudfront_function.domain_folder_router.arn
+      }
     }
   }
 
