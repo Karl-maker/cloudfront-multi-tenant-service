@@ -146,8 +146,9 @@ async function validateConfig(args) {
 }
 
 async function addCname(args) {
+  const config = readOptionalConfig(args);
   const domain = args.domain || process.env.GODADDY_DOMAIN;
-  const name = args.name || process.env.CNAME_NAME || process.env.DNS_RECORD_NAME;
+  const name = resolveCnameName(args, config);
   const value =
     args.value ||
     args.target ||
@@ -169,6 +170,46 @@ async function addCname(args) {
     record
   });
   console.log(`Added ${describeCname({ domain, record })}`);
+}
+
+function resolveCnameName(args, config) {
+  const name =
+    args.name ||
+    args.record ||
+    args._[0] ||
+    args.site ||
+    process.env.CNAME_NAME ||
+    process.env.DNS_RECORD_NAME ||
+    process.env.SITE_SUBDOMAIN;
+
+  if (name) {
+    return name;
+  }
+
+  const siteUrl = args.siteUrl || args.url || process.env.SITE_URL || config?.site?.url;
+  if (siteUrl) {
+    return cnameNameFromUrl(siteUrl);
+  }
+
+  throw new Error("CNAME record name is required. Pass --name, a positional name, --site-url, or --config.");
+}
+
+function cnameNameFromUrl(siteUrl) {
+  let host = "";
+  try {
+    host = new URL(siteUrl).hostname;
+  } catch {
+    host = String(siteUrl);
+  }
+
+  const cleanHost = host.trim().toLowerCase().replace(/^www\./, "");
+  const domain = (process.env.GODADDY_DOMAIN || "").trim().toLowerCase().replace(/^www\./, "");
+
+  if (domain && cleanHost.endsWith(`.${domain}`)) {
+    return cleanHost.slice(0, -(domain.length + 1));
+  }
+
+  return cleanHost.split(".")[0];
 }
 
 function resolveTarget(args, config) {
@@ -250,7 +291,8 @@ function printHelp() {
   syncpoly-site upload-seo --source ./seo --config ./site.config.json
   syncpoly-site upload-folder --source ./folder --prefix assets --folder site-folder
   syncpoly-site validate-config --file ./site.config.json
-  syncpoly-site add-cname --domain syncpoly.com --name aurum-eco-power-wash --value d111111abcdef8.cloudfront.net
+  syncpoly-site add-cname aurum-eco-power-wash --domain syncpoly.com --value d111111abcdef8.cloudfront.net
+  syncpoly-site add-cname --config ./site.config.json --value d111111abcdef8.cloudfront.net
 
 Environment:
   ENV_FILE                           Optional env file path. Defaults to .env in the current directory.
@@ -261,7 +303,8 @@ Environment:
   GODADDY_API_KEY                    GoDaddy production API key.
   GODADDY_API_SECRET                 GoDaddy production API secret.
   GODADDY_DOMAIN                     Domain to modify, for example syncpoly.com.
-  CNAME_NAME                         CNAME record name, for example aurum-eco-power-wash.
+  CNAME_NAME                         Optional default record name. CLI input or config-derived name wins.
+  SITE_URL                           Optional URL used to derive the record name.
   CNAME_VALUE                        CNAME target, for example CloudFront domain name.
   DRY_RUN=1                          Print aws commands without uploading.
 `);

@@ -150,6 +150,40 @@ describe("godaddy dns helpers", () => {
       "aurum-eco-power-wash.syncpoly.com CNAME d1mp8fjhswh27j.cloudfront.net TTL 600"
     );
   });
+
+  it("derives the GoDaddy CNAME record name from positional input or config", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-cname-test-"));
+    const configPath = path.join(dir, "site.config.json");
+    fs.writeFileSync(configPath, JSON.stringify(validConfig()));
+
+    const env = {
+      PATH: process.env.PATH,
+      GODADDY_DOMAIN: "syncpoly.com",
+      CNAME_VALUE: "d1mp8fjhswh27j.cloudfront.net",
+      DRY_RUN: "1"
+    };
+
+    const positionalOutput = execFileSync(
+      process.execPath,
+      [path.join(__dirname, "../bin/syncpoly-site.js"), "add-cname", "aurum-eco-power-wash"],
+      { cwd: dir, env, encoding: "utf8" }
+    );
+
+    const configOutput = execFileSync(
+      process.execPath,
+      [path.join(__dirname, "../bin/syncpoly-site.js"), "add-cname", "--config", configPath],
+      { cwd: dir, env, encoding: "utf8" }
+    );
+
+    assert.match(
+      positionalOutput,
+      /DRY RUN: aurum-eco-power-wash\.syncpoly\.com CNAME d1mp8fjhswh27j\.cloudfront\.net TTL 600/
+    );
+    assert.match(
+      configOutput,
+      /DRY RUN: example\.syncpoly\.com CNAME d1mp8fjhswh27j\.cloudfront\.net TTL 600/
+    );
+  });
 });
 
 function validConfig() {
