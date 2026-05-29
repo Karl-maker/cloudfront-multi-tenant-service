@@ -9,34 +9,40 @@ const { describe, it } = require("node:test");
 const handler = loadCloudFrontFunction();
 
 describe("cloudfront domain-folder-router", () => {
-  it("rewrites a custom domain root to its S3 folder index", () => {
+  it("rewrites a custom domain root to its template index", () => {
     const result = handler(eventFor("hello.com", "/"));
 
-    assert.equal(result.uri, "/hello-site/index.html");
+    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/index.html");
   });
 
-  it("rewrites a custom domain page route to a folder index document", () => {
+  it("rewrites a custom domain page route to a template index document", () => {
     const result = handler(eventFor("www.hello.com", "/about"));
 
-    assert.equal(result.uri, "/hello-site/about/index.html");
+    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/about/index.html");
   });
 
-  it("rewrites syncpoly subdomains to the configured folder", () => {
+  it("rewrites syncpoly subdomains to the configured template", () => {
     const result = handler(eventFor("acme.syncpoly.com", "/dashboard/"));
 
-    assert.equal(result.uri, "/acme-site/dashboard/index.html");
+    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/dashboard/index.html");
   });
 
-  it("keeps asset file names intact under the matched folder", () => {
+  it("keeps asset file names intact under the matched template", () => {
     const result = handler(eventFor("customco.com", "/assets/app.css"));
 
-    assert.equal(result.uri, "/customco-site/assets/app.css");
+    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/assets/app.css");
+  });
+
+  it("rewrites site config to the mapped site folder", () => {
+    const result = handler(eventFor("customco.com", "/public/site.config.json"));
+
+    assert.equal(result.uri, "/customco-site/site.config.json");
   });
 
   it("matches hosts case-insensitively", () => {
     const result = handler(eventFor("WWW.CUSTOMCO.COM", "/logo.svg"));
 
-    assert.equal(result.uri, "/customco-site/logo.svg");
+    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/logo.svg");
   });
 
   it("leaves global 404 assets at the bucket root", () => {

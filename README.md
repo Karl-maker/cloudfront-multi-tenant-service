@@ -11,7 +11,19 @@ https://hello.com/about
 CloudFront rewrites the origin request to:
 
 ```text
-s3://syncpoly-web-builder-sites/hello-site/about/index.html
+s3://syncpoly-web-builder-sites/syncpoly/templates/pressure-washer/about/index.html
+```
+
+The one exception is tenant config. Requests for:
+
+```text
+/public/site.config.json
+```
+
+are rewritten to the mapped tenant folder:
+
+```text
+s3://syncpoly-web-builder-sites/hello-site/site.config.json
 ```
 
 ## Shape
@@ -28,9 +40,9 @@ s3://syncpoly-web-builder-sites/hello-site/about/index.html
 For now, edit this object directly in `cloudfront/domain-folder-router.js`:
 
 ```js
-var foldersByHost = {
-  "hello.com": "hello-site",
-  "www.hello.com": "hello-site"
+var sitesByHost = {
+  "hello.com": { folder: "hello-site", template: "pressure-washer" },
+  "www.hello.com": { folder: "hello-site", template: "pressure-washer" }
 };
 ```
 

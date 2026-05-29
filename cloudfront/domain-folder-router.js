@@ -6,19 +6,19 @@ function handler(event) {
     return request;
   }
 
-  var foldersByHost = {
-    "hello.com": "hello-site",
-    "www.hello.com": "hello-site",
-    "acme.syncpoly.com": "acme-site",
-    "customco.com": "customco-site",
-    "www.customco.com": "customco-site",
+  var sitesByHost = {
+    "hello.com": { folder: "hello-site", template: "pressure-washer" },
+    "www.hello.com": { folder: "hello-site", template: "pressure-washer" },
+    "acme.syncpoly.com": { folder: "acme-site", template: "pressure-washer" },
+    "customco.com": { folder: "customco-site", template: "pressure-washer" },
+    "www.customco.com": { folder: "customco-site", template: "pressure-washer" },
     // real
-    "d1mp8fjhswh27j.cloudfront.net": "syncpoly"
+    "d1mp8fjhswh27j.cloudfront.net": { folder: "syncpoly", template: "pressure-washer" }
 
   };
 
-  var folder = foldersByHost[host];
-  if (!folder) {
+  var site = sitesByHost[host];
+  if (!site) {
     return {
       statusCode: 404,
       statusDescription: "Not Found",
@@ -30,7 +30,15 @@ function handler(event) {
     };
   }
 
-  request.uri = "/" + trimSlashes(folder) + normalizeStaticSiteUri(request.uri);
+  if (request.uri === "/public/site.config.json") {
+    request.uri = "/" + trimSlashes(site.folder) + "/site.config.json";
+    return request;
+  }
+
+  request.uri =
+    "/syncpoly/templates/" +
+    trimSlashes(site.template || "pressure-washer") +
+    normalizeStaticSiteUri(request.uri);
   return request;
 }
 
