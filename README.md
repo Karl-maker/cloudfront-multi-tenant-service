@@ -49,6 +49,7 @@ s3://syncpoly-web-builder-sites/hello-site/media/example.jpg
 ## Shape
 
 - `cloudfront/domain-folder-router.js` is the CloudFront Function source.
+- `docs/site-config-guide.md` explains site config, S3 layout, and naming conventions.
 - `test/cloudfront-function.test.js` tests host-to-folder rewrites locally.
 - `site/404.html` and `site/404.css` are the shared CloudFront error page assets.
 - `infra/` creates the private S3 bucket, CloudFront Function, CloudFront distribution, AWS WAF, cache policies, security headers, Origin Access Control, and read-only S3 bucket policy.
@@ -92,6 +93,16 @@ The distribution also adds baseline browser security headers, including HSTS, fr
 npm install
 npm run build
 npm test
+```
+
+Site upload CLI:
+
+```bash
+npm run site:validate-config -- --file ./sites/example/site.config.json
+npm run site:upload-config -- --file ./sites/example/site.config.json
+npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json
+npm run site:upload-seo -- --source ./sites/example --config ./sites/example/site.config.json
+npm run godaddy:add-cname -- --domain syncpoly.com --name example --value d111111abcdef8.cloudfront.net
 ```
 
 Upload the global 404 page after the content bucket exists:

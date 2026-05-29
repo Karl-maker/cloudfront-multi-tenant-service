@@ -4,10 +4,20 @@
   "private": true,
   "description": "CloudFront Function that maps domains to S3 client folders.",
   "main": "cloudfront/domain-folder-router.js",
+  "bin": {
+    "syncpoly-site": "bin/syncpoly-site.js"
+  },
   "scripts": {
-    "build": "node --check cloudfront/domain-folder-router.js && node --check test/cloudfront-function.test.js",
+    "build": "node --check cloudfront/domain-folder-router.js && node --check lib/site-config-schema.js && node --check lib/site-upload.js && node --check lib/godaddy-dns.js && node --check bin/syncpoly-site.js && node --check test/cloudfront-function.test.js && node --check test/site-upload.test.js",
     "deploy:global-404": "./bin/upload-global-404.sh",
-    "test": "node --test test/cloudfront-function.test.js",
+    "site": "node bin/syncpoly-site.js",
+    "site:upload-config": "node bin/syncpoly-site.js upload-config",
+    "site:upload-folder": "node bin/syncpoly-site.js upload-folder",
+    "site:upload-media": "node bin/syncpoly-site.js upload-media",
+    "site:upload-seo": "node bin/syncpoly-site.js upload-seo",
+    "site:validate-config": "node bin/syncpoly-site.js validate-config",
+    "godaddy:add-cname": "node bin/syncpoly-site.js add-cname",
+    "test": "node --test test/cloudfront-function.test.js test/site-upload.test.js",
     "test:unit": "npm test",
     "terraform:fmt": "terraform -chdir=infra fmt -check",
     "terraform:validate": "terraform -chdir=infra init -backend=false && terraform -chdir=infra validate"
