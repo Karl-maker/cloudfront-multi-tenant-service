@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -92,6 +93,37 @@ describe("site upload helpers", () => {
     assert.equal(prepared.files.length, 1);
     assert.equal(path.relative(prepared.outputRoot, prepared.files[0]), "icons/logo.svg");
     assert.equal(fs.readFileSync(prepared.files[0], "utf8"), "<svg><title>Logo</title></svg>");
+  });
+
+  it("loads CLI defaults from .env when shell env does not provide them", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-cli-env-test-"));
+    const mediaDir = path.join(dir, "media");
+    fs.mkdirSync(mediaDir);
+    fs.writeFileSync(path.join(mediaDir, "logo.svg"), "<svg>  <title>Logo</title>  </svg>");
+    fs.writeFileSync(
+      path.join(dir, ".env"),
+      [
+        "CONTENT_BUCKET=env-bucket",
+        "SITE_FOLDER=Env Site",
+        "AWS_REGION=us-west-2",
+        "DRY_RUN=1"
+      ].join("\n")
+    );
+
+    const output = execFileSync(
+      process.execPath,
+      [path.join(__dirname, "../bin/syncpoly-site.js"), "upload-media", "--source", mediaDir],
+      {
+        cwd: dir,
+        env: {
+          PATH: process.env.PATH
+        },
+        encoding: "utf8"
+      }
+    );
+
+    assert.match(output, /aws s3 cp .+ s3:\/\/env-bucket\/env-site\/media\/logo\.svg /);
+    assert.match(output, /--region us-west-2/);
   });
 });
 

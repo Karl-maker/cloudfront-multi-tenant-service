@@ -31,6 +31,7 @@ main().catch((error) => {
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const args = parseArgs(rest);
+  loadEnvFile(args.envFile || process.env.ENV_FILE || ".env");
 
   if (!command || args.help) {
     printHelp();
@@ -204,6 +205,44 @@ function printUploads(uploads) {
   }
 }
 
+function loadEnvFile(envFile) {
+  if (!envFile) {
+    return;
+  }
+
+  const envPath = path.resolve(envFile);
+  if (!fs.existsSync(envPath)) {
+    return;
+  }
+
+  const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const match = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)?\s*$/);
+    if (!match) {
+      continue;
+    }
+
+    const key = match[1];
+    if (Object.prototype.hasOwnProperty.call(process.env, key)) {
+      continue;
+    }
+
+    process.env[key] = parseEnvValue(match[2] || "");
+  }
+}
+
+function parseEnvValue(rawValue) {
+  const value = rawValue.trim();
+  const quote = value[0];
+
+  if ((quote === "\"" || quote === "'") && value.endsWith(quote)) {
+    return value.slice(1, -1);
+  }
+
+  const hashIndex = value.indexOf("#");
+  return (hashIndex === -1 ? value : value.slice(0, hashIndex)).trim();
+}
+
 function printHelp() {
   console.log(`Usage:
   syncpoly-site upload-config --file ./site.config.json [--folder site-folder]
@@ -214,6 +253,7 @@ function printHelp() {
   syncpoly-site add-cname --domain syncpoly.com --name aurum-eco-power-wash --value d111111abcdef8.cloudfront.net
 
 Environment:
+  ENV_FILE                           Optional env file path. Defaults to .env in the current directory.
   CONTENT_BUCKET or S3_BUCKET        Target S3 bucket. Defaults to syncpoly-web-builder-sites.
   SITE_FOLDER                        Target tenant folder. Overrides config-derived folder.
   SITE_CONFIG                        Config file used to validate and derive folder.
