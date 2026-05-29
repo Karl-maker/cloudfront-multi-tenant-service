@@ -13,7 +13,8 @@ function handler(event) {
     "customco.com": { folder: "customco-site", template: "pressure-washer" },
     "www.customco.com": { folder: "customco-site", template: "pressure-washer" },
     // real
-    "d1mp8fjhswh27j.cloudfront.net": { folder: "syncpoly", template: "pressure-washer" }
+    "d1mp8fjhswh27j.cloudfront.net": { folder: "syncpoly", template: "pressure-washer" },
+    "aurum-eco-power-wash.syncpoly.com": { folder: "aurum-eco-power-wash", template: "pressure-washer" },
 
   };
 
