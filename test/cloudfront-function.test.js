@@ -51,6 +51,18 @@ describe("cloudfront domain-folder-router", () => {
     }
   });
 
+  it("rewrites media routes to the mapped site folder", () => {
+    const cases = [
+      ["/media/gallery/truck.jpg", "/customco-site/media/gallery/truck.jpg"],
+      ["/public/media/gallery/truck.jpg", "/customco-site/media/gallery/truck.jpg"],
+      ["/media/videos/walkthrough.mp4", "/customco-site/media/videos/walkthrough.mp4"]
+    ];
+
+    for (const [requestUri, expectedUri] of cases) {
+      assert.equal(handler(eventFor("customco.com", requestUri)).uri, expectedUri);
+    }
+  });
+
   it("matches hosts case-insensitively", () => {
     const result = handler(eventFor("WWW.CUSTOMCO.COM", "/logo.svg"));
 

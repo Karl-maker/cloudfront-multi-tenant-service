@@ -26,6 +26,8 @@ Tenant-owned public files are mapped to the tenant folder instead of the shared 
 /public/favicon.ico
 /public/favicon.png
 /public/favicon.svg
+/media/*
+/public/media/*
 ```
 
 are rewritten to the mapped tenant folder:
@@ -37,6 +39,7 @@ s3://syncpoly-web-builder-sites/hello-site/llms.txt
 s3://syncpoly-web-builder-sites/hello-site/sitemap.xml
 s3://syncpoly-web-builder-sites/hello-site/robot.txt
 s3://syncpoly-web-builder-sites/hello-site/favicon.ico
+s3://syncpoly-web-builder-sites/hello-site/media/example.jpg
 ```
 
 ## Shape

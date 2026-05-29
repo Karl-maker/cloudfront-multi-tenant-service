@@ -47,6 +47,12 @@ function handler(event) {
     return request;
   }
 
+  var mappedMediaPath = getMappedMediaPath(request.uri);
+  if (mappedMediaPath) {
+    request.uri = "/" + trimSlashes(site.folder) + mappedMediaPath;
+    return request;
+  }
+
   request.uri =
     "/syncpoly/templates/" +
     trimSlashes(site.template || "pressure-washer") +
@@ -77,4 +83,16 @@ function normalizeStaticSiteUri(uri) {
 
 function trimSlashes(value) {
   return String(value || "").replace(/^\/+|\/+$/g, "");
+}
+
+function getMappedMediaPath(uri) {
+  if (uri.indexOf("/media/") === 0) {
+    return uri;
+  }
+
+  if (uri.indexOf("/public/media/") === 0) {
+    return uri.substring("/public".length);
+  }
+
+  return null;
 }
