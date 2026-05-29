@@ -14,16 +14,29 @@ CloudFront rewrites the origin request to:
 s3://syncpoly-web-builder-sites/syncpoly/templates/pressure-washer/about/index.html
 ```
 
-The one exception is tenant config. Requests for:
+Tenant-owned public files are mapped to the tenant folder instead of the shared template. Requests for:
 
 ```text
 /public/site.config.json
+/llm.txt
+/llms.txt
+/sitemap.xml
+/robot.txt
+/robots.txt
+/public/favicon.ico
+/public/favicon.png
+/public/favicon.svg
 ```
 
 are rewritten to the mapped tenant folder:
 
 ```text
 s3://syncpoly-web-builder-sites/hello-site/site.config.json
+s3://syncpoly-web-builder-sites/hello-site/llm.txt
+s3://syncpoly-web-builder-sites/hello-site/llms.txt
+s3://syncpoly-web-builder-sites/hello-site/sitemap.xml
+s3://syncpoly-web-builder-sites/hello-site/robot.txt
+s3://syncpoly-web-builder-sites/hello-site/favicon.ico
 ```
 
 ## Shape

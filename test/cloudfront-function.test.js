@@ -33,10 +33,22 @@ describe("cloudfront domain-folder-router", () => {
     assert.equal(result.uri, "/syncpoly/templates/pressure-washer/assets/app.css");
   });
 
-  it("rewrites site config to the mapped site folder", () => {
-    const result = handler(eventFor("customco.com", "/public/site.config.json"));
+  it("rewrites tenant-owned public files to the mapped site folder", () => {
+    const cases = [
+      ["/public/site.config.json", "/customco-site/site.config.json"],
+      ["/llm.txt", "/customco-site/llm.txt"],
+      ["/llms.txt", "/customco-site/llms.txt"],
+      ["/sitemap.xml", "/customco-site/sitemap.xml"],
+      ["/robot.txt", "/customco-site/robot.txt"],
+      ["/robots.txt", "/customco-site/robots.txt"],
+      ["/public/favicon.ico", "/customco-site/favicon.ico"],
+      ["/public/favicon.png", "/customco-site/favicon.png"],
+      ["/public/favicon.svg", "/customco-site/favicon.svg"]
+    ];
 
-    assert.equal(result.uri, "/customco-site/site.config.json");
+    for (const [requestUri, expectedUri] of cases) {
+      assert.equal(handler(eventFor("customco.com", requestUri)).uri, expectedUri);
+    }
   });
 
   it("matches hosts case-insensitively", () => {

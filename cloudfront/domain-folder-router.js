@@ -30,8 +30,20 @@ function handler(event) {
     };
   }
 
-  if (request.uri === "/public/site.config.json") {
-    request.uri = "/" + trimSlashes(site.folder) + "/site.config.json";
+  var mappedPublicPaths = {
+    "/public/site.config.json": "/site.config.json",
+    "/llm.txt": "/llm.txt",
+    "/llms.txt": "/llms.txt",
+    "/sitemap.xml": "/sitemap.xml",
+    "/robot.txt": "/robot.txt",
+    "/robots.txt": "/robots.txt",
+    "/public/favicon.ico": "/favicon.ico",
+    "/public/favicon.png": "/favicon.png",
+    "/public/favicon.svg": "/favicon.svg"
+  };
+  var mappedPublicPath = mappedPublicPaths[request.uri];
+  if (mappedPublicPath) {
+    request.uri = "/" + trimSlashes(site.folder) + mappedPublicPath;
     return request;
   }
 
