@@ -35,6 +35,7 @@ describe("cloudfront domain-folder-router", () => {
 
   it("rewrites tenant-owned public files to the mapped site folder", () => {
     const cases = [
+      ["/site.config.json", "/customco-site/site.config.json"],
       ["/public/site.config.json", "/customco-site/site.config.json"],
       ["/llm.txt", "/customco-site/llm.txt"],
       ["/llms.txt", "/customco-site/llms.txt"],

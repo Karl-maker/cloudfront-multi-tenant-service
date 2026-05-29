@@ -32,6 +32,7 @@ function handler(event) {
   }
 
   var mappedPublicPaths = {
+    "/site.config.json": "/site.config.json",
     "/public/site.config.json": "/site.config.json",
     "/llm.txt": "/llm.txt",
     "/llms.txt": "/llms.txt",

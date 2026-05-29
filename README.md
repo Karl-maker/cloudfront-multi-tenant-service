@@ -18,6 +18,7 @@ Tenant-owned public files are mapped to the tenant folder instead of the shared 
 
 ```text
 /public/site.config.json
+/site.config.json
 /llm.txt
 /llms.txt
 /sitemap.xml
