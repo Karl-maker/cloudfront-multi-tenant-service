@@ -87,6 +87,14 @@ function trimSlashes(value) {
 }
 
 function getMappedMediaPath(uri) {
+  if (uri.indexOf("/assets/") === 0) {
+    return uri;
+  }
+
+  if (uri.indexOf("/public/assets/") === 0) {
+    return uri.substring("/public".length);
+  }
+
   if (uri.indexOf("/media/") === 0) {
     return uri;
   }

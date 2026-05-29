@@ -27,10 +27,10 @@ describe("cloudfront domain-folder-router", () => {
     assert.equal(result.uri, "/syncpoly/templates/pressure-washer/dashboard/index.html");
   });
 
-  it("keeps asset file names intact under the matched template", () => {
+  it("rewrites non-tenant static files under the matched template", () => {
     const result = handler(eventFor("customco.com", "/assets/app.css"));
 
-    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/assets/app.css");
+    assert.equal(result.uri, "/customco-site/assets/app.css");
   });
 
   it("rewrites tenant-owned public files to the mapped site folder", () => {
@@ -51,8 +51,10 @@ describe("cloudfront domain-folder-router", () => {
     }
   });
 
-  it("rewrites media routes to the mapped site folder", () => {
+  it("rewrites media and asset routes to the mapped site folder", () => {
     const cases = [
+      ["/assets/syncpoly-icon.png", "/customco-site/assets/syncpoly-icon.png"],
+      ["/public/assets/syncpoly-icon.png", "/customco-site/assets/syncpoly-icon.png"],
       ["/media/gallery/truck.jpg", "/customco-site/media/gallery/truck.jpg"],
       ["/public/media/gallery/truck.jpg", "/customco-site/media/gallery/truck.jpg"],
       ["/media/videos/walkthrough.mp4", "/customco-site/media/videos/walkthrough.mp4"]
