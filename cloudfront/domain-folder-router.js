@@ -15,7 +15,7 @@ function handler(event) {
     // real
     "d1mp8fjhswh27j.cloudfront.net": { folder: "syncpoly", template: "pressure-washer" },
     "aurum-eco-power-wash.syncpoly.com": { folder: "aurum-eco-power-wash", template: "pressure-washer" },
-
+    "atlantic-villa-tt.syncpoly.com": { folder: "atlantic-villa-tt", template: "real-estate" },
   };
 
   var site = sitesByHost[host];
