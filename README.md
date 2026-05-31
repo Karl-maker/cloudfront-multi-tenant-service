@@ -101,9 +101,12 @@ Site upload CLI:
 npm run site:validate-config -- --file ./sites/example/site.config.json
 npm run site:upload-config -- --file ./sites/example/site.config.json
 npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json
+npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json --max-width 1600 --quality 72
 npm run site:upload-seo -- --source ./sites/example --config ./sites/example/site.config.json
 npm run godaddy:add-cname -- --domain syncpoly.com --name example --value d111111abcdef8.cloudfront.net
 ```
+
+`upload-media` optimizes media before uploading to S3. JPG/PNG/WebP/AVIF files are resized to fit within `1920x1920`, compressed for web delivery, and JPG/PNG/AVIF files also get a generated `.webp` sibling by default. Use `--no-webp` or `SITE_MEDIA_WEBP=0` to disable WebP variants.
 
 Upload the global 404 page after the content bucket exists:
 

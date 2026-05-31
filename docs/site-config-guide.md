@@ -258,7 +258,7 @@ SITE_CONFIG=./sites/aurum-eco-power-wash/site.config.json \
 npm run site:upload-media -- --source ./sites/aurum-eco-power-wash/media
 ```
 
-SVG files are minified. PNG/JPG/WebP/AVIF files are recompressed if the optional `sharp` package is installed; otherwise originals are uploaded unchanged.
+SVG files are minified. PNG/JPG/WebP/AVIF files are resized to fit within `1920x1920`, stripped of metadata, and recompressed when `sharp` is installed. JPG/PNG/AVIF files also generate same-path `.webp` variants by default, for example `gallery/truck.jpg` uploads with `gallery/truck.webp`. Use `--max-width`, `--max-height`, `--quality`, or `--no-webp` to tune the output.
 
 Upload SEO files:
 

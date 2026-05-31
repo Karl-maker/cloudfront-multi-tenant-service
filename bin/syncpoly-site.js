@@ -10,6 +10,7 @@ const {
   listFiles,
   getCacheControl,
   getContentType,
+  parseMediaCompressionOptions,
   resolveBucket,
   resolveFolder,
   runAwsS3Cp,
@@ -76,8 +77,10 @@ async function uploadMedia(args) {
   const source = requirePath(args.source || args.dir || process.env.SITE_MEDIA_SOURCE, "source");
   const config = readOptionalConfig(args);
   const target = resolveTarget(args, config);
+  const compression = parseMediaCompressionOptions(args);
   const prepared = await prepareCompressedMedia({
     source,
+    compression,
     log: (message) => console.warn(message)
   });
 
@@ -287,7 +290,7 @@ function parseEnvValue(rawValue) {
 function printHelp() {
   console.log(`Usage:
   syncpoly-site upload-config --file ./site.config.json [--folder site-folder]
-  syncpoly-site upload-media --source ./media --config ./site.config.json
+  syncpoly-site upload-media --source ./media --config ./site.config.json [--max-width 1920] [--quality 78] [--no-webp]
   syncpoly-site upload-seo --source ./seo --config ./site.config.json
   syncpoly-site upload-folder --source ./folder --prefix assets --folder site-folder
   syncpoly-site validate-config --file ./site.config.json
@@ -300,6 +303,10 @@ Environment:
   SITE_FOLDER                        Target tenant folder. Overrides config-derived folder.
   SITE_CONFIG                        Config file used to validate and derive folder.
   AWS_REGION                         Optional AWS CLI region.
+  SITE_MEDIA_MAX_WIDTH               Max uploaded image width. Defaults to 1920.
+  SITE_MEDIA_MAX_HEIGHT              Max uploaded image height. Defaults to 1920.
+  SITE_MEDIA_QUALITY                 JPEG/WebP quality from 1-100. Defaults to 78.
+  SITE_MEDIA_WEBP=0                  Disable generated .webp variants.
   GODADDY_API_KEY                    GoDaddy production API key.
   GODADDY_API_SECRET                 GoDaddy production API secret.
   GODADDY_DOMAIN                     Domain to modify, for example syncpoly.com.

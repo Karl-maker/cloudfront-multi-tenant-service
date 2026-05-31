@@ -13,6 +13,8 @@ const {
 } = require("../lib/site-config-schema");
 const {
   minifySvg,
+  parseArgs,
+  parseMediaCompressionOptions,
   prepareCompressedMedia,
   resolveBucket,
   resolveFolder,
@@ -93,6 +95,39 @@ describe("site upload helpers", () => {
     assert.equal(prepared.files.length, 1);
     assert.equal(path.relative(prepared.outputRoot, prepared.files[0]), "icons/logo.svg");
     assert.equal(fs.readFileSync(prepared.files[0], "utf8"), "<svg><title>Logo</title></svg>");
+  });
+
+  it("creates WebP variants for raster media", async () => {
+    const sharp = require("sharp");
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-media-webp-test-"));
+    fs.mkdirSync(path.join(dir, "gallery"));
+    await sharp({
+      create: {
+        width: 32,
+        height: 32,
+        channels: 3,
+        background: "#146ef5"
+      }
+    }).png().toFile(path.join(dir, "gallery", "photo.png"));
+
+    const prepared = await prepareCompressedMedia({
+      source: dir,
+      compression: { includeWebp: true, maxWidth: 24, maxHeight: 24, quality: 70 }
+    });
+    const relativeFiles = prepared.files.map((file) => path.relative(prepared.outputRoot, file)).sort();
+
+    assert.deepEqual(relativeFiles, ["gallery/photo.png", "gallery/photo.webp"]);
+  });
+
+  it("parses media compression CLI options", () => {
+    const args = parseArgs(["--max-width", "1600", "--max-height=1200", "--quality", "72", "--no-webp"]);
+
+    assert.deepEqual(parseMediaCompressionOptions(args, {}), {
+      includeWebp: false,
+      maxWidth: 1600,
+      maxHeight: 1200,
+      quality: 72
+    });
   });
 
   it("loads CLI defaults from .env when shell env does not provide them", () => {
