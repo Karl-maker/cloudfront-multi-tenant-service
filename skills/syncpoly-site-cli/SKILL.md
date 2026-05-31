@@ -37,6 +37,7 @@ Never say "created", "validated", "uploaded", "published", "sent", "added DNS", 
 
 - Created files: prove with `test -f`, `find`, or a direct file listing.
 - Valid config: prove with `syncpoly-site validate-config --file ./sites/<unique-name>/site.config.json`.
+- Provided images used: prove every usable operator-provided image was copied into `./sites/<unique-name>/media/` and referenced as `/media/...` in `site.config.json`.
 - Uploaded config/media/SEO: prove with successful `syncpoly-site upload-*` commands.
 - CloudFront routing: prove the host map file contains the exact `<unique-name>.syncpoly.com` entry, then `npm run build` and `npm test` pass.
 - GoDaddy DNS: prove with successful `syncpoly-site add-cname ...`.
@@ -106,6 +107,16 @@ If the user does not know something, fill conservative blanks from the industry,
 
 For speed, do bounded intake: ask once for the essentials, then proceed with conservative placeholders if the operator says they do not know. Do not spend a long run researching social media unless the operator asked for research or provided links/files to use.
 
+When the operator sends images or channel attachments, treat them as primary source material. For each usable image:
+
+- copy it into `./sites/<unique-name>/media/` with a descriptive kebab-case filename
+- reference it in `site.config.json` with a `/media/...` path
+- use the strongest image as the hero and `seo.defaultImage` when appropriate
+- use logo/favicon images as `/media/logo...` and `/media/favicon...`
+- use remaining relevant images in gallery, card, split, feature, testimonial, or contact sections
+
+Do not leave usable provided images only in an inbound, temp, downloads, `tools/`, or `assets/` folder. Do not hotlink provided social-media images when a local copy is available. If a provided image is unusable, irrelevant, duplicated, corrupt, or unsafe, report that exact reason.
+
 ## CLI Workflow
 
 Use this gate order. Do not skip a gate unless it is impossible, and report why.
@@ -144,6 +155,8 @@ sites/<unique-name>/
 
 All tenant-owned image files belong in `media/`, including logos, favicons, OG images, social images, hero photos, gallery photos, thumbnails, and illustrations. Do not create `assets/` for tenant image files.
 
+If the operator provided images, the generated config must visibly use them. Do not satisfy this by uploading them only; place them into sections so the localhost screenshot shows the client-specific media.
+
 Generate basic SEO files if missing:
 
 - `robots.txt` with sitemap URL
@@ -160,7 +173,11 @@ test -f ./sites/<unique-name>/robots.txt
 test -f ./sites/<unique-name>/sitemap.xml
 test -f ./sites/<unique-name>/llms.txt
 find ./sites/<unique-name> -maxdepth 3 -type f
+find ./sites/<unique-name>/media -maxdepth 3 -type f
+rg '"/media/' ./sites/<unique-name>/site.config.json
 ```
+
+For every usable image copied from the operator, verify the exact `/media/<filename>` path appears in `site.config.json`. If it does not, update the config before validation/upload.
 
 ### 4. Validate
 
@@ -284,6 +301,14 @@ Prefer this page structure unless the client needs less:
 - contact: `contact`, `faq`, `cta`
 
 Use `/media/...` for every tenant image, including logos and favicons. Do not use `/assets/...` for tenant images. Use the best image as `seo.defaultImage` and hero image. Keep JSON valid: no comments, trailing commas, or undefined values.
+
+Every usable operator-provided image must serve a site purpose. Prefer:
+
+- logo/favicon: `site.manifest.icon`, header branding if supported, footer/social brand context
+- strongest broad image: `seo.defaultImage` and hero media
+- service/property/product images: cards, split sections, galleries, or feature visuals
+- people/team images: about, testimonial, contact, or trust sections
+- location/exterior images: hero, location, amenities, or contact sections
 
 ## Style Selection
 
