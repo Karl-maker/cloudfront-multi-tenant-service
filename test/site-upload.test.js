@@ -43,6 +43,22 @@ describe("site config schema", () => {
     assert(errors.includes('pages must include a page with path "/"'));
   });
 
+  it("accepts the template mediaGallery section type", () => {
+    const config = validConfig();
+    config.pages[0].sections.push({
+      id: "featured-gallery",
+      type: "mediaGallery",
+      mediaItems: [
+        {
+          src: "/media/property-exterior.jpg",
+          alt: "Property exterior"
+        }
+      ]
+    });
+
+    assert.deepEqual(validateSiteConfig(config), []);
+  });
+
   it("derives folder names from explicit fields or site URL", () => {
     assert.equal(deriveFolderFromConfig({ site: { slug: "Aurum Eco Power Wash" } }), "aurum-eco-power-wash");
     assert.equal(
