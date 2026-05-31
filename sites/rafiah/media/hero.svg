@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title>Rafiah profile graphic</title>
+  <desc>Abstract professional portrait-style graphic with warm gradient and clean geometric shapes.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6f2ec"/>
+      <stop offset="100%" stop-color="#e6edf3"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#243447"/>
+      <stop offset="100%" stop-color="#c98f63"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" rx="48" fill="url(#bg)"/>
+  <circle cx="820" cy="290" r="150" fill="#d8e2ea"/>
+  <circle cx="350" cy="540" r="180" fill="#e7d5c4" opacity="0.65"/>
+  <path d="M810 215c62 0 112 50 112 112s-50 112-112 112-112-50-112-112 50-112 112-112z" fill="url(#accent)" opacity="0.2"/>
+  <rect x="120" y="130" width="430" height="540" rx="36" fill="#ffffff" opacity="0.8"/>
+  <path d="M255 600c0-80 53-144 121-144s121 64 121 144" fill="#243447" opacity="0.15"/>
+  <circle cx="376" cy="372" r="96" fill="#243447" opacity="0.18"/>
+  <path d="M315 365c0-31 27-56 61-56s61 25 61 56-27 56-61 56-61-25-61-56z" fill="#243447" opacity="0.35"/>
+  <path d="M287 602c15-68 57-104 89-110 20-4 42-4 62 0 31 6 73 42 88 110" fill="#c98f63" opacity="0.5"/>
+  <text x="730" y="610" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="700" fill="#243447">Rafiah</text>
+  <text x="730" y="665" font-family="Inter, Arial, sans-serif" font-size="28" fill="#5f6c78">Finance Analyst</text>
+</svg>

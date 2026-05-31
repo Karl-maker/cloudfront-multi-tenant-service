@@ -9,6 +9,9 @@
   },
   "scripts": {
     "build": "node --check cloudfront/domain-folder-router.js && node --check lib/site-config-schema.js && node --check lib/site-upload.js && node --check lib/godaddy-dns.js && node --check bin/syncpoly-site.js && node --check test/cloudfront-function.test.js && node --check test/site-upload.test.js",
+    "clawbot:start": "./bin/start-clawbot.sh",
+    "clawbot:check": "docker compose config --quiet",
+    "clawbot:openclaw": "./bin/openclaw-clawbot.sh",
     "deploy:global-404": "./bin/upload-global-404.sh",
     "site": "node bin/syncpoly-site.js",
     "site:upload-config": "node bin/syncpoly-site.js upload-config",

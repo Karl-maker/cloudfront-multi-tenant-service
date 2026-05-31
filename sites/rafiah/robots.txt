@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://rafiah.syncpoly.com/sitemap.xml

@@ -79,7 +79,9 @@ describe("site upload helpers", () => {
 
   it("selects SEO files and ignores unrelated files", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-seo-test-"));
+    fs.mkdirSync(path.join(dir, "media"));
     fs.writeFileSync(path.join(dir, "robots.txt"), "User-agent: *");
+    fs.writeFileSync(path.join(dir, "media", "favicon.svg"), "<svg></svg>");
     fs.writeFileSync(path.join(dir, "notes.md"), "ignore");
 
     assert.deepEqual(selectSeoFiles(dir).map((file) => path.basename(file)), ["robots.txt"]);
@@ -159,6 +161,82 @@ describe("site upload helpers", () => {
 
     assert.match(output, /aws s3 cp .+ s3:\/\/env-bucket\/env-site\/media\/logo\.svg /);
     assert.match(output, /--region us-west-2/);
+  });
+
+  it("rejects upload-folder image uploads outside the media prefix", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-upload-folder-test-"));
+    fs.writeFileSync(path.join(dir, "logo.svg"), "<svg></svg>");
+
+    let error;
+    try {
+      execFileSync(
+        process.execPath,
+        [
+          path.join(__dirname, "../bin/syncpoly-site.js"),
+          "upload-folder",
+          "--source",
+          dir,
+          "--prefix",
+          "assets",
+          "--folder",
+          "example"
+        ],
+        {
+          env: {
+            PATH: process.env.PATH,
+            CONTENT_BUCKET: "test-bucket",
+            DRY_RUN: "1"
+          },
+          encoding: "utf8"
+        }
+      );
+    } catch (caught) {
+      error = caught;
+    }
+
+    assert(error);
+    assert.match(String(error.stderr), /Tenant image files must be uploaded under \/media/);
+  });
+
+  it("prepares a localhost preview from template output and tenant media", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-preview-test-"));
+    const siteDir = path.join(dir, "sites", "example");
+    const templateDir = path.join(dir, "template");
+    const previewDir = path.join(dir, "preview");
+    fs.mkdirSync(path.join(siteDir, "media"), { recursive: true });
+    fs.mkdirSync(path.join(templateDir, "out"), { recursive: true });
+    fs.writeFileSync(path.join(templateDir, "out", "index.html"), "<html>preview</html>");
+    fs.writeFileSync(path.join(templateDir, "out", "site.config.json"), "{}");
+    fs.writeFileSync(path.join(siteDir, "site.config.json"), JSON.stringify(validConfig()));
+    fs.writeFileSync(path.join(siteDir, "robots.txt"), "User-agent: *");
+    fs.writeFileSync(path.join(siteDir, "media", "logo.svg"), "<svg></svg>");
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "preview",
+        "--site",
+        siteDir,
+        "--template",
+        templateDir,
+        "--out",
+        previewDir,
+        "--no-serve"
+      ],
+      {
+        env: {
+          PATH: process.env.PATH
+        },
+        encoding: "utf8"
+      }
+    );
+
+    assert.match(output, /Prepared local preview/);
+    assert(fs.existsSync(path.join(previewDir, "out", "index.html")));
+    assert(fs.existsSync(path.join(previewDir, "out", "site.config.json")));
+    assert(fs.existsSync(path.join(previewDir, "out", "robots.txt")));
+    assert(fs.existsSync(path.join(previewDir, "out", "media", "logo.svg")));
   });
 });
 

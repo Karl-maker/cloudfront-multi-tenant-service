@@ -1,0 +1,115 @@
+x-openclaw-environment: &openclaw-environment
+  OPEN_AI_KEY: ${OPEN_AI_KEY:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENCLAW_MODEL_OPENAI: ${OPENCLAW_MODEL_OPENAI:-openai/gpt-5.4-mini}
+  OPENCLAW_CONTEXT_TOKENS: ${OPENCLAW_CONTEXT_TOKENS:-131072}
+  OPENCLAW_AGENT_TIMEOUT_SECONDS: ${OPENCLAW_AGENT_TIMEOUT_SECONDS:-300}
+  OPENCLAW_COMPACTION_RESERVE_TOKENS: ${OPENCLAW_COMPACTION_RESERVE_TOKENS:-24576}
+  OPENCLAW_COMPACTION_MODEL: ${OPENCLAW_COMPACTION_MODEL:-openai/gpt-5.4-mini}
+  OPENCLAW_HEARTBEAT_TIMEOUT_SECONDS: ${OPENCLAW_HEARTBEAT_TIMEOUT_SECONDS:-300}
+  OPENCLAW_HEARTBEAT_MODEL: ${OPENCLAW_HEARTBEAT_MODEL:-openai/gpt-5.4-nano}
+  OPENCLAW_CONFIG_DIR: /home/node/.openclaw
+  OPENCLAW_BROWSER_HEADLESS: "1"
+  OPENCLAW_DISABLE_BONJOUR: "1"
+  OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
+  CONTENT_BUCKET: ${CONTENT_BUCKET:-syncpoly-web-builder-sites}
+  CLOUDFRONT_DOMAIN_NAME: ${CLOUDFRONT_DOMAIN_NAME:-}
+  AWS_REGION: ${AWS_REGION:-us-east-1}
+  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+  AWS_SHARED_CREDENTIALS_FILE: ${AWS_SHARED_CREDENTIALS_FILE:-/home/node/.aws/credentials}
+  AWS_CONFIG_FILE: ${AWS_CONFIG_FILE:-/home/node/.aws/config}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+  GODADDY_API_KEY: ${GODADDY_API_KEY:-}
+  GODADDY_API_SECRET: ${GODADDY_API_SECRET:-}
+  PATH: /workspace/cli/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+x-openclaw-volumes: &openclaw-volumes
+  - ./openclaw-data/config:/home/node/.openclaw
+  - ./openclaw-data/auth-profile-secrets:/home/node/.config/openclaw
+  - ./openclaw-data/workspace:/workspace:rw
+  - ./skills:/workspace/.agents/skills:ro
+  - ./skills:/workspace/skills:ro
+  - ./cli:/workspace/cli:ro
+  - ./tools:/workspace/tools:rw
+  - ./bin:/workspace/web-builder/bin:ro
+  - ./cloudfront:/workspace/web-builder/cloudfront:rw
+  - ./docs:/workspace/web-builder/docs:ro
+  - ./lib:/workspace/web-builder/lib:ro
+  - ./site:/workspace/web-builder/site:ro
+  - ./sites:/workspace/web-builder/sites:rw
+  - ./test:/workspace/web-builder/test:ro
+  - ./README.md:/workspace/web-builder/README.md:ro
+  - ./package.json:/workspace/web-builder/package.json:ro
+  - ./package-lock.json:/workspace/web-builder/package-lock.json:ro
+  - /Users/family/Documents/syncpoly-ou/web-builder-templates/next-static-config-template:/workspace/templates/next-static-config-template:ro
+
+services:
+  openclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: syncpoly-openclaw:local
+    container_name: syncpoly-openclaw
+    environment: *openclaw-environment
+    ports:
+      - "${OPENCLAW_PORT:-18789}:18789"
+    volumes: *openclaw-volumes
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - NET_ADMIN
+      - NET_RAW
+
+  openclaw-cli:
+    image: syncpoly-openclaw:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment: *openclaw-environment
+    volumes: *openclaw-volumes
+    network_mode: "service:openclaw"
+    profiles:
+      - cli
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - NET_ADMIN
+      - NET_RAW
+
+  openclaw-node:
+    image: syncpoly-openclaw:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      <<: *openclaw-environment
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: "1"
+    command:
+      - --profile
+      - nodehost
+      - node
+      - run
+      - --host
+      - openclaw
+      - --port
+      - "18789"
+      - --display-name
+      - syncpoly-web-builder-node
+    depends_on:
+      - openclaw
+    volumes: *openclaw-volumes
+    restart: unless-stopped
+    profiles:
+      - node
+    healthcheck:
+      disable: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - NET_ADMIN
+      - NET_RAW

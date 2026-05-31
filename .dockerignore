@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.git
+.github
+.terraform
+coverage
+node_modules
+clawbot
+clawbot-output
+openclaw-data
+sites
+*.log
+*.tfstate
+*.tfstate.*
+tfplan

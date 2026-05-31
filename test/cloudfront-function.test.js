@@ -42,9 +42,12 @@ describe("cloudfront domain-folder-router", () => {
       ["/sitemap.xml", "/customco-site/sitemap.xml"],
       ["/robot.txt", "/customco-site/robot.txt"],
       ["/robots.txt", "/customco-site/robots.txt"],
-      ["/public/favicon.ico", "/customco-site/favicon.ico"],
-      ["/public/favicon.png", "/customco-site/favicon.png"],
-      ["/public/favicon.svg", "/customco-site/favicon.svg"]
+      ["/favicon.ico", "/customco-site/media/favicon.ico"],
+      ["/favicon.png", "/customco-site/media/favicon.png"],
+      ["/favicon.svg", "/customco-site/media/favicon.svg"],
+      ["/public/favicon.ico", "/customco-site/media/favicon.ico"],
+      ["/public/favicon.png", "/customco-site/media/favicon.png"],
+      ["/public/favicon.svg", "/customco-site/media/favicon.svg"]
     ];
 
     for (const [requestUri, expectedUri] of cases) {

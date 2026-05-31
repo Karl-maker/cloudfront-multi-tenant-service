@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+set -eu
+
+cd /workspace/web-builder
+exec node bin/syncpoly-site.js "$@"

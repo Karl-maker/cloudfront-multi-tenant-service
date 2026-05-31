@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title>Rafiah favicon</title>
+  <desc>Minimal monogram icon</desc>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#243447"/>
+      <stop offset="100%" stop-color="#c98f63"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#g)"/>
+  <path d="M22 46V18h13c7 0 11 4 11 10 0 4-2 7-5 9l7 9h-8l-6-8h-5v8h-7zm7-13h6c3 0 4-2 4-4s-1-4-4-4h-6v8z" fill="#fff"/>
+</svg>

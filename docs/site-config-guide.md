@@ -33,15 +33,14 @@ syncpoly/
 
 aurum-eco-power-wash/
   site.config.json
-  favicon.ico
   llm.txt
   llms.txt
   robots.txt
   sitemap.xml
-  assets/
-    logo.png
-    syncpoly-icon.png
   media/
+    logo.png
+    favicon.svg
+    og-default.jpg
     hero-pressure-washing.jpg
     driveway-before-after.jpg
 ```
@@ -103,13 +102,14 @@ These routes map to the tenant folder:
 /sitemap.xml            -> /<folder>/sitemap.xml
 /robot.txt              -> /<folder>/robot.txt
 /robots.txt             -> /<folder>/robots.txt
-/assets/*               -> /<folder>/assets/*
-/public/assets/*        -> /<folder>/assets/*
 /media/*                -> /<folder>/media/*
 /public/media/*         -> /<folder>/media/*
-/public/favicon.ico     -> /<folder>/favicon.ico
-/public/favicon.png     -> /<folder>/favicon.png
-/public/favicon.svg     -> /<folder>/favicon.svg
+/favicon.ico            -> /<folder>/media/favicon.ico
+/favicon.png            -> /<folder>/media/favicon.png
+/favicon.svg            -> /<folder>/media/favicon.svg
+/public/favicon.ico     -> /<folder>/media/favicon.ico
+/public/favicon.png     -> /<folder>/media/favicon.png
+/public/favicon.svg     -> /<folder>/media/favicon.svg
 ```
 
 All other paths map to the shared template:
@@ -134,7 +134,7 @@ Keep `site.config.json` as valid JSON:
 - no comments
 - no trailing commas
 - UTF-8 encoding
-- paths should start with `/assets/` or `/media/`
+- tenant image paths should start with `/media/`
 
 Example:
 
@@ -147,7 +147,7 @@ Example:
     "domain": "aurum-eco-power-wash.syncpoly.com"
   },
   "brand": {
-    "logo": "/assets/logo.png",
+    "logo": "/media/logo.png",
     "primaryColor": "#0f766e",
     "accentColor": "#f5b942"
   },
@@ -206,25 +206,18 @@ The config can also carry upload targeting hints:
 
 CLI args and env vars override these config attributes.
 
-Upload tenant files:
-
-```bash
-CONTENT_BUCKET=syncpoly-web-builder-sites \
-SITE_FOLDER=aurum-eco-power-wash \
-npm run site:upload-folder -- --source ./sites/aurum-eco-power-wash
-```
-
 Expected local folder:
 
 ```text
 sites/
   aurum-eco-power-wash/
     site.config.json
-    favicon.ico
     robots.txt
     sitemap.xml
-    assets/
     media/
+      logo.png
+      favicon.svg
+      og-default.jpg
 ```
 
 Validate and upload config:
@@ -276,23 +269,20 @@ llms.txt
 sitemap.xml
 robot.txt
 robots.txt
-favicon.ico
-favicon.png
-favicon.svg
 ```
 
-After changing config or assets, invalidate the public paths:
+After changing config or media, invalidate the public paths:
 
 ```bash
 aws cloudfront create-invalidation \
   --distribution-id YOUR_DISTRIBUTION_ID \
-  --paths "/site.config.json" "/assets/*" "/media/*" "/sitemap.xml" "/robots.txt"
+  --paths "/site.config.json" "/media/*" "/sitemap.xml" "/robots.txt"
 ```
 
-Use versioned filenames for long-lived assets when possible:
+Use versioned filenames for long-lived media when possible:
 
 ```text
-/assets/logo-v2.png
+/media/logo-v2.png
 /media/hero-pressure-washing-v3.jpg
 ```
 
@@ -301,7 +291,7 @@ Use versioned filenames for long-lived assets when possible:
 1. Choose the domain, folder, and template names.
 2. Create the S3 tenant folder.
 3. Add `site.config.json`.
-4. Upload `assets/`, `media/`, `robots.txt`, `sitemap.xml`, and favicon files.
+4. Upload `media/`, `robots.txt`, `sitemap.xml`, and `llms.txt`.
 5. Add the host mapping in `cloudfront/domain-folder-router.js`.
 6. Run:
 

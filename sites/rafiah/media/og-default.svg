@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title>Rafiah Open Graph image</title>
+  <desc>Professional site preview image for Rafiah.</desc>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#243447"/>
+      <stop offset="100%" stop-color="#c98f63"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#f6f2ec"/>
+  <circle cx="960" cy="120" r="260" fill="#e3eaef"/>
+  <circle cx="220" cy="520" r="190" fill="#e9dccd"/>
+  <rect x="80" y="80" width="1040" height="470" rx="40" fill="#ffffff"/>
+  <rect x="120" y="120" width="76" height="76" rx="20" fill="url(#g1)"/>
+  <path d="M145 172v-48h20c12 0 20 7 20 18 0 7-4 12-9 15l10 15h-11l-8-12h-6v12h-16zm16-22h7c5 0 7-2 7-5s-2-6-7-6h-7v11z" fill="#fff"/>
+  <text x="220" y="171" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700" fill="#18222d">Rafiah</text>
+  <text x="120" y="320" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="700" fill="#243447">Finance analysis with calm, clear execution.</text>
+  <text x="120" y="390" font-family="Inter, Arial, sans-serif" font-size="28" fill="#5f6c78">Experience at Guardian and EY • Professional profile • Contact details included</text>
+</svg>

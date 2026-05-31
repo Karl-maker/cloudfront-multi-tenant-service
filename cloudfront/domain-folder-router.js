@@ -16,6 +16,7 @@ function handler(event) {
     "d1mp8fjhswh27j.cloudfront.net": { folder: "syncpoly", template: "pressure-washer" },
     "aurum-eco-power-wash.syncpoly.com": { folder: "aurum-eco-power-wash", template: "pressure-washer" },
     "atlantic-villa-tt.syncpoly.com": { folder: "atlantic-villa-tt", template: "real-estate" },
+    "rafiah.syncpoly.com": { folder: "rafiah", template: "real-estate" },
   };
 
   var site = sitesByHost[host];
@@ -39,9 +40,12 @@ function handler(event) {
     "/sitemap.xml": "/sitemap.xml",
     "/robot.txt": "/robot.txt",
     "/robots.txt": "/robots.txt",
-    "/public/favicon.ico": "/favicon.ico",
-    "/public/favicon.png": "/favicon.png",
-    "/public/favicon.svg": "/favicon.svg"
+    "/favicon.ico": "/media/favicon.ico",
+    "/favicon.png": "/media/favicon.png",
+    "/favicon.svg": "/media/favicon.svg",
+    "/public/favicon.ico": "/media/favicon.ico",
+    "/public/favicon.png": "/media/favicon.png",
+    "/public/favicon.svg": "/media/favicon.svg"
   };
   var mappedPublicPath = mappedPublicPaths[request.uri];
   if (mappedPublicPath) {

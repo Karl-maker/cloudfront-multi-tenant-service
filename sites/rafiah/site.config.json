@@ -1,0 +1,373 @@
+{
+  "$schema": "../../templates/next-static-config-template/content/site.schema.json",
+  "deployment": {
+    "basePath": "",
+    "assetPrefix": ""
+  },
+  "site": {
+    "name": "Rafiah",
+    "shortName": "Rafiah",
+    "url": "https://rafiah.syncpoly.com",
+    "locale": "en_US",
+    "description": "Rafiah is a finance analyst profile site for professional experience, reporting, and career contact.",
+    "updatedAt": "2026-05-31",
+    "keywords": ["finance analyst", "financial analysis", "EY", "Guardian", "professional profile", "portfolio"],
+    "author": {
+      "name": "Rafiah",
+      "url": "https://rafiah.syncpoly.com"
+    },
+    "social": {
+      "sameAs": [
+        "https://www.instagram.com/rawfyah?igsh=MXJrdW1vM3I3Mm82Yw=="
+      ]
+    },
+    "manifest": {
+      "display": "standalone",
+      "orientation": "portrait",
+      "backgroundColor": "#f6f2ec",
+      "themeColor": "#243447",
+      "icon": "/media/favicon.svg",
+      "categories": ["business", "productivity"]
+    },
+    "pwa": {
+      "enabled": true,
+      "serviceWorker": "/sw.js",
+      "offlinePath": "/offline/",
+      "cacheName": "rafiah-v1"
+    },
+    "llms": {
+      "summary": "Professional profile site for Rafiah, a finance analyst with experience at Guardian and EY.",
+      "notes": [
+        "Treat employer names as career history only; do not infer endorsements.",
+        "Use the contact phone and Instagram only as provided by the client.",
+        "Keep claims conservative and career-focused."
+      ]
+    }
+  },
+  "seo": {
+    "titleTemplate": "%s | Rafiah",
+    "defaultTitle": "Rafiah | Finance Analyst",
+    "defaultImage": "/media/og-default.svg",
+    "robots": {
+      "index": true,
+      "follow": true,
+      "allow": ["/"],
+      "disallow": []
+    },
+    "structuredData": {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Rafiah",
+      "jobTitle": "Finance Analyst",
+      "url": "https://rafiah.syncpoly.com",
+      "sameAs": [
+        "https://www.instagram.com/rawfyah?igsh=MXJrdW1vM3I3Mm82Yw=="
+      ]
+    }
+  },
+  "theme": {
+    "mode": "light",
+    "colors": {
+      "background": "#f6f2ec",
+      "surface": "#ffffff",
+      "surfaceAlt": "#e8eff5",
+      "text": "#18222d",
+      "muted": "#5f6c78",
+      "primary": "#243447",
+      "primaryContrast": "#ffffff",
+      "accent": "#c98f63",
+      "accentContrast": "#20160f",
+      "border": "#d7dee5"
+    },
+    "fonts": {
+      "heading": "Inter, ui-sans-serif, system-ui, sans-serif",
+      "body": "Inter, ui-sans-serif, system-ui, sans-serif"
+    },
+    "radius": "12px",
+    "maxWidth": "1120px",
+    "background": {
+      "type": "solid",
+      "value": "#f6f2ec"
+    },
+    "customCss": ""
+  },
+  "navigation": {
+    "logoText": "Rafiah",
+    "links": [
+      { "label": "Home", "href": "/" },
+      { "label": "Experience", "href": "/experience/" },
+      { "label": "About", "href": "/about/" },
+      { "label": "Contact", "href": "/contact/" }
+    ],
+    "cta": {
+      "label": "Contact Rafiah",
+      "href": "/contact/",
+      "style": "primary"
+    }
+  },
+  "blocks": {
+    "defaultFaq": {
+      "id": "faq",
+      "type": "faq",
+      "kicker": "FAQ",
+      "title": "Quick questions",
+      "items": [
+        {
+          "question": "What kind of roles does Rafiah focus on?",
+          "answer": "Finance analyst, reporting, and other structured roles where accuracy and clear communication matter."
+        },
+        {
+          "question": "What is the best way to reach her?",
+          "answer": "Use the phone number or Instagram profile listed on the contact page."
+        }
+      ]
+    },
+    "defaultContact": {
+      "id": "contact",
+      "type": "contact",
+      "title": "Contact Rafiah",
+      "body": "Reach out for professional inquiries, networking, or role opportunities.",
+      "methods": [
+        {
+          "label": "Phone",
+          "value": "+1 (868) 286-6807",
+          "href": "tel:+18682866807"
+        },
+        {
+          "label": "Instagram",
+          "value": "@rawfyah",
+          "href": "https://www.instagram.com/rawfyah?igsh=MXJrdW1vM3I3Mm82Yw=="
+        }
+      ],
+      "form": {
+        "enabled": false
+      }
+    }
+  },
+  "pages": [
+    {
+      "path": "/",
+      "title": "Home",
+      "layout": "landing",
+      "description": "Rafiah's professional finance analyst homepage.",
+      "seo": {
+        "title": "Rafiah | Finance Analyst",
+        "description": "A calm, professional profile site for Rafiah with experience highlights, career focus, and contact details.",
+        "image": "/media/og-default.svg"
+      },
+      "sections": [
+        {
+          "id": "hero",
+          "type": "hero",
+          "variant": "split",
+          "kicker": "Finance analyst",
+          "title": "Clear analysis for finance teams that need confident decisions.",
+          "body": "Rafiah brings a disciplined, stakeholder-friendly approach to reporting, analysis, and professional communication.",
+          "actions": [
+            { "label": "View experience", "href": "/experience/", "style": "primary" },
+            { "label": "Contact", "href": "/contact/", "style": "secondary" }
+          ],
+          "media": {
+            "src": "/media/hero.svg",
+            "alt": "Stylized portrait-style profile graphic for Rafiah"
+          }
+        },
+        {
+          "id": "focus",
+          "type": "featureGrid",
+          "kicker": "Focus areas",
+          "title": "What she brings to the table",
+          "columns": 3,
+          "items": [
+            {
+              "title": "Financial analysis",
+              "body": "Turning data into practical insights for finance and business teams."
+            },
+            {
+              "title": "Reporting",
+              "body": "Keeping monthly, quarterly, and stakeholder-facing reporting organized and clear."
+            },
+            {
+              "title": "Communication",
+              "body": "Explaining numbers in a way that supports decisions, not confusion."
+            }
+          ]
+        },
+        {
+          "id": "career-snapshot",
+          "type": "split",
+          "variant": "reverse",
+          "kicker": "Career snapshot",
+          "title": "Experience in structured, high-trust environments.",
+          "body": "Rafiah has worked with Guardian and EY, bringing experience from established organizations into a polished personal brand.",
+          "media": {
+            "src": "/media/hero.svg",
+            "alt": "Abstract finance profile illustration"
+          },
+          "actions": [
+            { "label": "See timeline", "href": "/experience/", "style": "primary" }
+          ]
+        },
+        { "use": "defaultFaq" },
+        { "use": "defaultContact" }
+      ]
+    },
+    {
+      "path": "/experience/",
+      "title": "Experience",
+      "layout": "content",
+      "description": "Rafiah's career timeline.",
+      "seo": {
+        "title": "Experience",
+        "description": "Career timeline and professional background for Rafiah.",
+        "image": "/media/og-default.svg"
+      },
+      "sections": [
+        {
+          "id": "experience-hero",
+          "type": "hero",
+          "variant": "centered",
+          "kicker": "Experience",
+          "title": "Built in finance environments where precision matters.",
+          "body": "A concise view of the organizations and experience that shaped Rafiah's professional path."
+        },
+        {
+          "id": "timeline",
+          "type": "timeline",
+          "kicker": "Career timeline",
+          "title": "Selected roles",
+          "items": [
+            {
+              "title": "EY",
+              "body": "Experience in a structured professional services environment, supporting analytical work and disciplined delivery."
+            },
+            {
+              "title": "Guardian",
+              "body": "Worked in a finance-focused organization with responsibility for reliable, detail-oriented work."
+            }
+          ]
+        },
+        {
+          "id": "experience-summary",
+          "type": "cardGrid",
+          "kicker": "Strengths",
+          "title": "The qualities that show up in the work",
+          "columns": 3,
+          "items": [
+            { "title": "Accuracy", "body": "Cares about the details that affect reports and decisions." },
+            { "title": "Composure", "body": "Works well in professional settings with many moving parts." },
+            { "title": "Clarity", "body": "Makes complex numbers easier for others to use." }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/about/",
+      "title": "About",
+      "layout": "content",
+      "description": "About Rafiah and her professional style.",
+      "seo": {
+        "title": "About",
+        "description": "Learn more about Rafiah's professional style and focus.",
+        "image": "/media/og-default.svg"
+      },
+      "sections": [
+        {
+          "id": "about-hero",
+          "type": "hero",
+          "variant": "centered",
+          "kicker": "About",
+          "title": "Professional, calm, and focused on useful outcomes.",
+          "body": "Rafiah's profile is built around trust, reliability, and clear presentation — the things finance teams actually need."
+        },
+        {
+          "id": "about-copy",
+          "type": "richText",
+          "kicker": "Working style",
+          "title": "How she approaches the work",
+          "content": [
+            "She keeps things practical and organized.",
+            "She communicates in a way that works for both technical and non-technical audiences.",
+            "She fits best in environments that value accuracy, professionalism, and follow-through."
+          ]
+        },
+        {
+          "id": "about-values",
+          "type": "featureGrid",
+          "kicker": "Values",
+          "title": "What matters in the role",
+          "columns": 3,
+          "items": [
+            { "title": "Trust", "body": "People should be able to rely on the numbers and the narrative." },
+            { "title": "Efficiency", "body": "Good analysis should move work forward, not slow it down." },
+            { "title": "Professionalism", "body": "Presentation matters when the audience is leadership or clients." }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/contact/",
+      "title": "Contact",
+      "layout": "content",
+      "description": "Contact details for Rafiah.",
+      "seo": {
+        "title": "Contact",
+        "description": "Reach Rafiah by phone or Instagram for professional inquiries.",
+        "image": "/media/og-default.svg"
+      },
+      "sections": [
+        {
+          "id": "contact-hero",
+          "type": "hero",
+          "variant": "centered",
+          "kicker": "Contact",
+          "title": "Reach out for opportunities, networking, or introductions.",
+          "body": "The fastest route is phone or Instagram."
+        },
+        { "use": "defaultContact" },
+        {
+          "id": "contact-cta",
+          "type": "cta",
+          "kicker": "Next step",
+          "title": "If you're a recruiter or hiring manager, start here.",
+          "body": "Use the contact details above to connect with Rafiah directly.",
+          "actions": [
+            { "label": "Call now", "href": "tel:+18682866807", "style": "primary" },
+            { "label": "Instagram", "href": "https://www.instagram.com/rawfyah?igsh=MXJrdW1vM3I3Mm82Yw==", "style": "secondary" }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/offline/",
+      "title": "Offline",
+      "layout": "content",
+      "description": "Offline fallback page.",
+      "sections": [
+        {
+          "id": "offline-message",
+          "type": "hero",
+          "variant": "centered",
+          "kicker": "Offline",
+          "title": "You are offline.",
+          "body": "Reconnect to view Rafiah's profile site."
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "tagline": "Rafiah's professional profile and finance analyst site.",
+    "socialLinks": [
+      {
+        "platform": "instagram",
+        "label": "Instagram",
+        "href": "https://www.instagram.com/rawfyah?igsh=MXJrdW1vM3I3Mm82Yw=="
+      }
+    ],
+    "links": [
+      { "label": "Sitemap", "href": "/sitemap.xml" },
+      { "label": "LLMs", "href": "/llms.txt" }
+    ],
+    "copyright": "(c) 2026 Rafiah."
+  }
+}
