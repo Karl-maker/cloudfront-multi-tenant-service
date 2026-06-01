@@ -13,7 +13,7 @@ const {
   writeSiteInput,
   writeSiteConfig
 } = require("../lib/site-config-builder");
-const { listThemes } = require("../lib/site-themes");
+const { listThemes, resolveThemeName } = require("../lib/site-themes");
 const { normalizeFolderName } = require("../lib/site-config-schema");
 const {
   MEDIA_EXTENSIONS,
@@ -272,17 +272,24 @@ async function makeSiteConfig(args) {
   const siteName = args.site || args.folder || args._[0];
   const siteDir = resolveMakeSiteDir(args, input);
   const output = path.resolve(args.out || args.file || args.config || path.join(siteDir, "site.config.json"));
+  const template = args.template || process.env.SITE_TEMPLATE;
+  const theme = resolveThemeName({
+    theme: args.theme || process.env.SITE_THEME,
+    inputTheme: input.themePreset || input.theme?.preset,
+    template
+  });
   const config = writeSiteConfig({
     input,
     output,
     site: siteName,
-    theme: args.theme || process.env.SITE_THEME,
+    theme,
+    template,
     updatedAt: args.updatedAt
   });
 
   console.log(`Wrote ${output}`);
   console.log(`Site folder: ${config.syncpoly.folder}`);
-  console.log(`Theme: ${args.theme || process.env.SITE_THEME || "luxury"}`);
+  console.log(`Theme: ${theme}`);
 }
 
 async function makeSeo(args) {
@@ -300,11 +307,18 @@ async function makeSite(args) {
   const siteName = args.site || args.folder || args._[0];
   const siteDir = resolveMakeSiteDir(args, input);
   const configPath = path.resolve(args.out || args.file || args.config || path.join(siteDir, "site.config.json"));
+  const template = args.template || process.env.SITE_TEMPLATE;
+  const theme = resolveThemeName({
+    theme: args.theme || process.env.SITE_THEME,
+    inputTheme: input.themePreset || input.theme?.preset,
+    template
+  });
   const config = writeSiteConfig({
     input,
     output: configPath,
     site: siteName,
-    theme: args.theme || process.env.SITE_THEME,
+    theme,
+    template,
     updatedAt: args.updatedAt
   });
   const files = writeSeoFiles({ config, siteDir });
@@ -314,7 +328,7 @@ async function makeSite(args) {
     console.log(`Wrote ${file}`);
   }
   console.log(`Site folder: ${config.syncpoly.folder}`);
-  console.log(`Theme: ${args.theme || process.env.SITE_THEME || "luxury"}`);
+  console.log(`Theme: ${theme}`);
 }
 
 function listAvailableThemes() {
@@ -403,8 +417,9 @@ function screenshotAudit(args) {
 async function publishSite(args) {
   const siteDir = resolvePublishSiteDir(args);
   const inputPath = args.input || path.join(siteDir, "site.input.json");
+  const template = args.template || "real-estate";
   if (fs.existsSync(path.resolve(inputPath))) {
-    await makeSite({ ...args, input: inputPath, dir: siteDir });
+    await makeSite({ ...args, input: inputPath, dir: siteDir, template });
   }
 
   const configPath = path.join(siteDir, "site.config.json");
@@ -421,7 +436,7 @@ async function publishSite(args) {
     router: args.router || path.join("cloudfront", "domain-folder-router.js"),
     host: args.host || `${folder}.syncpoly.com`,
     folder,
-    template: args.template || "real-estate"
+    template
   });
 
   execFileSync("npm", ["run", "build"], { stdio: "inherit" });
@@ -1368,8 +1383,8 @@ function parseEnvValue(rawValue) {
 function printHelp() {
   console.log(`Usage:
   syncpoly-site make-input --site example --name "Example Co" --industry "Villa rental" --phone "+1 555 0100" --booking-url "https://example.com/book" --whatsapp "+1 555 0100" --pricing "Consultation:Free:Quick scope call|Standard:From $199:Most service visits" --map "Port of Spain, Trinidad"
-  syncpoly-site make-site --input ./sites/example/site.input.json --site example --theme luxury
-  syncpoly-site make-siteconfig --input ./sites/example/site.input.json --site example --theme luxury
+  syncpoly-site make-site --input ./sites/example/site.input.json --site example --template service [--theme service]
+  syncpoly-site make-siteconfig --input ./sites/example/site.input.json --site example --template real-estate [--theme real-estate]
   syncpoly-site make-seo --site ./sites/example
   syncpoly-site media-manifest --site ./sites/example
   syncpoly-site audit-site --site ./sites/example
@@ -1393,7 +1408,8 @@ function printHelp() {
 Environment:
   ENV_FILE                           Optional env file path. Defaults to .env in the current directory.
   SITE_INPUT                         Optional input JSON for make-site/make-siteconfig.
-  SITE_THEME                         Theme preset for make-site/make-siteconfig. Defaults to luxury.
+  SITE_THEME                         Explicit theme preset for make-site/make-siteconfig. Overrides template defaults.
+  SITE_TEMPLATE                      Template name used to pick the default theme preset. service -> service, real-estate -> real-estate.
   Service input flags                make-input/make-siteconfig support --booking-url, --booking-label, --whatsapp, --pricing, and --map.
                                       Pricing format: "Title:Price:Body:Feature one,Feature two|Next:From $99:Details".
   CONTENT_BUCKET or S3_BUCKET        Target S3 bucket. Defaults to syncpoly-web-builder-sites.

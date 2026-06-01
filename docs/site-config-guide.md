@@ -239,11 +239,11 @@ npm run site:make-input -- \
 npm run site:make -- \
   --input ./sites/aurum-eco-power-wash/site.input.json \
   --site aurum-eco-power-wash \
-  --theme luxury
+  --template service
 npm run site:audit -- --site ./sites/aurum-eco-power-wash
 ```
 
-The built-in `luxury` theme name now maps to the approved modern service style: clean sans typography, blue/teal action colors, sticky header, rounded cards, concise hero, and direct booking CTAs. The service template owns the polished gallery, pricing, booking button, WhatsApp click-to-chat, Google Maps, and contact layouts. The AI should usually edit only `site.input.json`; the CLI owns section structure, `theme.colors`, `theme.fonts`, `theme.customCss`, `robots.txt`, `sitemap.xml`, and `llms.txt`.
+The CLI selects a default theme preset from the target template: `--template service` uses the modern service preset, while `--template real-estate` uses the property-focused real-estate preset. Pass `--theme` only when intentionally overriding that template default. The service template owns the polished gallery, pricing, booking button, WhatsApp click-to-chat, Google Maps, and contact layouts. The AI should usually edit only `site.input.json`; the CLI owns section structure, `theme.colors`, `theme.fonts`, `theme.customCss`, `robots.txt`, `sitemap.xml`, and `llms.txt`.
 
 Minimal `site.input.json`:
 

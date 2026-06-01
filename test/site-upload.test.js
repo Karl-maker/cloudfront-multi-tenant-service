@@ -15,7 +15,7 @@ const {
   buildSeoFiles,
   buildSiteConfig
 } = require("../lib/site-config-builder");
-const { listThemes } = require("../lib/site-themes");
+const { listThemes, resolveThemeName } = require("../lib/site-themes");
 const {
   minifySvg,
   parseArgs,
@@ -128,9 +128,94 @@ describe("site config schema", () => {
     assert.equal(config.seo.defaultImage, "/media/harbor-house.jpg");
     assert.equal(config.pages[0].sections[0].actions[0].href, "https://example.com/book");
     assert.equal(config.pages[0].sections[0].actions[1].href, "https://wa.me/18685550100");
+    assert(config.footer.socialLinks.some((link) => link.platform === "whatsapp" && link.href === "https://wa.me/18685550100"));
+    assert(config.footer.socialLinks.some((link) => link.platform === "phone" && link.href === "tel:+18685550100"));
     assert(config.pages[0].sections.some((section) => section.type === "mediaGallery"));
     assert(config.pages[0].sections.some((section) => section.type === "pricing"));
     assert(config.pages[0].sections.some((section) => section.type === "map"));
+  });
+
+  it("omits pricing navigation when pricing is not configured", () => {
+    const config = buildSiteConfig({
+      site: {
+        name: "Clean Cuts",
+        description: "Local barber services."
+      },
+      contact: {
+        whatsapp: "+1 (868) 555-0100"
+      },
+      media: {
+        hero: "/media/hero.jpg"
+      },
+      services: [
+        {
+          title: "Fades",
+          body: "Sharp fades and clean lineups."
+        }
+      ]
+    }, { site: "clean-cuts", theme: "luxury", updatedAt: "2026-05-31" });
+
+    assert(!config.navigation.links.some((link) => link.href === "#pricing"));
+    assert(!config.footer.links.some((link) => link.href === "#pricing"));
+    assert(!config.pages[0].sections.some((section) => section.type === "pricing"));
+  });
+
+  it("merges per-site theme overrides into the generated config", () => {
+    const config = buildSiteConfig({
+      site: {
+        name: "Night Cut",
+        description: "Dark barber website."
+      },
+      theme: {
+        mode: "dark",
+        colors: {
+          background: "#08090c",
+          surface: "#15171d",
+          text: "#f8fafc",
+          primary: "#d4af37"
+        }
+      },
+      media: {
+        hero: "/media/hero.jpg"
+      }
+    }, { site: "night-cut", theme: "luxury", updatedAt: "2026-05-31" });
+
+    assert.equal(config.theme.mode, "dark");
+    assert.equal(config.theme.colors.background, "#08090c");
+    assert.equal(config.theme.colors.surface, "#15171d");
+    assert.equal(config.theme.colors.text, "#f8fafc");
+    assert.equal(config.theme.colors.primary, "#d4af37");
+    assert.equal(config.site.manifest.backgroundColor, "#08090c");
+    assert.equal(config.site.manifest.themeColor, "#d4af37");
+  });
+
+  it("selects a default theme preset from the template", () => {
+    const baseInput = {
+      site: {
+        name: "Template Match",
+        description: "Template-specific theme selection."
+      },
+      media: {
+        hero: "/media/hero.jpg"
+      }
+    };
+    const serviceConfig = buildSiteConfig(baseInput, {
+      site: "template-match-service",
+      template: "service",
+      updatedAt: "2026-05-31"
+    });
+    const realEstateConfig = buildSiteConfig(baseInput, {
+      site: "template-match-real-estate",
+      template: "real-estate",
+      updatedAt: "2026-05-31"
+    });
+
+    assert.equal(resolveThemeName({ template: "service" }), "service");
+    assert.equal(resolveThemeName({ template: "real-estate" }), "real-estate");
+    assert.equal(resolveThemeName({ theme: "luxury", template: "real-estate" }), "luxury");
+    assert.equal(serviceConfig.theme.colors.primary, "#2563eb");
+    assert.equal(realEstateConfig.theme.colors.primary, "#0f766e");
+    assert.equal(realEstateConfig.theme.fonts.heading, "Playfair Display, Georgia, serif");
   });
 
   it("builds deterministic SEO files from a site config", () => {
@@ -150,7 +235,9 @@ describe("site config schema", () => {
     assert.match(files["llms.txt"], /Harbor House is represented by https:\/\/harbor-house\.syncpoly\.com/);
   });
 
-  it("lists the built-in luxury theme", () => {
+  it("lists the built-in template theme presets", () => {
+    assert(listThemes().some((theme) => theme.name === "service"));
+    assert(listThemes().some((theme) => theme.name === "real-estate"));
     assert(listThemes().some((theme) => theme.name === "luxury"));
   });
 });
@@ -404,6 +491,50 @@ describe("site upload helpers", () => {
     const generatedConfig = JSON.parse(fs.readFileSync(path.join(siteDir, "site.config.json"), "utf8"));
     assert(generatedConfig.pages[0].sections.some((section) => section.type === "pricing"));
     assert(generatedConfig.pages[0].sections.some((section) => section.type === "map"));
+  });
+
+  it("lets the CLI choose a theme preset from --template", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-template-theme-test-"));
+    const inputPath = path.join(dir, "site.input.json");
+    const siteDir = path.join(dir, "sites", "harbor-house");
+    fs.mkdirSync(path.dirname(inputPath), { recursive: true });
+    fs.writeFileSync(inputPath, JSON.stringify({
+      site: {
+        name: "Harbor House",
+        description: "Private waterfront stays."
+      },
+      media: {
+        hero: "/media/hero.jpg"
+      }
+    }));
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "make-site",
+        "--input",
+        inputPath,
+        "--site",
+        "harbor-house",
+        "--dir",
+        siteDir,
+        "--template",
+        "real-estate",
+        "--updated-at",
+        "2026-05-31"
+      ],
+      {
+        env: {
+          PATH: process.env.PATH
+        },
+        encoding: "utf8"
+      }
+    );
+    const generatedConfig = JSON.parse(fs.readFileSync(path.join(siteDir, "site.config.json"), "utf8"));
+
+    assert.match(output, /Theme: real-estate/);
+    assert.equal(generatedConfig.theme.colors.primary, "#0f766e");
   });
 
   it("creates normalized site input and reports a media manifest", () => {

@@ -187,10 +187,10 @@ Then edit only the factual text fields in `site.input.json`: copy, services, pri
 Generate or refresh config and SEO files with the CLI:
 
 ```bash
-syncpoly-site make-site --input ./sites/<unique-name>/site.input.json --site <unique-name> --theme luxury
+syncpoly-site make-site --input ./sites/<unique-name>/site.input.json --site <unique-name> --template service
 ```
 
-This command applies the approved modern service theme from the CLI, writes `site.config.json`, and writes basic SEO files:
+This command applies the template-matched preset from the CLI, writes `site.config.json`, and writes basic SEO files:
 
 - `robots.txt` with sitemap URL
 - `sitemap.xml` for known pages
@@ -321,7 +321,7 @@ Use `--skip-upload` or `--skip-dns` only when credentials or the target value ar
 Create `sites/<unique-name>/site.input.json`, then use the CLI to create `site.config.json` and supporting files. The config must pass:
 
 ```bash
-syncpoly-site make-site --input ./sites/<unique-name>/site.input.json --site <unique-name> --theme luxury
+syncpoly-site make-site --input ./sites/<unique-name>/site.input.json --site <unique-name> --template service
 ```
 
 Then validate:
@@ -397,10 +397,10 @@ Use the CLI theme preset by default. The current approved preset is:
 
 ```bash
 syncpoly-site list-themes
-syncpoly-site make-site --input ./sites/<unique-name>/site.input.json --site <unique-name> --theme luxury
+syncpoly-site make-site --input ./sites/<unique-name>/site.input.json --site <unique-name> --template service
 ```
 
-The `luxury` preset name now maps to the approved modern service style: clean sans typography, blue/teal action colors, sticky header, rounded service/pricing cards, concise hero, and direct booking CTAs. Do not ask the AI to invent CSS for each site. Put only content decisions in `site.input.json`: headline, body copy, services, stats, FAQs, contact methods, gallery media, hero media, SEO title/description, and notes for `llms.txt`.
+The CLI selects a default preset from the target template: `service` gets the approved modern service style, and `real-estate` gets the property-focused preset. Pass `--theme` only when intentionally overriding that template default. Do not ask the AI to invent CSS for each site. Put only content decisions in `site.input.json`: headline, body copy, services, stats, FAQs, contact methods, gallery media, hero media, SEO title/description, and notes for `llms.txt`.
 
 Choose copy, section content, and proof points from the client's industry and buyer psychology.
 
