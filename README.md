@@ -182,6 +182,19 @@ The real `.env` file is not mounted into the OpenClaw workspace. Docker Compose 
 
 The model defaults are cost-aware: the primary site-building model is `openai/gpt-5.4-mini`, heartbeat work uses `openai/gpt-5.4-nano`, and higher-cost models are not the default.
 
+WhatsApp site-building intake is configured as a one-at-a-time queue. `./bin/start-clawbot.sh` writes these defaults into `.env` and `bin/configure-openclaw.js` applies them to `openclaw-data/config/openclaw.json` at startup:
+
+```text
+OPENCLAW_MAX_CONCURRENT=1
+OPENCLAW_QUEUE_MODE=followup
+OPENCLAW_WHATSAPP_QUEUE_MODE=followup
+OPENCLAW_QUEUE_DEBOUNCE_MS=1000
+OPENCLAW_QUEUE_CAP=100
+OPENCLAW_QUEUE_DROP=summarize
+```
+
+OpenClaw's default queue mode is `steer`, which can inject new WhatsApp messages into an active agent run. For Syncpoly website batches, `followup` is intentional: each new WhatsApp message waits until the current build turn finishes, then the site skill processes the next request in order. A single WhatsApp message can still contain several website requests; the skill treats those as an ordered batch and completes one full site workflow, screenshot QA, and outreach step before moving to the next item.
+
 Check the Compose setup without starting it:
 
 ```bash

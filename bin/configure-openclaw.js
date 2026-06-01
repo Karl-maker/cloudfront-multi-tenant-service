@@ -6,6 +6,11 @@ const fs = require("node:fs");
 const port = process.argv[2];
 const configPath = "openclaw-data/config/openclaw.json";
 
+function positiveInteger(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 if (!fs.existsSync(configPath)) {
   process.exit(0);
 }
@@ -34,6 +39,7 @@ config.agents.defaults.model = config.agents.defaults.model || {};
 config.agents.defaults.model.primary = process.env.OPENCLAW_MODEL_OPENAI || "openai/gpt-5.5";
 config.agents.defaults.model.fallbacks = config.agents.defaults.model.fallbacks || [];
 config.agents.defaults.timeoutSeconds = 300;
+config.agents.defaults.maxConcurrent = positiveInteger(process.env.OPENCLAW_MAX_CONCURRENT, 1);
 config.agents.defaults.compaction = config.agents.defaults.compaction || {};
 config.agents.defaults.compaction.model = process.env.OPENCLAW_COMPACTION_MODEL || "openai/gpt-5.5";
 config.agents.defaults.compaction.memoryFlush = config.agents.defaults.compaction.memoryFlush || {};
@@ -42,6 +48,15 @@ config.agents.defaults.compaction.timeoutSeconds = 300;
 config.agents.defaults.heartbeat = config.agents.defaults.heartbeat || {};
 config.agents.defaults.heartbeat.model = process.env.OPENCLAW_HEARTBEAT_MODEL || "openai/gpt-5.5";
 config.agents.defaults.heartbeat.timeoutSeconds = 300;
+
+config.messages = config.messages || {};
+config.messages.queue = config.messages.queue || {};
+config.messages.queue.mode = process.env.OPENCLAW_QUEUE_MODE || "followup";
+config.messages.queue.debounceMs = positiveInteger(process.env.OPENCLAW_QUEUE_DEBOUNCE_MS, 1000);
+config.messages.queue.cap = positiveInteger(process.env.OPENCLAW_QUEUE_CAP, 100);
+config.messages.queue.drop = process.env.OPENCLAW_QUEUE_DROP || "summarize";
+config.messages.queue.byChannel = config.messages.queue.byChannel || {};
+config.messages.queue.byChannel.whatsapp = process.env.OPENCLAW_WHATSAPP_QUEUE_MODE || "followup";
 
 config.channels = config.channels || {};
 config.channels.whatsapp = config.channels.whatsapp || {};

@@ -13,6 +13,25 @@ This is a CLI-first, proof-gated workflow. Do not merely describe work. In a too
 
 When the operator asks to build, make, launch, or finish a client website, treat that as a request for the full end-to-end workflow by default. Do not stop after creating local files. Continue through intake, site config, SEO files, `llms.txt`, media placement, validation, S3 uploads, CloudFront host mapping, build/test, GoDaddy CNAME, localhost screenshots, and WhatsApp outreach with screenshots. Pause only when a gate is blocked by missing required input, missing credentials, validation failure, test failure, DNS failure, upload failure, or an unavailable sender.
 
+## WhatsApp Batch Queue Behavior
+
+The Syncpoly OpenClaw gateway is configured for site-building queue mode: WhatsApp messages use `followup`, and `agents.defaults.maxConcurrent` is `1`. This means new WhatsApp messages wait for the active build turn instead of steering into it. Do not tell the operator to stop sending items while a build is active.
+
+When a WhatsApp message contains a long list of website requests, treat each distinct business/client/site as an ordered queue item. Process exactly one item at a time in the order provided. Complete the full workflow for the current item, including local screenshots and WhatsApp outreach with screenshots when a destination is available, before starting the next item.
+
+If the operator sends extra details while a build is running, OpenClaw should deliver them as a later follow-up turn. At the start of each turn, first decide whether the new message adds details to the active or next queued site, or introduces another site to append to the queue. If a previous item stopped at a proof gate, resume that item before starting newer queued items unless the operator explicitly reprioritizes.
+
+For a batch list, keep a short working queue note in the final report and in local working notes when useful:
+
+```text
+queued: <site/client>
+active: <site/client>
+done: <site/client>
+blocked: <site/client> - <exact gate>
+```
+
+Do not combine multiple clients into one site, do not skip ahead to easier items, and do not send outreach for a queued item until that specific item's screenshots exist and were checked.
+
 Default full-build checklist:
 
 1. Get or infer the unique site name, client/business name, industry, location/service area, offer, contact details, images, and outreach destination.
