@@ -99,20 +99,35 @@ npm test
 Site upload CLI:
 
 ```bash
+npm run site:make-input -- --site example --name "Example Co" --industry "Villa rental" --phone "+1 555 0100" --booking-url "https://example.com/book" --whatsapp "+1 555 0100" --pricing "Consultation:Free:Quick scope call|Standard:From $199:Most service visits" --map "Port of Spain, Trinidad"
+npm run site:media-manifest -- --site ./sites/example
+npm run site:make -- --input ./sites/example/site.input.json --site example --theme luxury
+npm run site:make-config -- --input ./sites/example/site.input.json --site example --theme luxury
+npm run site:make-seo -- --site ./sites/example
+npm run site:audit -- --site ./sites/example
+npm run site:add-route -- --site example --template real-estate
+npm run site:launch-check -- --site ./sites/example --run-checks
+npm run site:upload-template -- --template-name service --source /Users/family/Documents/syncpoly-ou/web-builder-templates/next-static-config-template/out --profile prod
 npm run site:validate-config -- --file ./sites/example/site.config.json
 npm run site:upload-config -- --file ./sites/example/site.config.json
 npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json
 npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json --max-width 1600 --quality 72
 npm run site:upload-seo -- --source ./sites/example --config ./sites/example/site.config.json
 npm run site -- preview --site ./sites/example --template /Users/family/Documents/syncpoly-ou/web-builder-templates/next-static-config-template --port 4173
+npm run site:screenshot -- --site ./sites/example --url http://127.0.0.1:4173/ --out ./sites/example/screenshots
+npm run site:screenshot-audit -- --site ./sites/example
+npm run site:make-outreach -- --site ./sites/example --benefit findability
+npm run site:publish -- --site ./sites/example --template real-estate --skip-upload --skip-dns
 npm run godaddy:add-cname -- --domain syncpoly.com --name example --value d111111abcdef8.cloudfront.net
 ```
+
+Use `site:make-input`, `site:media-manifest`, and `site:make` to turn lightweight business facts and tenant media into `site.input.json`, `site.config.json`, `robots.txt`, `sitemap.xml`, and `llms.txt`. The service template now owns the modern layout for hero, gallery, service cards, pricing, booking CTAs, WhatsApp click-to-chat, Google Maps, contact, and SEO support. The built-in `luxury` theme name now maps to the approved modern service style, so AI agents should focus on text, contact details, media paths, services, prices, FAQs, booking links, and service areas instead of writing CSS or SEO files by hand. `site:audit`, `site:add-route`, `site:launch-check`, `site:screenshot-audit`, `site:make-outreach`, and `site:publish` cover the proof gates that agents used to perform manually.
 
 `upload-media` optimizes media before uploading to S3. JPG/PNG/WebP/AVIF files are resized to fit within `1920x1920`, compressed for web delivery, and JPG/PNG/AVIF files also get a generated `.webp` sibling by default. Use `--no-webp` or `SITE_MEDIA_WEBP=0` to disable WebP variants.
 
 Put every tenant-owned image in `sites/<name>/media`, including logos, favicons, OG/social images, hero photos, and gallery images. `upload-folder` rejects image files unless the target prefix is `media`; use `upload-media` for images so compression and WebP generation stay consistent.
 
-Use `syncpoly-site preview` for QA screenshots. It overlays a generated site folder onto the template export and serves it on localhost, so outreach screenshots come from `http://127.0.0.1:<port>/` instead of the public domain.
+Use `syncpoly-site preview` and `syncpoly-site screenshot` for QA screenshots. Preview overlays a generated site folder onto the template export and serves it on localhost, so outreach screenshots come from `http://127.0.0.1:<port>/` instead of the public domain.
 
 Upload the global 404 page after the content bucket exists:
 

@@ -211,13 +211,93 @@ Expected local folder:
 ```text
 sites/
   aurum-eco-power-wash/
+    site.input.json
     site.config.json
     robots.txt
     sitemap.xml
+    llms.txt
     media/
       logo.png
       favicon.svg
       og-default.jpg
+```
+
+Generate input, config, and SEO files from lightweight content:
+
+```bash
+npm run site:media-manifest -- --site ./sites/aurum-eco-power-wash --text
+npm run site:make-input -- \
+  --site aurum-eco-power-wash \
+  --name "Aurum Eco Power Wash" \
+  --industry "Exterior cleaning" \
+  --phone "+1 555 0100" \
+  --booking-url "https://example.com/book" \
+  --whatsapp "+1 555 0100" \
+  --pricing "Driveway Refresh:From $99:Driveways and walkways|Full Exterior:From $249:Siding, patios, and entry areas" \
+  --map "Port of Spain, Trinidad" \
+  --media-source ./sites/aurum-eco-power-wash/media
+npm run site:make -- \
+  --input ./sites/aurum-eco-power-wash/site.input.json \
+  --site aurum-eco-power-wash \
+  --theme luxury
+npm run site:audit -- --site ./sites/aurum-eco-power-wash
+```
+
+The built-in `luxury` theme name now maps to the approved modern service style: clean sans typography, blue/teal action colors, sticky header, rounded cards, concise hero, and direct booking CTAs. The service template owns the polished gallery, pricing, booking button, WhatsApp click-to-chat, Google Maps, and contact layouts. The AI should usually edit only `site.input.json`; the CLI owns section structure, `theme.colors`, `theme.fonts`, `theme.customCss`, `robots.txt`, `sitemap.xml`, and `llms.txt`.
+
+Minimal `site.input.json`:
+
+```json
+{
+  "site": {
+    "name": "Aurum Eco Power Wash",
+    "description": "Professional exterior cleaning and pressure washing."
+  },
+  "business": {
+    "industry": "Exterior cleaning"
+  },
+  "contact": {
+    "phone": "+1 555 0100",
+    "whatsapp": "+1 555 0100"
+  },
+  "booking": {
+    "label": "Book now",
+    "href": "https://example.com/book"
+  },
+  "media": {
+    "hero": "/media/hero-pressure-washing.jpg",
+    "logo": "/media/logo.png",
+    "favicon": "/media/favicon.svg",
+    "gallery": [
+      {
+        "src": "/media/hero-pressure-washing.jpg",
+        "alt": "Freshly cleaned driveway"
+      }
+    ]
+  },
+  "copy": {
+    "headline": "Eco-conscious pressure washing that restores curb appeal.",
+    "subheadline": "Driveways, patios, siding, decks, and storefronts."
+  },
+  "services": [
+    {
+      "title": "Driveway Cleaning",
+      "body": "Remove stains, buildup, and weathering from concrete and pavers."
+    }
+  ],
+  "pricing": [
+    {
+      "title": "Driveway Refresh",
+      "price": "From $99",
+      "body": "A focused clean for driveways and walkways.",
+      "features": ["Pre-rinse", "Surface clean", "Final rinse"]
+    }
+  ],
+  "map": {
+    "query": "Port of Spain, Trinidad",
+    "label": "Open in Google Maps"
+  }
+}
 ```
 
 Validate and upload config:
@@ -270,6 +350,45 @@ sitemap.xml
 robot.txt
 robots.txt
 ```
+
+If `site.config.json` already exists and only SEO files need to be refreshed, run:
+
+```bash
+npm run site:make-seo -- --site ./sites/aurum-eco-power-wash
+```
+
+Add the CloudFront route and run local proof checks:
+
+```bash
+npm run site:add-route -- --site aurum-eco-power-wash --template real-estate
+npm run site:launch-check -- --site ./sites/aurum-eco-power-wash --run-checks
+```
+
+Capture localhost QA screenshots after starting preview:
+
+```bash
+npm run site:screenshot -- \
+  --site ./sites/aurum-eco-power-wash \
+  --url http://127.0.0.1:4173/ \
+  --out ./sites/aurum-eco-power-wash/screenshots
+npm run site:screenshot-audit -- --site ./sites/aurum-eco-power-wash
+```
+
+This writes `desktop.png` and `mobile.png` using Playwright when available, with an `npx playwright screenshot` fallback.
+
+Generate outreach text from the same site input:
+
+```bash
+npm run site:make-outreach -- --site ./sites/aurum-eco-power-wash --benefit services
+```
+
+For a supervised end-to-end gate, run:
+
+```bash
+npm run site:publish -- --site ./sites/aurum-eco-power-wash --template real-estate
+```
+
+Use `--skip-upload` or `--skip-dns` only when the current environment cannot perform those steps.
 
 After changing config or media, invalidate the public paths:
 

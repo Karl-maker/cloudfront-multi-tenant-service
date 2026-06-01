@@ -12,6 +12,11 @@ const {
   validateSiteConfig
 } = require("../lib/site-config-schema");
 const {
+  buildSeoFiles,
+  buildSiteConfig
+} = require("../lib/site-config-builder");
+const { listThemes } = require("../lib/site-themes");
+const {
   minifySvg,
   parseArgs,
   parseMediaCompressionOptions,
@@ -65,6 +70,88 @@ describe("site config schema", () => {
       deriveFolderFromConfig({ site: { url: "https://aurum-eco-power-wash.syncpoly.com" } }),
       "aurum-eco-power-wash"
     );
+  });
+
+  it("builds a themed site config from lightweight content input", () => {
+    const config = buildSiteConfig({
+      site: {
+        name: "Harbor House",
+        description: "Private waterfront stays with polished guest service.",
+        keywords: ["luxury villa", "waterfront rental"]
+      },
+      business: {
+        industry: "Luxury villa rental"
+      },
+      contact: {
+        phone: "+1 (868) 555-0100",
+        whatsapp: "+1 (868) 555-0100"
+      },
+      booking: {
+        href: "https://example.com/book",
+        label: "Book a stay"
+      },
+      media: {
+        hero: "/media/harbor-house.jpg",
+        logo: "/media/logo.svg",
+        gallery: [
+          { src: "/media/harbor-house.jpg", alt: "Harbor House exterior" },
+          { src: "/media/pool.jpg", alt: "Pool view" }
+        ]
+      },
+      copy: {
+        headline: "Waterfront stays with a private, polished feel."
+      },
+      services: [
+        {
+          title: "Private stays",
+          body: "A calm base for groups that want privacy and comfort."
+        }
+      ],
+      pricing: [
+        {
+          title: "Weekend stay",
+          price: "From $300",
+          features: ["Pool access", "Private rooms"]
+        }
+      ],
+      map: {
+        query: "Bacolet Tobago"
+      }
+    }, { site: "harbor-house", theme: "luxury", updatedAt: "2026-05-31" });
+
+    assert.deepEqual(validateSiteConfig(config), []);
+    assert.equal(config.syncpoly.folder, "harbor-house");
+    assert.equal(config.theme.colors.primary, "#2563eb");
+    assert.match(config.theme.customCss, /site-header/);
+    assert.match(config.theme.customCss, /\.contact-method\{padding:18px 20px/);
+    assert.match(config.theme.customCss, /\.map-layout\{padding:28px/);
+    assert.equal(config.seo.defaultImage, "/media/harbor-house.jpg");
+    assert.equal(config.pages[0].sections[0].actions[0].href, "https://example.com/book");
+    assert.equal(config.pages[0].sections[0].actions[1].href, "https://wa.me/18685550100");
+    assert(config.pages[0].sections.some((section) => section.type === "mediaGallery"));
+    assert(config.pages[0].sections.some((section) => section.type === "pricing"));
+    assert(config.pages[0].sections.some((section) => section.type === "map"));
+  });
+
+  it("builds deterministic SEO files from a site config", () => {
+    const config = buildSiteConfig({
+      site: {
+        name: "Harbor House",
+        description: "Private waterfront stays."
+      },
+      media: {
+        hero: "/media/hero.jpg"
+      }
+    }, { site: "harbor-house", updatedAt: "2026-05-31" });
+    const files = buildSeoFiles(config);
+
+    assert.match(files["robots.txt"], /Sitemap: https:\/\/harbor-house\.syncpoly\.com\/sitemap\.xml/);
+    assert.match(files["sitemap.xml"], /<loc>https:\/\/harbor-house\.syncpoly\.com\/<\/loc>/);
+    assert.match(files["llms.txt"], /Harbor House is represented by https:\/\/harbor-house\.syncpoly\.com/);
+  });
+
+  it("lists the built-in luxury theme", () => {
+    assert(listThemes().some((theme) => theme.name === "luxury"));
   });
 });
 
@@ -253,6 +340,268 @@ describe("site upload helpers", () => {
     assert(fs.existsSync(path.join(previewDir, "out", "site.config.json")));
     assert(fs.existsSync(path.join(previewDir, "out", "robots.txt")));
     assert(fs.existsSync(path.join(previewDir, "out", "media", "logo.svg")));
+  });
+
+  it("creates site config and SEO files through the CLI", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-make-site-test-"));
+    const inputPath = path.join(dir, "site.input.json");
+    const siteDir = path.join(dir, "sites", "harbor-house");
+    fs.mkdirSync(path.dirname(inputPath), { recursive: true });
+    fs.writeFileSync(inputPath, JSON.stringify({
+      site: {
+        name: "Harbor House",
+        description: "Private waterfront stays."
+      },
+      media: {
+        hero: "/media/hero.jpg"
+      },
+      services: [
+        {
+          title: "Guest-ready presentation",
+          body: "Clear details for people comparing premium stays."
+        }
+      ],
+      pricing: [
+        {
+          title: "Starter",
+          price: "From $99",
+          body: "A simple entry package."
+        }
+      ],
+      map: {
+        query: "Port of Spain Trinidad"
+      }
+    }));
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "make-site",
+        "--input",
+        inputPath,
+        "--site",
+        "harbor-house",
+        "--dir",
+        siteDir,
+        "--updated-at",
+        "2026-05-31"
+      ],
+      {
+        env: {
+          PATH: process.env.PATH
+        },
+        encoding: "utf8"
+      }
+    );
+
+    assert.match(output, /Theme: luxury/);
+    assert(fs.existsSync(path.join(siteDir, "site.config.json")));
+    assert(fs.existsSync(path.join(siteDir, "robots.txt")));
+    assert(fs.existsSync(path.join(siteDir, "sitemap.xml")));
+    assert(fs.existsSync(path.join(siteDir, "llms.txt")));
+    assert.deepEqual(validateSiteConfig(JSON.parse(fs.readFileSync(path.join(siteDir, "site.config.json"), "utf8"))), []);
+    const generatedConfig = JSON.parse(fs.readFileSync(path.join(siteDir, "site.config.json"), "utf8"));
+    assert(generatedConfig.pages[0].sections.some((section) => section.type === "pricing"));
+    assert(generatedConfig.pages[0].sections.some((section) => section.type === "map"));
+  });
+
+  it("creates normalized site input and reports a media manifest", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-input-test-"));
+    const mediaDir = path.join(dir, "sites", "harbor-house", "media");
+    fs.mkdirSync(mediaDir, { recursive: true });
+    fs.writeFileSync(path.join(mediaDir, "hero-pool.jpg"), "jpg");
+    fs.writeFileSync(path.join(mediaDir, "logo.svg"), "<svg></svg>");
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "make-input",
+        "--site",
+        "harbor-house",
+        "--name",
+        "Harbor House",
+        "--industry",
+        "Luxury villa rental",
+        "--phone",
+        "+1 (868) 555-0100",
+        "--booking-url",
+        "https://example.com/book",
+        "--whatsapp",
+        "+1 (868) 555-0100",
+        "--pricing",
+        "Weekday Stay:From $299:Monday to Thursday:Pool access,Concierge|Weekend Stay:From $499:Friday to Sunday",
+        "--map",
+        "Port of Spain, Trinidad",
+        "--dir",
+        path.join(dir, "sites", "harbor-house"),
+        "--media-source",
+        mediaDir
+      ],
+      {
+        cwd: dir,
+        env: {
+          PATH: process.env.PATH
+        },
+        encoding: "utf8"
+      }
+    );
+    const input = JSON.parse(fs.readFileSync(path.join(dir, "sites", "harbor-house", "site.input.json"), "utf8"));
+    const manifest = execFileSync(
+      process.execPath,
+      [path.join(__dirname, "../bin/syncpoly-site.js"), "media-manifest", "--source", mediaDir],
+      { cwd: dir, env: { PATH: process.env.PATH }, encoding: "utf8" }
+    );
+
+    assert.match(output, /Wrote/);
+    assert.equal(input.site.name, "Harbor House");
+    assert.equal(input.media.hero, "/media/hero-pool.jpg");
+    assert.equal(input.booking.href, "https://example.com/book");
+    assert.equal(input.contact.whatsapp, "+1 (868) 555-0100");
+    assert.equal(input.pricing[0].price, "From $299");
+    assert.deepEqual(input.pricing[0].features, ["Pool access", "Concierge"]);
+    assert.equal(input.map.query, "Port of Spain, Trinidad");
+    assert.match(manifest, /hero-pool\.jpg/);
+  });
+
+  it("audits a generated site and creates a route entry", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-audit-route-test-"));
+    const siteDir = path.join(dir, "sites", "harbor-house");
+    const mediaDir = path.join(siteDir, "media");
+    const routerPath = path.join(dir, "domain-folder-router.js");
+    fs.mkdirSync(mediaDir, { recursive: true });
+    fs.writeFileSync(path.join(mediaDir, "hero.jpg"), "jpg");
+    fs.writeFileSync(path.join(mediaDir, "favicon.svg"), "<svg></svg>");
+    fs.writeFileSync(path.join(siteDir, "site.input.json"), JSON.stringify({
+      site: {
+        name: "Harbor House",
+        description: "Private waterfront stays."
+      },
+      media: {
+        hero: "/media/hero.jpg",
+        favicon: "/media/favicon.svg"
+      },
+      services: [
+        {
+          title: "Private stays",
+          body: "A calm base for groups that want privacy and comfort."
+        }
+      ]
+    }));
+    fs.writeFileSync(routerPath, [
+      "function handler(event) {",
+      "  var sitesByHost = {",
+      "    // real",
+      "  };",
+      "  return sitesByHost;",
+      "}"
+    ].join("\n"));
+
+    execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "make-site",
+        "--input",
+        path.join(siteDir, "site.input.json"),
+        "--site",
+        "harbor-house",
+        "--dir",
+        siteDir,
+        "--updated-at",
+        "2026-05-31"
+      ],
+      { cwd: dir, env: { PATH: process.env.PATH }, encoding: "utf8" }
+    );
+    const routeOutput = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "add-route",
+        "--site",
+        "harbor-house",
+        "--router",
+        routerPath
+      ],
+      { cwd: dir, env: { PATH: process.env.PATH }, encoding: "utf8" }
+    );
+    const auditOutput = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "audit-site",
+        "--site",
+        siteDir,
+        "--router",
+        routerPath
+      ],
+      { cwd: dir, env: { PATH: process.env.PATH }, encoding: "utf8" }
+    );
+
+    assert.match(routeOutput, /Added route harbor-house\.syncpoly\.com/);
+    assert.match(fs.readFileSync(routerPath, "utf8"), /"harbor-house\.syncpoly\.com": \{ folder: "harbor-house", template: "real-estate" \}/);
+    assert.match(auditOutput, /PASS site\.config\.json validates/);
+    assert.match(auditOutput, /PASS route exists for harbor-house\.syncpoly\.com/);
+  });
+
+  it("prints template upload commands through the CLI", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-template-upload-test-"));
+    const outDir = path.join(dir, "out");
+    fs.mkdirSync(path.join(outDir, "_next", "static"), { recursive: true });
+    fs.writeFileSync(path.join(outDir, "index.html"), "<!doctype html>");
+    fs.writeFileSync(path.join(outDir, "_next", "static", "app.js"), "console.log('ok');");
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "upload-template",
+        "--template-name",
+        "service",
+        "--source",
+        outDir,
+        "--profile",
+        "prod",
+        "--dry-run"
+      ],
+      { cwd: dir, env: { PATH: process.env.PATH }, encoding: "utf8" }
+    );
+
+    assert.match(output, /aws --profile prod s3 cp/);
+    assert.match(output, /s3:\/\/syncpoly-web-builder-sites\/syncpoly\/templates\/service\/index\.html/);
+    assert.match(output, /no-cache, max-age=0/);
+    assert.match(output, /public, max-age=31536000, immutable/);
+    assert.match(output, /Template uploaded: syncpoly\/templates\/service\/ \(2 file\(s\)\)/);
+  });
+
+  it("generates outreach text from site input", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-outreach-test-"));
+    const siteDir = path.join(dir, "sites", "harbor-house");
+    fs.mkdirSync(siteDir, { recursive: true });
+    fs.writeFileSync(path.join(siteDir, "site.input.json"), JSON.stringify({
+      site: {
+        name: "Harbor House",
+        description: "Private waterfront stays."
+      }
+    }));
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "make-outreach",
+        "--site",
+        siteDir,
+        "--benefit",
+        "real-estate"
+      ],
+      { cwd: dir, env: { PATH: process.env.PATH }, encoding: "utf8" }
+    );
+
+    assert.match(output, /Hi Harbor House,/);
+    assert.match(output, /property, location, amenities, and inquiry details/);
+    assert.doesNotMatch(output, /https:\/\/harbor-house/);
   });
 });
 
