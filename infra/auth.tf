@@ -460,6 +460,7 @@ resource "aws_lambda_function" "auth_google_login" {
   environment {
     variables = {
       ACCESS_TOKEN_TTL_SECONDS = tostring(local.auth_access_token_ttl_seconds)
+      AUTH_ALLOWED_ORIGINS     = join(",", var.auth_allowed_origins)
       GOOGLE_OAUTH_SECRET_ARN  = data.aws_secretsmanager_secret.auth_google_oauth.arn
       JWT_AUDIENCE             = local.auth_jwt_audience
       JWT_ISSUER               = local.auth_jwt_issuer
@@ -528,7 +529,8 @@ resource "aws_lambda_function" "auth_me" {
 
   environment {
     variables = {
-      USERS_TABLE_NAME = aws_dynamodb_table.auth_users.name
+      AUTH_ALLOWED_ORIGINS = join(",", var.auth_allowed_origins)
+      USERS_TABLE_NAME     = aws_dynamodb_table.auth_users.name
     }
   }
 
@@ -558,6 +560,7 @@ resource "aws_lambda_function" "auth_billing_summary" {
 
   environment {
     variables = {
+      AUTH_ALLOWED_ORIGINS      = join(",", var.auth_allowed_origins)
       BILLING_EVENTS_TABLE_NAME = aws_dynamodb_table.billing_events.name
       STRIPE_SECRET_ARN         = data.aws_secretsmanager_secret.auth_stripe.arn
       USERS_TABLE_NAME          = aws_dynamodb_table.auth_users.name
@@ -590,6 +593,7 @@ resource "aws_lambda_function" "auth_stripe_webhook" {
 
   environment {
     variables = {
+      AUTH_ALLOWED_ORIGINS       = join(",", var.auth_allowed_origins)
       BILLING_EVENTS_TABLE_NAME  = aws_dynamodb_table.billing_events.name
       BILLING_EVENTS_TTL_SECONDS = tostring(local.billing_event_ttl_seconds)
       STRIPE_SECRET_ARN          = data.aws_secretsmanager_secret.auth_stripe.arn

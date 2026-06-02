@@ -46,12 +46,12 @@ export async function handleGoogleLogin(event, deps = {}) {
 
   try {
     if (event.requestContext?.http?.method === "OPTIONS") {
-      return jsonResponse(204, {});
+      return jsonResponse(204, {}, event);
     }
 
     const body = parseJsonBody(event.body, event.isBase64Encoded);
     if (!body.code || typeof body.code !== "string") {
-      return jsonResponse(400, { message: "Missing Google authorization code." });
+      return jsonResponse(400, { message: "Missing Google authorization code." }, event);
     }
 
     const googleSecret = await getJsonSecret(process.env.GOOGLE_OAUTH_SECRET_ARN, "google", secretsClient, secretCache);
@@ -59,7 +59,7 @@ export async function handleGoogleLogin(event, deps = {}) {
     const redirectUri = body.redirectUri || googleSecret.redirect_uri;
 
     if (!googleSecret.client_id || !googleSecret.client_secret || !redirectUri) {
-      return jsonResponse(500, { message: "Google OAuth secret is not fully configured." });
+      return jsonResponse(500, { message: "Google OAuth secret is not fully configured." }, event);
     }
 
     const googleTokens = await exchangeGoogleCode({
@@ -71,7 +71,7 @@ export async function handleGoogleLogin(event, deps = {}) {
     });
 
     if (!googleTokens.id_token) {
-      return jsonResponse(401, { message: "Google did not return an identity token." });
+      return jsonResponse(401, { message: "Google did not return an identity token." }, event);
     }
 
     const googleIdentity = await verifyGoogleIdToken(googleTokens.id_token, googleSecret.client_id, fetchImpl, nowMs);
@@ -115,28 +115,30 @@ export async function handleGoogleLogin(event, deps = {}) {
       dynamodbClient
     });
 
-    return jsonResponse(200, {
-      accessToken,
-      tokenType: "Bearer",
-      expiresIn: TOKEN_TTL_SECONDS,
-      expiresAt,
-      user,
-      provider: {
-        name: "google",
-        scope: googleTokens.scope,
-        accessToken: googleTokens.access_token,
-        accessTokenExpiresIn: googleTokens.expires_in
-      }
-    });
+    return jsonResponse(
+      200,
+      {
+        accessToken,
+        tokenType: "Bearer",
+        expiresIn: TOKEN_TTL_SECONDS,
+        expiresAt,
+        user,
+        provider: {
+          name: "google",
+          scope: googleTokens.scope,
+          accessToken: googleTokens.access_token,
+          accessTokenExpiresIn: googleTokens.expires_in
+        }
+      },
+      event
+    );
   } catch (error) {
     console.error("Google login failed", {
       message: error.message,
       name: error.name
     });
 
-    return jsonResponse(error.statusCode || 500, {
-      message: error.publicMessage || "Google login failed."
-    });
+    return jsonResponse(error.statusCode || 500, { message: error.publicMessage || "Google login failed." }, event);
   }
 }
 
@@ -330,13 +332,45 @@ function base64UrlEncode(value) {
   return Buffer.from(value).toString("base64url");
 }
 
-function jsonResponse(statusCode, body) {
+function jsonResponse(statusCode, body, event) {
   return {
     statusCode,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "no-store"
-    },
+    headers: responseHeaders(event),
     body: statusCode === 204 ? "" : JSON.stringify(body)
   };
+}
+
+function responseHeaders(event) {
+  const headers = {
+    "content-type": "application/json",
+    "cache-control": "no-store",
+    "access-control-allow-headers": "authorization, content-type",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
+    "access-control-max-age": "300"
+  };
+  const origin = getHeader(event?.headers, "origin");
+  if (allowedOrigins().has(origin)) {
+    headers["access-control-allow-origin"] = origin;
+    headers["access-control-allow-credentials"] = "true";
+  }
+  return headers;
+}
+
+function allowedOrigins() {
+  return new Set(
+    (process.env.AUTH_ALLOWED_ORIGINS || "https://syncpoly.com,https://www.syncpoly.com")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  );
+}
+
+function getHeader(headers, name) {
+  const lowerName = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers || {})) {
+    if (key.toLowerCase() === lowerName) {
+      return value;
+    }
+  }
+  return undefined;
 }

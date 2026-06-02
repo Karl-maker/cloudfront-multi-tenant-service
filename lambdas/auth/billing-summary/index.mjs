@@ -39,17 +39,17 @@ export async function handleBillingSummary(event, deps = {}) {
   try {
     const userId = event.requestContext?.authorizer?.lambda?.userId;
     if (!userId) {
-      return jsonResponse(401, { message: "Unauthorized." });
+      return jsonResponse(401, { message: "Unauthorized." }, event);
     }
 
     const user = await getUser(dynamodbClient, userId);
     if (!user) {
-      return jsonResponse(404, { message: "User not found." });
+      return jsonResponse(404, { message: "User not found." }, event);
     }
 
     const stripeSecret = await getStripeSecret(secretsClient, secretCache);
     if (!stripeSecret.secret_key) {
-      return jsonResponse(500, { message: "Stripe secret is not configured." });
+      return jsonResponse(500, { message: "Stripe secret is not configured." }, event);
     }
 
     const stripe = createStripeClient(stripeSecret.secret_key, fetchImpl);
@@ -81,15 +81,19 @@ export async function handleBillingSummary(event, deps = {}) {
     const sanitizedInvoices = (invoices.data || []).map(sanitizeInvoice);
     const sanitizedSubscriptions = (subscriptions.data || []).map(sanitizeSubscription);
 
-    return jsonResponse(200, {
-      customer: sanitizeCustomer(customer),
-      invoices: sanitizedInvoices,
-      subscriptions: sanitizedSubscriptions,
-      paymentMethods: (paymentMethods.data || []).map(sanitizePaymentMethod),
-      paymentInfo: buildPaymentInfo(customer, sanitizedSubscriptions, sanitizedInvoices),
-      dunning: buildDunningSummary(sanitizedInvoices, sanitizedSubscriptions, events),
-      retrievedAt: new Date(nowMs()).toISOString()
-    });
+    return jsonResponse(
+      200,
+      {
+        customer: sanitizeCustomer(customer),
+        invoices: sanitizedInvoices,
+        subscriptions: sanitizedSubscriptions,
+        paymentMethods: (paymentMethods.data || []).map(sanitizePaymentMethod),
+        paymentInfo: buildPaymentInfo(customer, sanitizedSubscriptions, sanitizedInvoices),
+        dunning: buildDunningSummary(sanitizedInvoices, sanitizedSubscriptions, events),
+        retrievedAt: new Date(nowMs()).toISOString()
+      },
+      event
+    );
   } catch (error) {
     console.error("Failed to load billing summary", {
       message: error.message,
@@ -97,9 +101,7 @@ export async function handleBillingSummary(event, deps = {}) {
       stripeStatus: error.stripeStatus
     });
 
-    return jsonResponse(error.statusCode || 500, {
-      message: error.publicMessage || "Failed to load billing details."
-    });
+    return jsonResponse(error.statusCode || 500, { message: error.publicMessage || "Failed to load billing details." }, event);
   }
 }
 
@@ -385,13 +387,45 @@ function getExpandableId(value) {
   return typeof value === "string" ? value : value.id || null;
 }
 
-function jsonResponse(statusCode, body) {
+function jsonResponse(statusCode, body, event) {
   return {
     statusCode,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "no-store"
-    },
+    headers: responseHeaders(event),
     body: JSON.stringify(body)
   };
+}
+
+function responseHeaders(event) {
+  const headers = {
+    "content-type": "application/json",
+    "cache-control": "no-store",
+    "access-control-allow-headers": "authorization, content-type",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
+    "access-control-max-age": "300"
+  };
+  const origin = getHeader(event?.headers, "origin");
+  if (allowedOrigins().has(origin)) {
+    headers["access-control-allow-origin"] = origin;
+    headers["access-control-allow-credentials"] = "true";
+  }
+  return headers;
+}
+
+function allowedOrigins() {
+  return new Set(
+    (process.env.AUTH_ALLOWED_ORIGINS || "https://syncpoly.com,https://www.syncpoly.com")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  );
+}
+
+function getHeader(headers, name) {
+  const lowerName = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers || {})) {
+    if (key.toLowerCase() === lowerName) {
+      return value;
+    }
+  }
+  return undefined;
 }

@@ -42,6 +42,43 @@ test("google login returns 400 without an authorization code and does not call A
   assert.equal(dynamodbClient.calls.length, 0);
 });
 
+test("google login returns CORS headers for www.syncpoly.com JSON requests", async () => {
+  const handler = createGoogleLoginHandler({
+    secretsClient: createMockClient(() => assert.fail("secrets should not be called")),
+    dynamodbClient: createMockClient(() => assert.fail("dynamodb should not be called"))
+  });
+
+  const response = await handler({
+    body: JSON.stringify({}),
+    headers: {
+      Origin: "https://www.syncpoly.com",
+      "content-type": "application/json"
+    },
+    requestContext: { http: { method: "POST" } }
+  });
+
+  assert.equal(response.statusCode, 400);
+  assert.equal(response.headers["access-control-allow-origin"], "https://www.syncpoly.com");
+  assert.equal(response.headers["access-control-allow-credentials"], "true");
+  assert.match(response.headers["access-control-allow-headers"], /content-type/);
+});
+
+test("google login handles CORS preflight for www.syncpoly.com", async () => {
+  const handler = createGoogleLoginHandler();
+  const response = await handler({
+    headers: {
+      Origin: "https://www.syncpoly.com",
+      "access-control-request-headers": "content-type"
+    },
+    requestContext: { http: { method: "OPTIONS" } }
+  });
+
+  assert.equal(response.statusCode, 204);
+  assert.equal(response.headers["access-control-allow-origin"], "https://www.syncpoly.com");
+  assert.match(response.headers["access-control-allow-methods"], /POST/);
+  assert.equal(response.body, "");
+});
+
 test("google login rejects malformed JSON without leaking internals", async () => {
   const handler = createGoogleLoginHandler();
   const response = await handler({

@@ -39,23 +39,21 @@ export async function handleStripeWebhook(event, deps = {}) {
     const stripeSecret = await getStripeSecret(secretsClient, secretCache);
 
     if (!stripeSecret.webhook_secret) {
-      return jsonResponse(500, { message: "Stripe webhook secret is not configured." });
+      return jsonResponse(500, { message: "Stripe webhook secret is not configured." }, event);
     }
 
     verifyStripeSignature(body, signature, stripeSecret.webhook_secret, nowSeconds());
     const stripeEvent = JSON.parse(body);
     await recordStripeEvent(dynamodbClient, stripeEvent, nowSeconds());
 
-    return jsonResponse(200, { received: true });
+    return jsonResponse(200, { received: true }, event);
   } catch (error) {
     console.warn("Stripe webhook rejected", {
       message: error.message,
       name: error.name
     });
 
-    return jsonResponse(error.statusCode || 400, {
-      message: error.publicMessage || "Invalid Stripe webhook."
-    });
+    return jsonResponse(error.statusCode || 400, { message: error.publicMessage || "Invalid Stripe webhook." }, event);
   }
 }
 
@@ -194,13 +192,35 @@ function getHeader(headers = {}, name) {
   return undefined;
 }
 
-function jsonResponse(statusCode, body) {
+function jsonResponse(statusCode, body, event) {
   return {
     statusCode,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "no-store"
-    },
+    headers: responseHeaders(event),
     body: JSON.stringify(body)
   };
+}
+
+function responseHeaders(event) {
+  const headers = {
+    "content-type": "application/json",
+    "cache-control": "no-store",
+    "access-control-allow-headers": "authorization, content-type",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
+    "access-control-max-age": "300"
+  };
+  const origin = getHeader(event?.headers, "origin");
+  if (allowedOrigins().has(origin)) {
+    headers["access-control-allow-origin"] = origin;
+    headers["access-control-allow-credentials"] = "true";
+  }
+  return headers;
+}
+
+function allowedOrigins() {
+  return new Set(
+    (process.env.AUTH_ALLOWED_ORIGINS || "https://syncpoly.com,https://www.syncpoly.com")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  );
 }
