@@ -30,10 +30,6 @@ output "auth_api_endpoint" {
   value = aws_apigatewayv2_api.auth.api_endpoint
 }
 
-output "auth_api_prod_endpoint" {
-  value = "${aws_apigatewayv2_api.auth.api_endpoint}/${aws_apigatewayv2_stage.auth_prod.name}"
-}
-
 output "auth_api_cloudfront_distribution_id" {
   value = aws_cloudfront_distribution.auth_api.id
 }

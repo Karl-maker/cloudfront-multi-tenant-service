@@ -20,9 +20,10 @@ test("auth Terraform disables authorizer result caching for protected route safe
   assert.match(authTf, /authorizer_result_ttl_in_seconds\s+=\s+0/);
 });
 
-test("auth Terraform exposes a prod API Gateway stage through CloudFront", () => {
-  assert.match(authTf, /resource "aws_apigatewayv2_stage" "auth_prod"[\s\S]*name\s+=\s+"prod"[\s\S]*auto_deploy\s+=\s+true/);
-  assert.match(authTf, /origin_path\s+=\s+"\/\$\{aws_apigatewayv2_stage\.auth_prod\.name\}"/);
+test("auth Terraform serves API Gateway through the default stage", () => {
+  assert.match(authTf, /resource "aws_apigatewayv2_stage" "auth_default"[\s\S]*name\s+=\s+"\$default"[\s\S]*auto_deploy\s+=\s+true/);
+  assert.doesNotMatch(authTf, /resource "aws_apigatewayv2_stage" "auth_prod"/);
+  assert.doesNotMatch(authTf, /origin_path\s+=/);
 });
 
 test("auth Terraform avoids wildcard credentialed CORS and enables DynamoDB protections", () => {

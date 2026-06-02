@@ -648,33 +648,6 @@ resource "aws_apigatewayv2_stage" "auth_default" {
   }
 }
 
-resource "aws_apigatewayv2_stage" "auth_prod" {
-  api_id      = aws_apigatewayv2_api.auth.id
-  name        = "prod"
-  auto_deploy = true
-
-  default_route_settings {
-    detailed_metrics_enabled = true
-    throttling_burst_limit   = 100
-    throttling_rate_limit    = 50
-  }
-
-  access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.auth_api_gateway.arn
-    format = jsonencode({
-      requestId      = "$context.requestId"
-      ip             = "$context.identity.sourceIp"
-      requestTime    = "$context.requestTime"
-      httpMethod     = "$context.httpMethod"
-      routeKey       = "$context.routeKey"
-      status         = "$context.status"
-      protocol       = "$context.protocol"
-      responseLength = "$context.responseLength"
-      integrationErr = "$context.integrationErrorMessage"
-    })
-  }
-}
-
 resource "aws_cloudwatch_log_group" "auth_api_gateway" {
   name              = "/aws/apigateway/${local.auth_api_name}"
   retention_in_days = 30
@@ -805,7 +778,6 @@ resource "aws_cloudfront_distribution" "auth_api" {
   origin {
     domain_name = replace(aws_apigatewayv2_api.auth.api_endpoint, "https://", "")
     origin_id   = local.auth_api_cloudfront_origin_id
-    origin_path = "/${aws_apigatewayv2_stage.auth_prod.name}"
 
     custom_origin_config {
       http_port              = 80
