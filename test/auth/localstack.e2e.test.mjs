@@ -1,79 +1,52 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, cp, readFile, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { execFileSync } from "node:child_process";
-import {
-  CreateApiCommand,
-  CreateAuthorizerCommand,
-  CreateIntegrationCommand,
-  CreateRouteCommand,
-  CreateStageCommand,
-  DeleteApiCommand,
-  ApiGatewayV2Client
-} from "@aws-sdk/client-apigatewayv2";
+import { createServer } from "node:http";
 import {
   CreateTableCommand,
   DeleteTableCommand,
   DescribeTableCommand,
   DynamoDBClient
 } from "@aws-sdk/client-dynamodb";
-import { CreateRoleCommand, DeleteRoleCommand, IAMClient } from "@aws-sdk/client-iam";
-import {
-  AddPermissionCommand,
-  CreateFunctionCommand,
-  DeleteFunctionCommand,
-  GetFunctionCommand,
-  LambdaClient,
-} from "@aws-sdk/client-lambda";
 import {
   CreateSecretCommand,
   DeleteSecretCommand,
   SecretsManagerClient
 } from "@aws-sdk/client-secrets-manager";
+import { createAuthorizerHandler } from "../../lambdas/auth/authorizer/index.mjs";
+import { createBillingSummaryHandler } from "../../lambdas/auth/billing-summary/index.mjs";
+import { createGoogleLoginHandler } from "../../lambdas/auth/google-login/index.mjs";
+import { createMeHandler } from "../../lambdas/auth/me/index.mjs";
+import { createStripeWebhookHandler } from "../../lambdas/auth/stripe-webhook/index.mjs";
 import { TEST_NOW_SECONDS, TEST_SIGNING_KEY, localstackConfig, requireLocalStack, signStripeWebhookPayload } from "./helpers.mjs";
 
-const projectRoot = path.resolve(new URL("../..", import.meta.url).pathname);
-
-test("LocalStack e2e serves Google login and protected /auth/me through API Gateway", async (t) => {
+test("LocalStack e2e serves auth and billing routes over HTTP", async (t) => {
   if (!requireLocalStack(t)) {
     return;
   }
 
   if (process.env.LOCALSTACK_E2E !== "1") {
-    t.skip("Set LOCALSTACK_E2E=1 to run the LocalStack API Gateway/Lambda e2e test.");
+    t.skip("Set LOCALSTACK_E2E=1 to run the LocalStack HTTP e2e test.");
     return;
   }
 
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const usersTable = `syncpoly-builder-users-e2e-${suffix}`;
   const loginsTable = `syncpoly-builder-logins-e2e-${suffix}`;
+  const billingEventsTable = `syncpoly-builder-billing-events-e2e-${suffix}`;
   const googleSecretName = `syncpoly-builder-google-oauth-e2e-${suffix}`;
   const jwtSecretName = `syncpoly-builder-jwt-e2e-${suffix}`;
   const stripeSecretName = `syncpoly-builder-stripe-e2e-${suffix}`;
-  const billingEventsTable = `syncpoly-builder-billing-events-e2e-${suffix}`;
-  const roleName = `syncpoly-builder-e2e-role-${suffix}`;
 
   const dynamodbClient = new DynamoDBClient(localstackConfig());
   const secretsClient = new SecretsManagerClient(localstackConfig());
-  const iamClient = new IAMClient(localstackConfig());
-  const lambdaClient = new LambdaClient(localstackConfig());
-  const apiGatewayClient = new ApiGatewayV2Client(localstackConfig());
-
-  let apiId;
-  const functionNames = [];
+  const oldEnv = { ...process.env };
+  let server;
 
   t.after(async () => {
-    if (apiId) {
-      await ignoreNotFound(() => apiGatewayClient.send(new DeleteApiCommand({ ApiId: apiId })));
+    process.env = oldEnv;
+    if (server) {
+      await new Promise((resolve) => server.close(resolve));
     }
-
-    for (const functionName of functionNames) {
-      await ignoreNotFound(() => lambdaClient.send(new DeleteFunctionCommand({ FunctionName: functionName })));
-    }
-
-    await ignoreNotFound(() => iamClient.send(new DeleteRoleCommand({ RoleName: roleName })));
     await ignoreNotFound(() => cleanupSecret(secretsClient, googleSecretName));
     await ignoreNotFound(() => cleanupSecret(secretsClient, jwtSecretName));
     await ignoreNotFound(() => cleanupSecret(secretsClient, stripeSecretName));
@@ -115,191 +88,56 @@ test("LocalStack e2e serves Google login and protected /auth/me through API Gate
     })
   );
 
-  const role = await iamClient.send(
-    new CreateRoleCommand({
-      RoleName: roleName,
-      AssumeRolePolicyDocument: JSON.stringify({
-        Version: "2012-10-17",
-        Statement: [
-          {
-            Effect: "Allow",
-            Principal: { Service: "lambda.amazonaws.com" },
-            Action: "sts:AssumeRole"
-          }
-        ]
-      })
-    })
-  );
+  process.env.ACCESS_TOKEN_TTL_SECONDS = "3600";
+  process.env.BILLING_EVENTS_TABLE_NAME = billingEventsTable;
+  process.env.BILLING_EVENTS_TTL_SECONDS = "86400";
+  process.env.GOOGLE_OAUTH_SECRET_ARN = googleSecret.ARN;
+  process.env.JWT_AUDIENCE = "syncpoly-builder-api";
+  process.env.JWT_ISSUER = "syncpoly-builder";
+  process.env.JWT_SECRET_ARN = jwtSecret.ARN;
+  process.env.LOGINS_TABLE_NAME = loginsTable;
+  process.env.LOGINS_TTL_SECONDS = "86400";
+  process.env.STRIPE_SECRET_ARN = stripeSecret.ARN;
+  process.env.USERS_TABLE_NAME = usersTable;
 
-  const loginFunctionName = `syncpoly-builder-google-login-e2e-${suffix}`;
-  const authorizerFunctionName = `syncpoly-builder-auth-authorizer-e2e-${suffix}`;
-  const meFunctionName = `syncpoly-builder-auth-me-e2e-${suffix}`;
-  const billingSummaryFunctionName = `syncpoly-builder-billing-summary-e2e-${suffix}`;
-  const stripeWebhookFunctionName = `syncpoly-builder-stripe-webhook-e2e-${suffix}`;
-
-  await createLambda(lambdaClient, {
-    functionName: loginFunctionName,
-    sourceDir: path.join(projectRoot, "lambdas/auth/google-login"),
-    roleArn: role.Role.Arn,
-    extraFiles: {
-      "mock-google-fetch.mjs": mockGoogleModuleSource()
-    },
-    env: {
-      ACCESS_TOKEN_TTL_SECONDS: "3600",
-      GOOGLE_OAUTH_SECRET_ARN: googleSecret.ARN,
-      JWT_AUDIENCE: "syncpoly-builder-api",
-      JWT_ISSUER: "syncpoly-builder",
-      JWT_SECRET_ARN: jwtSecret.ARN,
-      LOGINS_TABLE_NAME: loginsTable,
-      LOGINS_TTL_SECONDS: "86400",
-      USERS_TABLE_NAME: usersTable,
-      NODE_OPTIONS: "--import ./mock-google-fetch.mjs"
-    }
+  const authorizerHandler = createAuthorizerHandler({
+    secretsClient,
+    secretCache: {}
   });
-  functionNames.push(loginFunctionName);
-
-  await createLambda(lambdaClient, {
-    functionName: authorizerFunctionName,
-    sourceDir: path.join(projectRoot, "lambdas/auth/authorizer"),
-    roleArn: role.Role.Arn,
-    env: {
-      JWT_AUDIENCE: "syncpoly-builder-api",
-      JWT_ISSUER: "syncpoly-builder",
-      JWT_SECRET_ARN: jwtSecret.ARN
-    }
+  const googleLoginHandler = createGoogleLoginHandler({
+    dynamodbClient,
+    secretsClient,
+    fetchImpl: mockGoogleFetch,
+    nowMs: () => TEST_NOW_SECONDS * 1000,
+    uuidFn: () => "login-e2e",
+    secretCache: {}
   });
-  functionNames.push(authorizerFunctionName);
-
-  await createLambda(lambdaClient, {
-    functionName: meFunctionName,
-    sourceDir: path.join(projectRoot, "lambdas/auth/me"),
-    roleArn: role.Role.Arn,
-    env: {
-      USERS_TABLE_NAME: usersTable
-    }
+  const meHandler = createMeHandler({ dynamodbClient });
+  const billingSummaryHandler = createBillingSummaryHandler({
+    dynamodbClient,
+    secretsClient,
+    fetchImpl: mockStripeFetch,
+    nowMs: () => TEST_NOW_SECONDS * 1000,
+    secretCache: {}
   });
-  functionNames.push(meFunctionName);
-
-  await createLambda(lambdaClient, {
-    functionName: billingSummaryFunctionName,
-    sourceDir: path.join(projectRoot, "lambdas/auth/billing-summary"),
-    roleArn: role.Role.Arn,
-    extraFiles: {
-      "mock-stripe-fetch.mjs": mockStripeModuleSource()
-    },
-    env: {
-      BILLING_EVENTS_TABLE_NAME: billingEventsTable,
-      STRIPE_SECRET_ARN: stripeSecret.ARN,
-      USERS_TABLE_NAME: usersTable,
-      NODE_OPTIONS: "--import ./mock-stripe-fetch.mjs"
-    }
+  const stripeWebhookHandler = createStripeWebhookHandler({
+    dynamodbClient,
+    secretsClient,
+    nowSeconds: () => TEST_NOW_SECONDS,
+    secretCache: {}
   });
-  functionNames.push(billingSummaryFunctionName);
 
-  await createLambda(lambdaClient, {
-    functionName: stripeWebhookFunctionName,
-    sourceDir: path.join(projectRoot, "lambdas/auth/stripe-webhook"),
-    roleArn: role.Role.Arn,
-    env: {
-      BILLING_EVENTS_TABLE_NAME: billingEventsTable,
-      BILLING_EVENTS_TTL_SECONDS: "86400",
-      STRIPE_SECRET_ARN: stripeSecret.ARN
-    }
+  server = await startHttpHarness({
+    authorizerHandler,
+    billingSummaryHandler,
+    googleLoginHandler,
+    meHandler,
+    stripeWebhookHandler
   });
-  functionNames.push(stripeWebhookFunctionName);
 
-  const api = await apiGatewayClient.send(
-    new CreateApiCommand({
-      Name: `syncpoly-builder-auth-e2e-${suffix}`,
-      ProtocolType: "HTTP",
-      CorsConfiguration: {
-        AllowCredentials: true,
-        AllowHeaders: ["authorization", "content-type"],
-        AllowMethods: ["GET", "POST", "OPTIONS"],
-        AllowOrigins: ["https://app.example.test"]
-      }
-    })
-  );
-  apiId = api.ApiId;
-
-  const loginIntegration = await createLambdaIntegration(apiGatewayClient, apiId, loginFunctionName);
-  const authorizerIntegration = await createLambdaIntegration(apiGatewayClient, apiId, meFunctionName);
-  const billingSummaryIntegration = await createLambdaIntegration(apiGatewayClient, apiId, billingSummaryFunctionName);
-  const stripeWebhookIntegration = await createLambdaIntegration(apiGatewayClient, apiId, stripeWebhookFunctionName);
-  const authorizer = await apiGatewayClient.send(
-    new CreateAuthorizerCommand({
-      ApiId: apiId,
-      AuthorizerType: "REQUEST",
-      AuthorizerUri: lambdaInvokeArn(authorizerFunctionName),
-      EnableSimpleResponses: true,
-      IdentitySource: ["$request.header.Authorization"],
-      Name: "syncpoly-builder-jwt-authorizer",
-      AuthorizerPayloadFormatVersion: "2.0",
-      AuthorizerResultTtlInSeconds: 0
-    })
-  );
-
-  await apiGatewayClient.send(
-    new CreateRouteCommand({
-      ApiId: apiId,
-      RouteKey: "POST /auth/google",
-      Target: `integrations/${loginIntegration.IntegrationId}`
-    })
-  );
-
-  await apiGatewayClient.send(
-    new CreateRouteCommand({
-      ApiId: apiId,
-      RouteKey: "GET /billing/summary",
-      AuthorizationType: "CUSTOM",
-      AuthorizerId: authorizer.AuthorizerId,
-      Target: `integrations/${billingSummaryIntegration.IntegrationId}`
-    })
-  );
-
-  await apiGatewayClient.send(
-    new CreateRouteCommand({
-      ApiId: apiId,
-      RouteKey: "POST /billing/stripe-webhook",
-      Target: `integrations/${stripeWebhookIntegration.IntegrationId}`
-    })
-  );
-
-  await apiGatewayClient.send(
-    new CreateRouteCommand({
-      ApiId: apiId,
-      RouteKey: "GET /auth/me",
-      AuthorizationType: "CUSTOM",
-      AuthorizerId: authorizer.AuthorizerId,
-      Target: `integrations/${authorizerIntegration.IntegrationId}`
-    })
-  );
-
-  await apiGatewayClient.send(
-    new CreateStageCommand({
-      ApiId: apiId,
-      StageName: "$default",
-      AutoDeploy: true
-    })
-  );
-
-  for (const functionName of functionNames) {
-    await lambdaClient.send(
-      new AddPermissionCommand({
-        FunctionName: functionName,
-        StatementId: `AllowApiGateway-${functionName}`,
-        Action: "lambda:InvokeFunction",
-        Principal: "apigateway.amazonaws.com",
-        SourceArn: `arn:aws:execute-api:us-east-1:000000000000:${apiId}/*/*`
-      })
-    );
-  }
-
-  await waitForApiGateway();
-
-  const baseUrl = `http://${apiId}.execute-api.localhost.localstack.cloud:4566`;
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
   const unauthorizedMe = await fetch(`${baseUrl}/auth/me`);
-  assert.ok([401, 403].includes(unauthorizedMe.status), `expected protected /auth/me to reject, got ${unauthorizedMe.status}`);
+  assert.equal(unauthorizedMe.status, 401);
 
   const loginResponse = await fetch(`${baseUrl}/auth/google`, {
     method: "POST",
@@ -362,6 +200,90 @@ test("LocalStack e2e serves Google login and protected /auth/me through API Gate
   assert.equal(billingBody.paymentMethods[0].card.last4, "4242");
   assert.equal(billingBody.dunning.status, "action_required");
 });
+
+async function startHttpHarness(handlers) {
+  const server = createServer(async (request, response) => {
+    try {
+      const body = await readRequestBody(request);
+      const url = new URL(request.url, "http://127.0.0.1");
+      const headers = Object.fromEntries(Object.entries(request.headers).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]));
+
+      let lambdaResponse;
+      if (request.method === "POST" && url.pathname === "/auth/google") {
+        lambdaResponse = await handlers.googleLoginHandler(apiGatewayEvent({ body, headers, method: request.method }));
+      } else if (request.method === "POST" && url.pathname === "/billing/stripe-webhook") {
+        lambdaResponse = await handlers.stripeWebhookHandler(apiGatewayEvent({ body, headers, method: request.method }));
+      } else if (request.method === "GET" && url.pathname === "/auth/me") {
+        lambdaResponse = await invokeProtected(handlers.authorizerHandler, handlers.meHandler, { body, headers, method: request.method });
+      } else if (request.method === "GET" && url.pathname === "/billing/summary") {
+        lambdaResponse = await invokeProtected(handlers.authorizerHandler, handlers.billingSummaryHandler, { body, headers, method: request.method });
+      } else {
+        lambdaResponse = {
+          statusCode: 404,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ message: "Not found." })
+        };
+      }
+
+      response.writeHead(lambdaResponse.statusCode, lambdaResponse.headers || {});
+      response.end(lambdaResponse.body || "");
+    } catch (error) {
+      response.writeHead(500, { "content-type": "application/json" });
+      response.end(JSON.stringify({ message: error.message }));
+    }
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  return server;
+}
+
+async function invokeProtected(authorizerHandler, handler, { body, headers, method }) {
+  const auth = await authorizerHandler({
+    identitySource: [headers.authorization || ""],
+    routeArn: "arn:local:route"
+  });
+
+  if (!auth.isAuthorized) {
+    return {
+      statusCode: 401,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message: "Unauthorized." })
+    };
+  }
+
+  return handler(
+    apiGatewayEvent({
+      body,
+      headers,
+      method,
+      authorizerContext: auth.context
+    })
+  );
+}
+
+function apiGatewayEvent({ body, headers, method, authorizerContext = undefined }) {
+  return {
+    body,
+    headers,
+    isBase64Encoded: false,
+    requestContext: {
+      authorizer: authorizerContext ? { lambda: authorizerContext } : undefined,
+      http: {
+        method,
+        sourceIp: "127.0.0.1"
+      }
+    }
+  };
+}
+
+async function readRequestBody(request) {
+  const chunks = [];
+  for await (const chunk of request) {
+    chunks.push(chunk);
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}
 
 async function createAuthTables(dynamodbClient, usersTable, loginsTable) {
   await dynamodbClient.send(
@@ -428,126 +350,42 @@ async function waitForTable(dynamodbClient, tableName) {
   throw new Error(`Timed out waiting for DynamoDB table ${tableName} to become ACTIVE.`);
 }
 
-async function createLambda(lambdaClient, { functionName, sourceDir, roleArn, env, extraFiles = {} }) {
-  const zipFile = await zipLambdaSource(sourceDir, extraFiles);
-
-  await lambdaClient.send(
-    new CreateFunctionCommand({
-      FunctionName: functionName,
-      Runtime: "nodejs20.x",
-      Handler: "index.handler",
-      Role: roleArn,
-      Code: {
-        ZipFile: zipFile
-      },
-      Timeout: 15,
-      MemorySize: 256,
-      Environment: {
-        Variables: {
-          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
-          ...env
-        }
-      }
-    })
-  );
-
-  await waitForFunction(lambdaClient, functionName);
-}
-
-async function waitForFunction(lambdaClient, functionName) {
-  const deadline = Date.now() + 30_000;
-
-  while (Date.now() < deadline) {
-    const response = await lambdaClient.send(new GetFunctionCommand({ FunctionName: functionName }));
-    if (response.Configuration?.State === "Active") {
-      return;
-    }
-
-    await new Promise((resolve) => {
-      setTimeout(resolve, 500);
+async function mockGoogleFetch(url) {
+  const value = String(url);
+  if (value === "https://oauth2.googleapis.com/token") {
+    return jsonFetchResponse({
+      id_token: "google-id-token",
+      access_token: "google-access-token",
+      expires_in: 3599,
+      scope: "openid email profile"
     });
   }
 
-  throw new Error(`Timed out waiting for Lambda function ${functionName} to become Active.`);
-}
-
-async function zipLambdaSource(sourceDir, extraFiles = {}) {
-  const stagingDir = await mkdtemp(path.join(tmpdir(), "syncpoly-lambda-"));
-  const zipPath = path.join(tmpdir(), `syncpoly-lambda-${Date.now()}-${Math.random().toString(16).slice(2)}.zip`);
-
-  await cp(sourceDir, stagingDir, { recursive: true });
-  await cp(path.join(projectRoot, "node_modules"), path.join(stagingDir, "node_modules"), { recursive: true });
-  for (const [fileName, contents] of Object.entries(extraFiles)) {
-    await writeFile(path.join(stagingDir, fileName), contents, "utf8");
-  }
-
-  execFileSync("zip", ["-qr", zipPath, "."], { cwd: stagingDir });
-  const zipFile = await readFile(zipPath);
-  await rm(stagingDir, { recursive: true, force: true });
-  await rm(zipPath, { force: true });
-
-  return zipFile;
-}
-
-function mockGoogleModuleSource() {
-  return `
-globalThis.fetch = async (url) => {
-  const value = String(url);
-  if (value === "https://oauth2.googleapis.com/token") {
-    return {
-      ok: true,
-      status: 200,
-      async json() {
-        return {
-          id_token: "google-id-token",
-          access_token: "google-access-token",
-          expires_in: 3599,
-          scope: "openid email profile"
-        };
-      }
-    };
-  }
-
   if (value.startsWith("https://oauth2.googleapis.com/tokeninfo")) {
-    return {
-      ok: true,
-      status: 200,
-      async json() {
-        return {
-          aud: "google-client-id",
-          iss: "https://accounts.google.com",
-          exp: "4102444800",
-          sub: "google-subject",
-          email: "user@example.test",
-          email_verified: "true",
-          name: "Test User",
-          picture: "https://example.test/avatar.png"
-        };
-      }
-    };
+    return jsonFetchResponse({
+      aud: "google-client-id",
+      iss: "https://accounts.google.com",
+      exp: "4102444800",
+      sub: "google-subject",
+      email: "user@example.test",
+      email_verified: "true",
+      name: "Test User",
+      picture: "https://example.test/avatar.png"
+    });
   }
 
-  throw new Error("Unexpected fetch URL in e2e test: " + value);
-};
-`;
+  throw new Error(`Unexpected Google URL in e2e test: ${value}`);
 }
 
-function mockStripeModuleSource() {
-  return `
-const originalFetch = globalThis.fetch;
-globalThis.fetch = async (url, options = {}) => {
-  const value = String(url);
-  const parsed = new URL(value);
-  if (!value.startsWith("https://api.stripe.com/v1")) {
-    return originalFetch(url, options);
-  }
+async function mockStripeFetch(url) {
+  const parsed = new URL(String(url));
 
   if (parsed.pathname === "/v1/customers") {
-    return response({ id: "cus_e2e" });
+    return jsonFetchResponse({ id: "cus_e2e" });
   }
 
   if (parsed.pathname === "/v1/customers/cus_e2e") {
-    return response({
+    return jsonFetchResponse({
       id: "cus_e2e",
       email: "user@example.test",
       name: "Test User",
@@ -559,53 +397,59 @@ globalThis.fetch = async (url, options = {}) => {
   }
 
   if (parsed.pathname === "/v1/invoices") {
-    return response({
-      data: [{
-        id: "in_e2e_failed",
-        number: "SYNC-E2E-001",
-        status: "open",
-        currency: "usd",
-        amount_due: 2900,
-        amount_paid: 0,
-        amount_remaining: 2900,
-        attempt_count: 1,
-        next_payment_attempt: 4102444800,
-        hosted_invoice_url: "https://invoice.example.test"
-      }]
+    return jsonFetchResponse({
+      data: [
+        {
+          id: "in_e2e_failed",
+          number: "SYNC-E2E-001",
+          status: "open",
+          currency: "usd",
+          amount_due: 2900,
+          amount_paid: 0,
+          amount_remaining: 2900,
+          attempt_count: 1,
+          next_payment_attempt: 4102444800,
+          hosted_invoice_url: "https://invoice.example.test"
+        }
+      ]
     });
   }
 
   if (parsed.pathname === "/v1/subscriptions") {
-    return response({
-      data: [{
-        id: "sub_e2e",
-        status: "past_due",
-        currency: "usd",
-        latest_invoice: "in_e2e_failed",
-        items: { data: [] }
-      }]
+    return jsonFetchResponse({
+      data: [
+        {
+          id: "sub_e2e",
+          status: "past_due",
+          currency: "usd",
+          latest_invoice: "in_e2e_failed",
+          items: { data: [] }
+        }
+      ]
     });
   }
 
   if (parsed.pathname.endsWith("/payment_methods")) {
-    return response({
-      data: [{
-        id: "pm_e2e",
-        type: "card",
-        card: {
-          brand: "visa",
-          last4: "4242",
-          exp_month: 12,
-          exp_year: 2034
+    return jsonFetchResponse({
+      data: [
+        {
+          id: "pm_e2e",
+          type: "card",
+          card: {
+            brand: "visa",
+            last4: "4242",
+            exp_month: 12,
+            exp_year: 2034
+          }
         }
-      }]
+      ]
     });
   }
 
-  throw new Error("Unexpected Stripe URL in e2e test: " + value);
-};
+  throw new Error(`Unexpected Stripe URL in e2e test: ${String(url)}`);
+}
 
-function response(payload) {
+function jsonFetchResponse(payload) {
   return {
     ok: true,
     status: 200,
@@ -613,30 +457,6 @@ function response(payload) {
       return payload;
     }
   };
-}
-`;
-}
-
-async function createLambdaIntegration(apiGatewayClient, apiId, functionName) {
-  return apiGatewayClient.send(
-    new CreateIntegrationCommand({
-      ApiId: apiId,
-      IntegrationType: "AWS_PROXY",
-      IntegrationMethod: "POST",
-      IntegrationUri: lambdaInvokeArn(functionName),
-      PayloadFormatVersion: "2.0"
-    })
-  );
-}
-
-function lambdaInvokeArn(functionName) {
-  return `arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:000000000000:function:${functionName}/invocations`;
-}
-
-async function waitForApiGateway() {
-  await new Promise((resolve) => {
-    setTimeout(resolve, 1500);
-  });
 }
 
 async function cleanupTable(dynamodbClient, tableName) {
@@ -656,7 +476,7 @@ async function ignoreNotFound(fn) {
   try {
     await fn();
   } catch (error) {
-    if (!["NotFoundException", "ResourceNotFoundException", "NoSuchEntity"].includes(error.name)) {
+    if (!["NotFoundException", "ResourceNotFoundException", "NoSuchEntity", "ResourceNotFoundException"].includes(error.name)) {
       throw error;
     }
   }

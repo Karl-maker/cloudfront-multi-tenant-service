@@ -85,7 +85,7 @@ jobs:
       - name: Run LocalStack auth integration tests
         run: npm run test:integration
 
-      - name: Run LocalStack auth e2e tests
+      - name: Run auth HTTP e2e tests with LocalStack services
         run: npm run test:e2e
 
       - name: Stop LocalStack

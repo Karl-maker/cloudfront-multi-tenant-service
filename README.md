@@ -106,7 +106,7 @@ npm run test:localstack
 docker compose --profile test down -v
 ```
 
-`test:unit` covers Google OAuth error handling, Google ID token `aud`/`iss`/`exp`/verified-email checks, JWT signature/expiry/issuer/audience failures, malformed bearer headers, `/auth/me` authorization context, and Terraform security assertions. `test:localstack` adds DynamoDB/Secrets Manager integration coverage and an HTTP API/Lambda e2e path through LocalStack.
+`test:unit` covers Google OAuth error handling, Google ID token `aud`/`iss`/`exp`/verified-email checks, JWT signature/expiry/issuer/audience failures, malformed bearer headers, `/auth/me` authorization context, and Terraform security assertions. `test:localstack` adds DynamoDB/Secrets Manager integration coverage and a local HTTP e2e path that exercises the real Lambda handlers against LocalStack services.
 
 Site upload CLI:
 
