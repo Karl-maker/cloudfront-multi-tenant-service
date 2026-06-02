@@ -5,9 +5,10 @@ import { readFileSync } from "node:fs";
 const authTf = readFileSync(new URL("../../infra/auth.tf", import.meta.url), "utf8");
 
 test("auth Terraform keeps secrets out of state values", () => {
-  assert.match(authTf, /resource "aws_secretsmanager_secret" "auth_google_oauth"/);
-  assert.match(authTf, /resource "aws_secretsmanager_secret" "auth_jwt"/);
-  assert.match(authTf, /resource "aws_secretsmanager_secret" "auth_stripe"/);
+  assert.match(authTf, /data "aws_secretsmanager_secret" "auth_google_oauth"/);
+  assert.match(authTf, /data "aws_secretsmanager_secret" "auth_jwt"/);
+  assert.match(authTf, /data "aws_secretsmanager_secret" "auth_stripe"/);
+  assert.doesNotMatch(authTf, /resource "aws_secretsmanager_secret"/);
   assert.doesNotMatch(authTf, /aws_secretsmanager_secret_version/);
   assert.doesNotMatch(authTf, /client_secret\s*=/);
   assert.doesNotMatch(authTf, /signing_key\s*=/);
@@ -32,12 +33,7 @@ test("auth Terraform protects billing summary with JWT auth and leaves Stripe we
   assert.match(authTf, /route_key\s+=\s+"POST \/billing\/stripe-webhook"/);
 });
 
-test("auth Terraform protects direct API Gateway access with regional WAF and rate limiting", () => {
-  assert.match(authTf, /resource "aws_wafv2_web_acl" "auth_api"[\s\S]*scope\s+=\s+"REGIONAL"/);
-  assert.match(authTf, /resource "aws_wafv2_web_acl_association" "auth_api_stage"[\s\S]*resource_arn\s+=\s+aws_apigatewayv2_stage\.auth_default\.arn[\s\S]*web_acl_arn\s+=\s+aws_wafv2_web_acl\.auth_api\.arn/);
-  assert.match(authTf, /rate_based_statement\s+\{\s+aggregate_key_type\s+=\s+"IP"\s+limit\s+=\s+local\.waf_rate_limit_per_five_minute\s+\}/s);
-  assert.match(authTf, /AWSManagedRulesAmazonIpReputationList/);
-  assert.match(authTf, /AWSManagedRulesCommonRuleSet/);
-  assert.match(authTf, /AWSManagedRulesKnownBadInputsRuleSet/);
-  assert.match(authTf, /AWSManagedRulesSQLiRuleSet/);
+test("auth Terraform protects API traffic through CloudFront WAF and rate limiting", () => {
+  assert.match(authTf, /resource "aws_cloudfront_distribution" "auth_api"[\s\S]*web_acl_id\s+=\s+aws_wafv2_web_acl\.sites\.arn/);
+  assert.doesNotMatch(authTf, /resource "aws_wafv2_web_acl_association" "auth_api_stage"/);
 });

@@ -59,16 +59,16 @@ output "auth_stripe_webhook_function_name" {
 }
 
 output "auth_google_oauth_secret_arn" {
-  value     = aws_secretsmanager_secret.auth_google_oauth.arn
+  value     = data.aws_secretsmanager_secret.auth_google_oauth.arn
   sensitive = true
 }
 
 output "auth_jwt_secret_arn" {
-  value     = aws_secretsmanager_secret.auth_jwt.arn
+  value     = data.aws_secretsmanager_secret.auth_jwt.arn
   sensitive = true
 }
 
 output "auth_stripe_secret_arn" {
-  value     = aws_secretsmanager_secret.auth_stripe.arn
+  value     = data.aws_secretsmanager_secret.auth_stripe.arn
   sensitive = true
 }

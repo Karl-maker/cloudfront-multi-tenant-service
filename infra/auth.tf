@@ -75,29 +75,27 @@ data "aws_cloudfront_origin_request_policy" "api_all_viewer_except_host" {
   name = "Managed-AllViewerExceptHostHeader"
 }
 
-resource "aws_secretsmanager_secret" "auth_google_oauth" {
-  name                    = local.auth_google_oauth_secret_name
-  description             = "Google OAuth client settings for Syncpoly Builder login"
-  recovery_window_in_days = 30
+data "aws_secretsmanager_secret" "auth_google_oauth" {
+  name = local.auth_google_oauth_secret_name
 }
 
-resource "aws_secretsmanager_secret" "auth_jwt" {
-  name                    = local.auth_jwt_secret_name
-  description             = "JWT signing key for Syncpoly Builder API access tokens"
-  recovery_window_in_days = 30
+data "aws_secretsmanager_secret" "auth_jwt" {
+  name = local.auth_jwt_secret_name
 }
 
-resource "aws_secretsmanager_secret" "auth_stripe" {
-  name                    = local.auth_stripe_secret_name
-  description             = "Stripe secret and webhook signing keys for Syncpoly Builder billing"
-  recovery_window_in_days = 30
+data "aws_secretsmanager_secret" "auth_stripe" {
+  name = local.auth_stripe_secret_name
 }
 
 resource "aws_dynamodb_table" "auth_users" {
   name                        = local.auth_users_table_name
   billing_mode                = "PAY_PER_REQUEST"
-  hash_key                    = "user_id"
   deletion_protection_enabled = true
+
+  key_schema {
+    attribute_name = "user_id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "user_id"
@@ -111,8 +109,12 @@ resource "aws_dynamodb_table" "auth_users" {
 
   global_secondary_index {
     name            = "email-index"
-    hash_key        = "email"
     projection_type = "ALL"
+
+    key_schema {
+      attribute_name = "email"
+      key_type       = "HASH"
+    }
   }
 
   point_in_time_recovery {
@@ -127,9 +129,17 @@ resource "aws_dynamodb_table" "auth_users" {
 resource "aws_dynamodb_table" "auth_logins" {
   name                        = local.auth_logins_table_name
   billing_mode                = "PAY_PER_REQUEST"
-  hash_key                    = "user_id"
-  range_key                   = "login_id"
   deletion_protection_enabled = true
+
+  key_schema {
+    attribute_name = "user_id"
+    key_type       = "HASH"
+  }
+
+  key_schema {
+    attribute_name = "login_id"
+    key_type       = "RANGE"
+  }
 
   attribute {
     name = "user_id"
@@ -158,9 +168,17 @@ resource "aws_dynamodb_table" "auth_logins" {
 resource "aws_dynamodb_table" "billing_events" {
   name                        = local.billing_events_table_name
   billing_mode                = "PAY_PER_REQUEST"
-  hash_key                    = "stripe_customer_id"
-  range_key                   = "stripe_event_id"
   deletion_protection_enabled = true
+
+  key_schema {
+    attribute_name = "stripe_customer_id"
+    key_type       = "HASH"
+  }
+
+  key_schema {
+    attribute_name = "stripe_event_id"
+    key_type       = "RANGE"
+  }
 
   attribute {
     name = "stripe_customer_id"
@@ -283,8 +301,8 @@ data "aws_iam_policy_document" "auth_google_login_lambda" {
     ]
 
     resources = [
-      aws_secretsmanager_secret.auth_google_oauth.arn,
-      aws_secretsmanager_secret.auth_jwt.arn
+      data.aws_secretsmanager_secret.auth_google_oauth.arn,
+      data.aws_secretsmanager_secret.auth_jwt.arn
     ]
   }
 
@@ -311,7 +329,7 @@ data "aws_iam_policy_document" "auth_authorizer_lambda" {
     ]
 
     resources = [
-      aws_secretsmanager_secret.auth_jwt.arn
+      data.aws_secretsmanager_secret.auth_jwt.arn
     ]
   }
 }
@@ -339,7 +357,7 @@ data "aws_iam_policy_document" "auth_billing_summary_lambda" {
     ]
 
     resources = [
-      aws_secretsmanager_secret.auth_stripe.arn
+      data.aws_secretsmanager_secret.auth_stripe.arn
     ]
   }
 
@@ -378,7 +396,7 @@ data "aws_iam_policy_document" "auth_stripe_webhook_lambda" {
     ]
 
     resources = [
-      aws_secretsmanager_secret.auth_stripe.arn
+      data.aws_secretsmanager_secret.auth_stripe.arn
     ]
   }
 
@@ -466,10 +484,10 @@ resource "aws_lambda_function" "auth_google_login" {
   environment {
     variables = {
       ACCESS_TOKEN_TTL_SECONDS = tostring(local.auth_access_token_ttl_seconds)
-      GOOGLE_OAUTH_SECRET_ARN  = aws_secretsmanager_secret.auth_google_oauth.arn
+      GOOGLE_OAUTH_SECRET_ARN  = data.aws_secretsmanager_secret.auth_google_oauth.arn
       JWT_AUDIENCE             = local.auth_jwt_audience
       JWT_ISSUER               = local.auth_jwt_issuer
-      JWT_SECRET_ARN           = aws_secretsmanager_secret.auth_jwt.arn
+      JWT_SECRET_ARN           = data.aws_secretsmanager_secret.auth_jwt.arn
       LOGINS_TABLE_NAME        = aws_dynamodb_table.auth_logins.name
       LOGINS_TTL_SECONDS       = tostring(local.auth_login_retention_ttl_seconds)
       USERS_TABLE_NAME         = aws_dynamodb_table.auth_users.name
@@ -504,7 +522,7 @@ resource "aws_lambda_function" "auth_authorizer" {
     variables = {
       JWT_AUDIENCE   = local.auth_jwt_audience
       JWT_ISSUER     = local.auth_jwt_issuer
-      JWT_SECRET_ARN = aws_secretsmanager_secret.auth_jwt.arn
+      JWT_SECRET_ARN = data.aws_secretsmanager_secret.auth_jwt.arn
     }
   }
 
@@ -565,7 +583,7 @@ resource "aws_lambda_function" "auth_billing_summary" {
   environment {
     variables = {
       BILLING_EVENTS_TABLE_NAME = aws_dynamodb_table.billing_events.name
-      STRIPE_SECRET_ARN         = aws_secretsmanager_secret.auth_stripe.arn
+      STRIPE_SECRET_ARN         = data.aws_secretsmanager_secret.auth_stripe.arn
       USERS_TABLE_NAME          = aws_dynamodb_table.auth_users.name
     }
   }
@@ -598,7 +616,7 @@ resource "aws_lambda_function" "auth_stripe_webhook" {
     variables = {
       BILLING_EVENTS_TABLE_NAME  = aws_dynamodb_table.billing_events.name
       BILLING_EVENTS_TTL_SECONDS = tostring(local.billing_event_ttl_seconds)
-      STRIPE_SECRET_ARN          = aws_secretsmanager_secret.auth_stripe.arn
+      STRIPE_SECRET_ARN          = data.aws_secretsmanager_secret.auth_stripe.arn
     }
   }
 
@@ -657,137 +675,6 @@ resource "aws_apigatewayv2_stage" "auth_default" {
 resource "aws_cloudwatch_log_group" "auth_api_gateway" {
   name              = "/aws/apigateway/${local.auth_api_name}"
   retention_in_days = 30
-}
-
-resource "aws_wafv2_web_acl" "auth_api" {
-  name        = "${local.auth_api_name}-regional-waf"
-  description = "Managed WAF protections and rate limiting for the Syncpoly Builder API Gateway stage"
-  scope       = "REGIONAL"
-
-  default_action {
-    allow {}
-  }
-
-  rule {
-    name     = "AWSManagedIpReputationList"
-    priority = 0
-
-    override_action {
-      none {}
-    }
-
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesAmazonIpReputationList"
-        vendor_name = "AWS"
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AuthApiAWSManagedIpReputationList"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "AWSManagedCommonRules"
-    priority = 10
-
-    override_action {
-      none {}
-    }
-
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesCommonRuleSet"
-        vendor_name = "AWS"
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AuthApiAWSManagedCommonRules"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "AWSManagedKnownBadInputs"
-    priority = 20
-
-    override_action {
-      none {}
-    }
-
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesKnownBadInputsRuleSet"
-        vendor_name = "AWS"
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AuthApiAWSManagedKnownBadInputs"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "AWSManagedSQLiRules"
-    priority = 30
-
-    override_action {
-      none {}
-    }
-
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesSQLiRuleSet"
-        vendor_name = "AWS"
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AuthApiAWSManagedSQLiRules"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  rule {
-    name     = "RateLimitByIp"
-    priority = 40
-
-    action {
-      block {}
-    }
-
-    statement {
-      rate_based_statement {
-        aggregate_key_type = "IP"
-        limit              = local.waf_rate_limit_per_five_minute
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AuthApiRateLimitByIp"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  visibility_config {
-    cloudwatch_metrics_enabled = true
-    metric_name                = "${local.auth_api_name}-regional-waf"
-    sampled_requests_enabled   = true
-  }
-}
-
-resource "aws_wafv2_web_acl_association" "auth_api_stage" {
-  resource_arn = aws_apigatewayv2_stage.auth_default.arn
-  web_acl_arn  = aws_wafv2_web_acl.auth_api.arn
 }
 
 resource "aws_apigatewayv2_authorizer" "auth_jwt" {
