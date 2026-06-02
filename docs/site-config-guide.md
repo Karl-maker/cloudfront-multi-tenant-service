@@ -6,7 +6,7 @@ Most page requests use a shared template:
 
 ```text
 /about
--> s3://syncpoly-web-builder-sites/syncpoly/templates/pressure-washer/about/index.html
+-> s3://syncpoly-web-builder-sites/syncpoly/templates/service/about/index.html
 ```
 
 Tenant-owned files use the mapped site folder:
@@ -23,7 +23,7 @@ Use this structure inside `syncpoly-web-builder-sites`:
 ```text
 syncpoly/
   templates/
-    pressure-washer/
+    service/
       index.html
       about/
         index.html
@@ -53,7 +53,7 @@ Add each public hostname in `cloudfront/domain-folder-router.js`:
 var sitesByHost = {
   "aurum-eco-power-wash.syncpoly.com": {
     folder: "aurum-eco-power-wash",
-    template: "pressure-washer"
+    template: "service"
   }
 };
 ```
@@ -69,7 +69,7 @@ Use lowercase `kebab-case` everywhere:
 
 ```text
 aurum-eco-power-wash
-pressure-washer
+service
 hero-pressure-washing.jpg
 driveway-before-after.jpg
 ```
@@ -87,7 +87,7 @@ Recommended pattern:
 ```text
 domain: aurum-eco-power-wash.syncpoly.com
 folder: aurum-eco-power-wash
-template: pressure-washer
+template: service
 ```
 
 ## Tenant-Owned Routes
@@ -121,7 +121,7 @@ All other paths map to the shared template:
 
 ## Site Config Contract
 
-The shared template should fetch config from:
+The shared Next static template fetches tenant config from:
 
 ```text
 /site.config.json
@@ -129,57 +129,227 @@ The shared template should fetch config from:
 
 The browser URL stays tenant-specific, and CloudFront maps the request to the correct S3 folder.
 
-Keep `site.config.json` as valid JSON:
+The template schema lives at:
 
-- no comments
-- no trailing commas
-- UTF-8 encoding
-- tenant image paths should start with `/media/`
+```text
+/workspace/templates/next-static-config-template/content/site.schema.json
+```
 
-Example:
+Keep `site.config.json` as strict JSON: no comments, no trailing commas, UTF-8 encoding, absolute canonical URLs, and tenant image paths that start with `/media/`.
+
+Required top-level fields:
+
+- `site`: identity, canonical URL, locale, description, manifest, PWA, and `llms.txt` notes.
+- `seo`: default title/image, robots settings, and site-level JSON-LD.
+- `theme`: color tokens, font stacks, radius, max width, background, and optional scoped `customCss`.
+- `navigation`: logo text/logo, header links, and optional CTA.
+- `pages`: the static route list. Must include `path: "/"`.
+- `footer`: tagline, footer links, social links, and copyright.
+
+Common optional fields:
+
+- `deployment`: `basePath` and `assetPrefix`; leave empty for Syncpoly S3/CloudFront root hosting.
+- `trial` and `trialBanner`: Syncpoly attribution banner controls.
+- `blocks`: reusable sections that pages can insert with `{ "use": "blockName" }`.
+- `syncpoly`: local deployment hints such as `folder` and `bucket`.
+
+## Configuring Pages
+
+Every object in `pages` creates one route. Use lowercase kebab-case paths and trailing slashes for readability. The renderer normalizes them.
+
+Page shape:
 
 ```json
 {
-  "site": {
-    "name": "Aurum Eco Power Wash",
-    "slug": "aurum-eco-power-wash",
-    "template": "pressure-washer",
-    "domain": "aurum-eco-power-wash.syncpoly.com"
-  },
-  "brand": {
-    "logo": "/media/logo.png",
-    "primaryColor": "#0f766e",
-    "accentColor": "#f5b942"
-  },
+  "path": "/services/",
+  "title": "Services",
+  "layout": "content",
+  "description": "Short fallback description for this page.",
   "seo": {
-    "title": "Aurum Eco Power Wash",
-    "description": "Professional exterior cleaning and pressure washing.",
-    "image": "/media/hero-pressure-washing.jpg"
-  },
-  "contact": {
-    "phone": "+1 555 0100",
-    "email": "hello@example.com",
-    "serviceArea": "Local service area"
-  },
-  "hero": {
-    "headline": "Eco-conscious pressure washing that restores curb appeal.",
-    "subheadline": "Driveways, patios, siding, decks, and storefronts.",
     "image": "/media/hero-pressure-washing.jpg",
-    "ctaLabel": "Request a quote",
-    "ctaHref": "tel:+15550100"
+    "title": "Pressure Washing Services",
+    "description": "Browse driveway, house, roof, and commercial pressure washing services.",
+    "keywords": ["pressure washing", "driveway cleaning"],
+    "structuredData": {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "Pressure washing services"
+    }
   },
-  "services": [
+  "sections": []
+}
+```
+
+Use page-level `seo.title` without repeating the brand when `seo.titleTemplate` already appends it. Add page-level `seo.structuredData` only when you have truthful, verified page-specific data.
+
+Do not add routes casually. If a page path is not present in the template export, rebuild the template with that route or keep the content as a section on an existing page. Update `navigation.links`, `footer.links`, CTAs, and cards only after the target page or anchor exists.
+
+## Configuring Sections
+
+Sections render in the exact order listed in each page's `sections` array.
+
+Valid section types from the current template schema:
+
+```text
+hero, mediaGallery, rates, amenities, location, featureGrid, split, cardGrid, stats, timeline, faq, testimonials, cta, richText, logoCloud, contact
+```
+
+Common section fields:
+
+- `id`: required anchor target; use lowercase kebab-case and keep it unique within the page.
+- `type`: required renderer type from the list above.
+- `kicker`, `title`, `body`: section intro copy.
+- `variant`: layout modifier such as `centered`, `split`, `mediaLeft`, or `mediaRight`.
+- `className`: scoped CSS hook when `theme.customCss` is truly needed.
+- `background`: `{ "type": "solid" | "gradient" | "image", "value": "...", "overlay": "..." }`.
+- `media`: one image, video, or embed.
+- `mediaItems` and `carousel`: hero/gallery carousel media and behavior.
+- `actions`: CTA links rendered as buttons.
+- `items`: repeated entries for cards, rates, amenities, stats, timeline, FAQ, testimonials, and logo cloud.
+- `methods` and `form`: contact/location details and contact form settings.
+
+Hero sections support background images and optional carousel media:
+
+```json
+{
+  "id": "hero",
+  "type": "hero",
+  "variant": "centered",
+  "kicker": "Exterior cleaning",
+  "title": "Eco-conscious pressure washing that restores curb appeal.",
+  "body": "Driveways, patios, siding, decks, and storefronts.",
+  "background": {
+    "type": "image",
+    "value": "/media/hero-pressure-washing.jpg",
+    "overlay": "linear-gradient(90deg, rgba(7, 38, 48, 0.78), rgba(7, 38, 48, 0.28))"
+  },
+  "actions": [
+    { "label": "Request a quote", "href": "tel:+15550100", "style": "primary" },
+    { "label": "View services", "href": "#services", "style": "secondary" }
+  ]
+}
+```
+
+Use `rates` for packages, service pricing, room rates, or quote ranges. The CLI still accepts `pricing[]` in `site.input.json`, but generated `site.config.json` uses section type `rates`:
+
+```json
+{
+  "id": "rates",
+  "type": "rates",
+  "kicker": "Rates",
+  "title": "Simple options to start the conversation.",
+  "items": [
     {
-      "name": "Driveway Cleaning",
-      "description": "Remove stains, buildup, and weathering from concrete and pavers."
-    },
-    {
-      "name": "House Washing",
-      "description": "Soft-wash exterior siding, trim, and entry areas."
+      "label": "Popular",
+      "title": "Driveway Refresh",
+      "price": "From $99",
+      "body": "A focused clean for driveways and walkways.",
+      "amenities": ["Pre-rinse", "Surface clean", "Final rinse"],
+      "href": "#contact"
     }
   ]
 }
 ```
+
+Use `location` for Google Maps, service areas, office details, hours, and directions. The CLI still accepts `map` in `site.input.json`, but generated config uses section type `location`:
+
+```json
+{
+  "id": "location",
+  "type": "location",
+  "kicker": "Location",
+  "title": "Find us or check the service area.",
+  "map": {
+    "title": "Service area map",
+    "query": "Port of Spain, Trinidad",
+    "address": "Port of Spain, Trinidad"
+  },
+  "methods": [
+    { "label": "Hours", "value": "Mon - Fri, 8:00am - 5:00pm" }
+  ]
+}
+```
+
+Use reusable `blocks` for shared FAQ/contact/CTA content:
+
+```json
+{
+  "blocks": {
+    "defaultFaq": {
+      "id": "faq",
+      "type": "faq",
+      "title": "Questions",
+      "items": [
+        { "question": "What areas do you serve?", "answer": "Replace with the verified service area." }
+      ]
+    }
+  },
+  "pages": [
+    {
+      "path": "/",
+      "sections": [{ "use": "defaultFaq" }]
+    }
+  ]
+}
+```
+
+## SEO And Discovery Files
+
+Set `site.url` to the final production origin before generating SEO files. It drives canonical URLs, sitemap URLs, robots sitemap references, Open Graph URLs, JSON-LD URLs, and `llms.txt` links.
+
+Global SEO shape:
+
+```json
+{
+  "seo": {
+    "titleTemplate": "%s | Aurum Eco Power Wash",
+    "defaultTitle": "Aurum Eco Power Wash | Exterior Cleaning",
+    "defaultImage": "/media/hero-pressure-washing.jpg",
+    "robots": {
+      "index": true,
+      "follow": true,
+      "allow": ["/"],
+      "disallow": ["/offline/"]
+    },
+    "structuredData": {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Aurum Eco Power Wash"
+    }
+  }
+}
+```
+
+SEO files belong in the tenant folder, next to `site.config.json`:
+
+```text
+sites/<name>/
+  site.config.json
+  robots.txt
+  sitemap.xml
+  llms.txt
+  llm.txt
+```
+
+Generate them with:
+
+```bash
+npm run site:make -- --input ./sites/<name>/site.input.json --site <name> --template service
+```
+
+Refresh only SEO files after editing an existing config:
+
+```bash
+npm run site:make-seo -- --site ./sites/<name>
+```
+
+Upload them separately from config and media:
+
+```bash
+npm run site:upload-seo -- --source ./sites/<name> --config ./sites/<name>/site.config.json
+```
+
+`upload-seo` includes `robots.txt`, `robot.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt` when present. Keep `llms.txt` factual and short: describe the business, canonical URL, important pages, and any notes useful to AI/search systems. Do not invent locations, reviews, ratings, licenses, guarantees, or prices for structured data or SEO copy.
 
 ## Uploading A Site
 
@@ -216,6 +386,7 @@ sites/
     robots.txt
     sitemap.xml
     llms.txt
+    llm.txt
     media/
       logo.png
       favicon.svg
@@ -243,7 +414,7 @@ npm run site:make -- \
 npm run site:audit -- --site ./sites/aurum-eco-power-wash
 ```
 
-The CLI selects a default theme preset from the target template: `--template service` uses the modern service preset, while `--template real-estate` uses the property-focused real-estate preset. Pass `--theme` only when intentionally overriding that template default. The service template owns the polished gallery, pricing, booking button, WhatsApp click-to-chat, Google Maps, and contact layouts. The AI should usually edit only `site.input.json`; the CLI owns section structure, `theme.colors`, `theme.fonts`, `theme.customCss`, `robots.txt`, `sitemap.xml`, and `llms.txt`.
+The CLI selects a default theme preset from the target template: `--template service` uses the modern service preset, while `--template real-estate` uses the property-focused real-estate preset. Pass `--theme` only when intentionally overriding that template default. The service template owns the polished gallery, rates, booking button, WhatsApp click-to-chat, location/Google Maps, and contact layouts. The AI should usually edit only `site.input.json`; the CLI owns section structure, `theme.colors`, `theme.fonts`, `theme.customCss`, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt`.
 
 Minimal `site.input.json`:
 
@@ -360,7 +531,7 @@ npm run site:make-seo -- --site ./sites/aurum-eco-power-wash
 Add the CloudFront route and run local proof checks:
 
 ```bash
-npm run site:add-route -- --site aurum-eco-power-wash --template real-estate
+npm run site:add-route -- --site aurum-eco-power-wash --template service
 npm run site:launch-check -- --site ./sites/aurum-eco-power-wash --run-checks
 ```
 
@@ -385,7 +556,7 @@ npm run site:make-outreach -- --site ./sites/aurum-eco-power-wash --benefit serv
 For a supervised end-to-end gate, run:
 
 ```bash
-npm run site:publish -- --site ./sites/aurum-eco-power-wash --template real-estate
+npm run site:publish -- --site ./sites/aurum-eco-power-wash --template service
 ```
 
 Use `--skip-upload` or `--skip-dns` only when the current environment cannot perform those steps.
@@ -405,12 +576,33 @@ Use versioned filenames for long-lived media when possible:
 /media/hero-pressure-washing-v3.jpg
 ```
 
+## Uploading The Shared Template
+
+The Next static config template is deployed as the shared CloudFront template named `service`.
+
+Build the template export, then upload the `out/` folder with the CLI:
+
+```bash
+cd /workspace/templates/next-static-config-template
+npm run build
+cd /workspace/web-builder
+syncpoly-site upload-template --template-name service --source /workspace/templates/next-static-config-template/out --profile prod
+```
+
+The successful proof string is:
+
+```text
+Template uploaded: syncpoly/templates/service/ (... file(s))
+```
+
+The template upload includes its static shell files and generated static discovery files in `out/`. Tenant-specific `site.config.json`, media, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt` are still uploaded per site with `upload-config`, `upload-media`, and `upload-seo`.
+
 ## Adding A New Site
 
 1. Choose the domain, folder, and template names.
 2. Create the S3 tenant folder.
 3. Add `site.config.json`.
-4. Upload `media/`, `robots.txt`, `sitemap.xml`, and `llms.txt`.
+4. Upload `media/`, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt`.
 5. Add the host mapping in `cloudfront/domain-folder-router.js`.
 6. Run:
 

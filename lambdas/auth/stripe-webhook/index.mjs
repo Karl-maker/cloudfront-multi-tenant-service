@@ -107,6 +107,7 @@ async function recordStripeEvent(dynamodbClient, stripeEvent, nowSeconds) {
     return;
   }
 
+  let insertedEvent = false;
   try {
     await dynamodbClient.send(
       new PutItemCommand({
@@ -127,6 +128,7 @@ async function recordStripeEvent(dynamodbClient, stripeEvent, nowSeconds) {
         ConditionExpression: "attribute_not_exists(stripe_event_id)"
       })
     );
+    insertedEvent = true;
   } catch (error) {
     if (error.name !== "ConditionalCheckFailedException") {
       throw error;
@@ -170,6 +172,52 @@ async function recordStripeEvent(dynamodbClient, stripeEvent, nowSeconds) {
       })
     );
   }
+
+  if (insertedEvent) {
+    await grantPaidCatalogEntitlements(dynamodbClient, stripeEvent, object, nowSeconds);
+  }
+}
+
+async function grantPaidCatalogEntitlements(dynamodbClient, stripeEvent, object, nowSeconds) {
+  const metadata = object.metadata || {};
+  const itemId = metadata.syncpoly_catalog_item_id;
+  const userId = metadata.syncpoly_user_id;
+  const directPaymentSucceeded =
+    stripeEvent.type === "payment_intent.succeeded" &&
+    object.status === "succeeded" &&
+    metadata.syncpoly_payment_source === "direct_payment_intent";
+  const checkoutPaymentSucceeded =
+    stripeEvent.type === "checkout.session.completed" &&
+    (object.payment_status === "paid" || object.status === "complete");
+
+  const grant = paidEntitlementGrant(itemId);
+  if (!grant || !userId || (!directPaymentSucceeded && !checkoutPaymentSucceeded)) {
+    return;
+  }
+
+  await dynamodbClient.send(
+    new UpdateItemCommand({
+      TableName: process.env.USERS_TABLE_NAME,
+      Key: {
+        user_id: { S: userId }
+      },
+      UpdateExpression: `SET updated_at = :updatedAt ADD ${grant.attribute} :amount`,
+      ExpressionAttributeValues: {
+        ":updatedAt": { S: new Date((stripeEvent.created || nowSeconds) * 1000).toISOString() },
+        ":amount": { N: String(grant.amount) }
+      }
+    })
+  );
+}
+
+function paidEntitlementGrant(itemId) {
+  if (itemId === "additional_website_one_time") {
+    return { attribute: "additional_website_credits", amount: 1 };
+  }
+  if (itemId === "media_storage_10mb_one_time") {
+    return { attribute: "additional_media_storage_mb", amount: 10 };
+  }
+  return null;
 }
 
 async function getStripeSecret(secretsClient, secretCache = {}) {

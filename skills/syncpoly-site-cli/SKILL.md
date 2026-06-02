@@ -1,6 +1,6 @@
 ---
 name: syncpoly-site-cli
-description: Build, verify, upload, and launch Syncpoly client websites with the syncpoly-site CLI. Use when a user asks to create a client website, generate site.config.json/robots.txt/sitemap.xml/llms.txt, upload tenant media or config to S3, add a syncpoly.com GoDaddy CNAME, update the CloudFront host map, capture screenshots, resume a failed site launch, or draft outreach for a newly built site. Do not use for generic web design advice without Syncpoly publishing.
+description: Build, verify, upload, and launch Syncpoly client websites with the syncpoly-site CLI. Use when a user asks to create a client website, generate site.config.json/robots.txt/sitemap.xml/llms.txt/llm.txt, upload tenant media or config to S3, add a syncpoly.com GoDaddy CNAME, update the CloudFront host map, capture screenshots, resume a failed site launch, or draft outreach for a newly built site. Do not use for generic web design advice without Syncpoly publishing.
 ---
 
 # Syncpoly Site CLI
@@ -11,7 +11,7 @@ Use this skill for one job: turn client inputs into a schema-valid Syncpoly site
 
 This is a CLI-first, proof-gated workflow. Do not merely describe work. In a tool-enabled OpenClaw session, create files, validate them, upload them, update routing/DNS, capture screenshots, and report command results. In a chat-only or channel-only session, collect inputs and provide exact commands/artifacts for the operator; do not claim deployment, DNS, screenshots, outreach, or channel sends happened unless a tool actually performed them.
 
-When the operator asks to build, make, launch, or finish a client website, treat that as a request for the full end-to-end workflow by default. Do not stop after creating local files. Continue through intake, site config, SEO files, `llms.txt`, media placement, validation, S3 uploads, CloudFront host mapping, build/test, GoDaddy CNAME, localhost screenshots, and WhatsApp outreach with screenshots. Pause only when a gate is blocked by missing required input, missing credentials, validation failure, test failure, DNS failure, upload failure, or an unavailable sender.
+When the operator asks to build, make, launch, or finish a client website, treat that as a request for the full end-to-end workflow by default. Do not stop after creating local files. Continue through intake, site config, SEO files, `llms.txt`, `llm.txt`, media placement, validation, S3 uploads, CloudFront host mapping, build/test, GoDaddy CNAME, localhost screenshots, and WhatsApp outreach with screenshots. Pause only when a gate is blocked by missing required input, missing credentials, validation failure, test failure, DNS failure, upload failure, or an unavailable sender.
 
 ## WhatsApp Batch Queue Behavior
 
@@ -35,7 +35,7 @@ Do not combine multiple clients into one site, do not skip ahead to easier items
 Default full-build checklist:
 
 1. Get or infer the unique site name, client/business name, industry, location/service area, offer, contact details, images, and outreach destination.
-2. Create or resume `./sites/<unique-name>/site.input.json`, `site.config.json`, `robots.txt`, `sitemap.xml`, `llms.txt`, and `media/` based on the client inputs.
+2. Create or resume `./sites/<unique-name>/site.input.json`, `site.config.json`, `robots.txt`, `sitemap.xml`, `llms.txt`, `llm.txt`, and `media/` based on the client inputs.
 3. Copy every usable provided image into `media/`, reference it with `/media/...` in `site.config.json`, and make it visible in the site.
 4. Create a lightweight `site.input.json` with client facts, text, contact details, booking links, WhatsApp number, media paths, service packages, stats, FAQs, and services. Let the CLI apply theme CSS, service-template page structure, SEO files, and screenshot capture.
 5. Use the CLI gates for the rest: `make-site`, `audit-site`, `upload-*`, `add-route`, `launch-check`, `add-cname`, `screenshot`, `screenshot-audit`, and `make-outreach`. Use the shared CloudFront template name `service` unless the operator explicitly requests another deployed template.
@@ -175,6 +175,7 @@ Expected local layout:
 sites/<unique-name>/
   site.input.json
   site.config.json
+  llm.txt
   robots.txt
   sitemap.xml
   llms.txt
@@ -214,8 +215,9 @@ This command applies the template-matched preset from the CLI, writes `site.conf
 - `robots.txt` with sitemap URL
 - `sitemap.xml` for known pages
 - `llms.txt` with a short factual site summary
+- `llm.txt` as the compatibility alias for singular spelling
 
-Do not hand-author `theme.customCss`, `theme.colors`, `theme.fonts`, `robots.txt`, `sitemap.xml`, or `llms.txt` unless the CLI command is unavailable or the operator specifically asks for a custom override. The AI should focus on accurate text and media paths in `site.input.json`.
+Do not hand-author `theme.customCss`, `theme.colors`, `theme.fonts`, `robots.txt`, `sitemap.xml`, `llms.txt`, or `llm.txt` unless the CLI command is unavailable or the operator specifically asks for a custom override. The AI should focus on accurate text and media paths in `site.input.json`.
 
 If image files are large, rely on `syncpoly-site upload-media`; it compresses and creates `.webp` variants.
 
@@ -362,23 +364,42 @@ The generated schema-valid config includes:
 Valid service-template section types:
 
 ```text
-hero, mediaGallery, featureGrid, split, cardGrid, stats, timeline, pricing, map, faq, testimonials, cta, richText, logoCloud, contact
+hero, mediaGallery, rates, amenities, location, featureGrid, split, cardGrid, stats, timeline, faq, testimonials, cta, richText, logoCloud, contact
 ```
 
 Prefer this page structure unless the client needs less:
 
-- home: `hero`, `featureGrid` services, `mediaGallery` when photos exist, `pricing` when rates/packages are known, `split`, `stats` or `testimonials`, `map` when an address/service area is known, `faq`, `contact`, `cta`
+- home: `hero`, `featureGrid` services, `mediaGallery` when photos exist, `rates` when packages or quote ranges are known, `split`, `stats` or `testimonials`, `location` when an address/service area is known, `faq`, `contact`, `cta`
 - services/contact only when those routes already exist in the current template/export or the operator explicitly asks for them
 - galleries, FAQs, menus, portfolios, listings, testimonials, and about content should usually be sections on an existing page, not new pages
 
 Do not add new pages/routes just because the content type sounds useful. Before adding any page besides `/`, confirm the template/export already has that route or the operator explicitly requested that exact page. If the route is not supported or not requested, fold the content into home page sections and do not add navigation, footer, sitemap, or `pages[]` entries for it.
 
+Page objects must use:
+
+- `path`: `/` or lowercase kebab-case with trailing slash, such as `/services/`
+- `title`: short human page name
+- `description`: fallback page description
+- `seo`: page title, description, image, keywords, and optional truthful page-level JSON-LD
+- `sections`: ordered section objects or block references such as `{ "use": "defaultFaq" }`
+
+Top-level SEO must use:
+
+- `site.url`: final production URL without a trailing slash
+- `seo.titleTemplate`: usually `%s | <business-name>`
+- `seo.defaultTitle`: site-level default title
+- `seo.defaultImage`: `/media/...` hero or dedicated OG image
+- `seo.robots.index`, `seo.robots.follow`, `allow`, and `disallow`
+- `seo.structuredData`: truthful schema.org JSON-LD only
+
+The CLI-generated discovery files are part of the site, not optional extras. `robots.txt` points to the sitemap, `sitemap.xml` lists configured pages, `llms.txt` summarizes the site for AI/search systems, and `llm.txt` mirrors `llms.txt` for singular-spelling compatibility. Upload them with `syncpoly-site upload-seo` after config validation.
+
 For service businesses, include these in `site.input.json` when available:
 
 - `booking.href` and `booking.label` for the primary booking button
 - `contact.whatsapp` for WhatsApp click-to-chat
-- `pricing[]` with package `title`, `price`, `body`, and `features`
-- `map.query` or `map.embedUrl` for Google Maps
+- `pricing[]` with package `title`, `price`, `body`, and `features` or `amenities`; the generated config renders them as `rates`
+- `map.query` or `map.embedUrl` for Google Maps; the generated config renders it as `location`
 - `media.gallery[]` for the gallery
 
 Use `syncpoly-site make-input` flags when quick entry is enough: `--booking-url`, `--whatsapp`, `--pricing`, and `--map`.
@@ -419,7 +440,7 @@ syncpoly-site list-themes
 syncpoly-site make-site --input ./sites/<unique-name>/site.input.json --site <unique-name> --template service
 ```
 
-The CLI selects a default preset from the target template: `service` gets the approved modern service style, and `real-estate` gets the property-focused preset. Pass `--theme` only when intentionally overriding that template default. Do not ask the AI to invent CSS for each site. Put only content decisions in `site.input.json`: headline, body copy, services, stats, FAQs, contact methods, gallery media, hero media, SEO title/description, and notes for `llms.txt`.
+The CLI selects a default preset from the target template: `service` gets the approved modern service style, and `real-estate` gets the property-focused preset. Pass `--theme` only when intentionally overriding that template default. Do not ask the AI to invent CSS for each site. Put only content decisions in `site.input.json`: headline, body copy, services, stats, FAQs, contact methods, gallery media, hero media, SEO title/description, and notes for `llms.txt`/`llm.txt`.
 
 Choose copy, section content, and proof points from the client's industry and buyer psychology.
 

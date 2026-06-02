@@ -58,6 +58,10 @@ output "auth_pricing_function_name" {
   value = aws_lambda_function.auth_pricing.function_name
 }
 
+output "auth_websites_function_name" {
+  value = aws_lambda_function.auth_websites.function_name
+}
+
 output "auth_stripe_webhook_function_name" {
   value = aws_lambda_function.auth_stripe_webhook.function_name
 }

@@ -12,6 +12,7 @@ test.beforeEach(() => {
   process.env.STRIPE_SECRET_ARN = "arn:test:stripe";
   process.env.BILLING_EVENTS_TABLE_NAME = "billing-events-table";
   process.env.BILLING_EVENTS_TTL_SECONDS = "86400";
+  process.env.USERS_TABLE_NAME = "users-table";
 });
 
 test.afterEach(() => {
@@ -138,6 +139,101 @@ test("Stripe webhook treats duplicate event ids as idempotent success", async ()
 
   assert.equal(response.statusCode, 200);
   assert.equal(callCount, 2);
+});
+
+test("Stripe webhook grants an additional website credit after one-time payment succeeds", async () => {
+  const payload = JSON.stringify({
+    id: "evt_checkout_completed",
+    type: "checkout.session.completed",
+    created: TEST_NOW_SECONDS,
+    data: {
+      object: {
+        object: "checkout.session",
+        id: "cs_123",
+        customer: "cus_123",
+        status: "complete",
+        payment_status: "paid",
+        metadata: {
+          syncpoly_user_id: "google:subject",
+          syncpoly_catalog_item_id: "additional_website_one_time",
+          syncpoly_payment_source: "checkout_session"
+        }
+      }
+    }
+  });
+  const updates = [];
+  const handler = createStripeWebhookHandler({
+    dynamodbClient: createMockClient((command) => {
+      assert.ok(command instanceof PutItemCommand || command instanceof UpdateItemCommand);
+      if (command instanceof UpdateItemCommand) {
+        updates.push(command.input);
+      }
+      return {};
+    }),
+    secretsClient: createStripeSecretClient(),
+    nowSeconds: () => TEST_NOW_SECONDS,
+    secretCache: {}
+  });
+
+  const response = await handler({
+    body: payload,
+    headers: {
+      "stripe-signature": signStripeWebhookPayload(payload, webhookSecret, TEST_NOW_SECONDS)
+    }
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].TableName, "users-table");
+  assert.equal(updates[0].Key.user_id.S, "google:subject");
+  assert.equal(updates[0].ExpressionAttributeValues[":amount"].N, "1");
+});
+
+test("Stripe webhook grants 10MB media storage after the media add-on succeeds", async () => {
+  const payload = JSON.stringify({
+    id: "evt_media_storage_completed",
+    type: "checkout.session.completed",
+    created: TEST_NOW_SECONDS,
+    data: {
+      object: {
+        object: "checkout.session",
+        id: "cs_media",
+        customer: "cus_123",
+        status: "complete",
+        payment_status: "paid",
+        metadata: {
+          syncpoly_user_id: "google:subject",
+          syncpoly_catalog_item_id: "media_storage_10mb_one_time",
+          syncpoly_payment_source: "checkout_session"
+        }
+      }
+    }
+  });
+  const updates = [];
+  const handler = createStripeWebhookHandler({
+    dynamodbClient: createMockClient((command) => {
+      assert.ok(command instanceof PutItemCommand || command instanceof UpdateItemCommand);
+      if (command instanceof UpdateItemCommand) {
+        updates.push(command.input);
+      }
+      return {};
+    }),
+    secretsClient: createStripeSecretClient(),
+    nowSeconds: () => TEST_NOW_SECONDS,
+    secretCache: {}
+  });
+
+  const response = await handler({
+    body: payload,
+    headers: {
+      "stripe-signature": signStripeWebhookPayload(payload, webhookSecret, TEST_NOW_SECONDS)
+    }
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].UpdateExpression, "SET updated_at = :updatedAt ADD additional_media_storage_mb :amount");
+  assert.equal(updates[0].ExpressionAttributeValues[":amount"].N, "10");
 });
 
 function createStripeSecretClient() {

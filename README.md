@@ -133,7 +133,7 @@ npm run site:publish -- --site ./sites/example --template real-estate --skip-upl
 npm run godaddy:add-cname -- --domain syncpoly.com --name example --value d111111abcdef8.cloudfront.net
 ```
 
-Use `site:make-input`, `site:media-manifest`, and `site:make` to turn lightweight business facts and tenant media into `site.input.json`, `site.config.json`, `robots.txt`, `sitemap.xml`, and `llms.txt`. Pass `--template service` or `--template real-estate` so the CLI selects the matching default preset; `--theme` remains available when a site intentionally needs to override that template default. The service template owns the modern layout for hero, gallery, service cards, pricing, booking CTAs, WhatsApp click-to-chat, Google Maps, contact, and SEO support. AI agents should focus on text, contact details, media paths, services, prices, FAQs, booking links, and service areas instead of writing CSS or SEO files by hand. `site:audit`, `site:add-route`, `site:launch-check`, `site:screenshot-audit`, `site:make-outreach`, and `site:publish` cover the proof gates that agents used to perform manually.
+Use `site:make-input`, `site:media-manifest`, and `site:make` to turn lightweight business facts and tenant media into `site.input.json`, `site.config.json`, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt`. Pass `--template service` or `--template real-estate` so the CLI selects the matching default preset; `--theme` remains available when a site intentionally needs to override that template default. The service template owns the modern layout for hero, gallery, service cards, rates, booking CTAs, WhatsApp click-to-chat, location/Google Maps, contact, and SEO support. AI agents should focus on text, contact details, media paths, services, prices, FAQs, booking links, and service areas instead of writing CSS or SEO files by hand. `site:audit`, `site:add-route`, `site:launch-check`, `site:screenshot-audit`, `site:make-outreach`, and `site:publish` cover the proof gates that agents used to perform manually.
 
 `upload-media` optimizes media before uploading to S3. JPG/PNG/WebP/AVIF files are resized to fit within `1920x1920`, compressed for web delivery, and JPG/PNG/AVIF files also get a generated `.webp` sibling by default. Use `--no-webp` or `SITE_MEDIA_WEBP=0` to disable WebP variants.
 
@@ -284,8 +284,9 @@ Terraform creates these auth resources:
 - `syncpoly-builder-auth-me`: `GET /auth/me`, protected by the authorizer.
 - `syncpoly-builder-billing-summary`: `GET /billing/summary`, protected by the authorizer.
 - `syncpoly-builder-billing-pricing`: `GET /billing/catalog` and protected `POST /billing/checkout`.
+- `syncpoly-builder-websites`: protected website ownership, config, SEO, media upload, and deploy request endpoints.
 - `syncpoly-builder-stripe-webhook`: `POST /billing/stripe-webhook`, verifies Stripe signatures and records billing/dunning events.
-- `syncpoly-builder-users`, `syncpoly-builder-logins`, `syncpoly-builder-billing-catalog`, and `syncpoly-builder-billing-events`: DynamoDB tables for users, login audit records, pricing/entitlement catalog records, and Stripe billing events.
+- `syncpoly-builder-users`, `syncpoly-builder-logins`, `syncpoly-builder-websites`, `syncpoly-builder-website-folders`, `syncpoly-builder-website-media`, `syncpoly-builder-billing-catalog`, and `syncpoly-builder-billing-events`: DynamoDB tables for users, login audit records, owned websites, globally unique site folders, media records, pricing/entitlement catalog records, and Stripe billing events.
 - `syncpoly-builder-google-oauth`, `syncpoly-builder-jwt-signing-key`, and `syncpoly-builder-stripe`: Secrets Manager secrets.
 - A CloudFront distribution in front of the HTTP API.
 - A regional AWS WAF on the API Gateway stage with the same managed rules and 2,000 requests per 5 minutes per-IP rate limit as the static-site CloudFront WAF.
@@ -330,7 +331,7 @@ curl "$AUTH_API/auth/me" \
   -H "authorization: Bearer ACCESS_TOKEN"
 ```
 
-Pricing catalog is public and returns seeded plans/add-ons with boolean and usage entitlements. Usage entitlements reset monthly. The default catalog includes Free Website Plan, Basic Website Plan at $39.99/month, Custom Solution Plan, 5 More Change Requests, and Managed Promotions. Yearly prices are calculated with a 20% discount.
+Pricing catalog is public and returns seeded plans/add-ons/products with boolean and usage entitlements. Usage entitlements for plan services reset monthly. The default catalog includes Free Website Plan, Basic Website Plan at $39.99/month, Custom Solution Plan, Additional Website at a one-time $29.99, 10MB Media Storage at a one-time $4.99, 5 More Change Requests, and Managed Promotions. Each website plan includes one owned website. Free includes 10MB of media storage; Basic includes 50MB. Yearly subscription prices are calculated with a 20% discount.
 
 ```bash
 curl "$AUTH_API/billing/catalog"
@@ -343,6 +344,66 @@ curl -X POST "$AUTH_API/billing/checkout" \
   -H "authorization: Bearer ACCESS_TOKEN" \
   -H "content-type: application/json" \
   -d '{"itemId":"basic_website_plan","interval":"month","idempotencyKey":"frontend-button-click-id"}'
+```
+
+Websites are protected and scoped to the authenticated user. A user can create one included website from their plan entitlement. Website names derive globally unique S3 folder names in `syncpoly-builder-website-folders`. After the included capacity is used, `POST /websites` returns `402` with `catalogItemId: "additional_website_one_time"` until the user buys another website credit. Successful one-time payment grants `additional_website_credits`; creating the next website consumes one credit atomically with the folder claim.
+
+```bash
+curl "$AUTH_API/websites" \
+  -H "authorization: Bearer ACCESS_TOKEN"
+```
+
+```bash
+curl -X POST "$AUTH_API/websites" \
+  -H "authorization: Bearer ACCESS_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"name":"Customer Website","domain":"example.com"}'
+```
+
+Website content endpoints let owners update the selected template, validated site config, SEO files, compressed media, and deployment requests:
+
+```bash
+curl -X PUT "$AUTH_API/websites/WEBSITE_ID/template" \
+  -H "authorization: Bearer ACCESS_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"template":"service"}'
+```
+
+```bash
+curl -X PUT "$AUTH_API/websites/WEBSITE_ID/config" \
+  -H "authorization: Bearer ACCESS_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"config":{...}}'
+```
+
+Config updates are validated with the shared site config schema. Entitlement blocks prevent users from disabling ads or the Syncpoly banner when their current plan does not allow it.
+
+```bash
+curl -X PUT "$AUTH_API/websites/WEBSITE_ID/seo" \
+  -H "authorization: Bearer ACCESS_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"robotsTxt":"User-agent: *","sitemapXml":"<urlset></urlset>","llmsTxt":"About"}'
+```
+
+Media uploads require client-side image compression first. `POST /websites/{websiteId}/media` validates the compressed byte count against the user's `media_storage_mb` entitlement plus any `additional_media_storage_mb`, stores a pending media record, and returns a presigned S3 `PUT` URL.
+
+```bash
+curl -X POST "$AUTH_API/websites/WEBSITE_ID/media" \
+  -H "authorization: Bearer ACCESS_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"fileName":"hero.jpg","contentType":"image/jpeg","compressed":true,"originalBytes":1500000,"compressedBytes":900000}'
+```
+
+```bash
+curl "$AUTH_API/websites/WEBSITE_ID/media" \
+  -H "authorization: Bearer ACCESS_TOKEN"
+```
+
+Deployment requests validate config and SEO before marking the website for deployment. The first deployment returns `202` with `approvalRequired: true` and the message that the website needs to be approved within 48 hours. Later deployments return the CDN invalidation paths and GoDaddy CNAME action needed by the deploy worker.
+
+```bash
+curl -X POST "$AUTH_API/websites/WEBSITE_ID/deploy" \
+  -H "authorization: Bearer ACCESS_TOKEN"
 ```
 
 Billing summary is also protected. It uses the authenticated user only, auto-creates a Stripe Customer if the user does not have `stripe_customer_id`, stores that id on the user record, and returns sanitized customer, invoice, subscription, payment method, payment status, and dunning data:

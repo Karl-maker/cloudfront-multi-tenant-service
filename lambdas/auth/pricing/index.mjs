@@ -130,9 +130,48 @@ export async function handlePricing(event, deps = {}) {
       item,
       nowMs
     });
-    const priceId = interval === "year" ? pricedItem.stripePriceYearId : pricedItem.stripePriceMonthId;
+    const priceId = item.checkoutMode === "payment"
+      ? pricedItem.stripePriceOneTimeId
+      : interval === "year" ? pricedItem.stripePriceYearId : pricedItem.stripePriceMonthId;
     const paymentMethodId = await getAvailablePaymentMethodId(stripe, customerId);
     if (paymentMethodId) {
+      if (item.checkoutMode === "payment") {
+        const paymentIntent = await stripe.post("/payment_intents", {
+          amount: String(pricedItem.amountOneTimeCents),
+          currency: pricedItem.currency,
+          customer: customerId,
+          payment_method: paymentMethodId,
+          confirm: "true",
+          return_url: successUrl,
+          "metadata[syncpoly_user_id]": userId,
+          "metadata[syncpoly_catalog_item_id]": item.itemId,
+          "metadata[syncpoly_item_type]": item.itemType,
+          "metadata[syncpoly_payment_source]": "direct_payment_intent"
+        }, {
+          idempotencyKey: stripeIdempotencyKey(checkoutRequest.key, "payment-intent")
+        });
+        const paymentChallenge = paymentChallengeFromPaymentIntent(paymentIntent);
+        if (paymentIntent.status === "succeeded") {
+          await grantEntitlementsForPaidItem({ dynamodbClient, item, userId, nowMs });
+        }
+
+        const responseBody = {
+          checkoutRequired: false,
+          chargedSavedPaymentMethod: paymentIntent.status === "succeeded",
+          paymentActionRequired: Boolean(paymentChallenge),
+          paymentChallenge,
+          paymentIntent: sanitizePaymentIntent(paymentIntent),
+          item: publicCatalogItem(pricedItem),
+          stripeCustomerId: customerId,
+          stripeProductId: pricedItem.stripeProductId,
+          stripePriceId: priceId,
+          paymentMethodId,
+          interval: "one_time"
+        };
+        await finishCheckoutRequest(dynamodbClient, checkoutRequest, responseBody, 200, nowMs);
+        return jsonResponse(200, responseBody, event);
+      }
+
       const subscription = await stripe.post("/subscriptions", {
         customer: customerId,
         default_payment_method: paymentMethodId,
@@ -168,8 +207,8 @@ export async function handlePricing(event, deps = {}) {
       return jsonResponse(200, responseBody, event);
     }
 
-    const session = await stripe.post("/checkout/sessions", {
-      mode: "subscription",
+    const sessionParams = {
+      mode: item.checkoutMode === "payment" ? "payment" : "subscription",
       customer: customerId,
       success_url: successUrl,
       cancel_url: cancelUrl,
@@ -179,11 +218,22 @@ export async function handlePricing(event, deps = {}) {
       "metadata[syncpoly_catalog_item_id]": item.itemId,
       "metadata[syncpoly_item_type]": item.itemType,
       "metadata[syncpoly_billing_interval]": interval,
-      "subscription_data[metadata][syncpoly_user_id]": userId,
-      "subscription_data[metadata][syncpoly_catalog_item_id]": item.itemId,
-      "subscription_data[metadata][syncpoly_item_type]": item.itemType,
-      "subscription_data[metadata][syncpoly_reset_strategy]": "monthly"
-    }, {
+      "metadata[syncpoly_payment_source]": "checkout_session",
+      ...(item.checkoutMode === "payment"
+        ? {
+            "payment_intent_data[metadata][syncpoly_user_id]": userId,
+            "payment_intent_data[metadata][syncpoly_catalog_item_id]": item.itemId,
+            "payment_intent_data[metadata][syncpoly_item_type]": item.itemType,
+            "payment_intent_data[metadata][syncpoly_payment_source]": "checkout_session"
+          }
+        : {
+            "subscription_data[metadata][syncpoly_user_id]": userId,
+            "subscription_data[metadata][syncpoly_catalog_item_id]": item.itemId,
+            "subscription_data[metadata][syncpoly_item_type]": item.itemType,
+            "subscription_data[metadata][syncpoly_reset_strategy]": "monthly"
+          })
+    };
+    const session = await stripe.post("/checkout/sessions", sessionParams, {
       idempotencyKey: stripeIdempotencyKey(checkoutRequest.key, "checkout-session")
     });
 
@@ -197,7 +247,7 @@ export async function handlePricing(event, deps = {}) {
       stripeCustomerId: customerId,
       stripeProductId: pricedItem.stripeProductId,
       stripePriceId: priceId,
-      interval
+      interval: item.checkoutMode === "payment" ? "one_time" : interval
     };
     await finishCheckoutRequest(dynamodbClient, checkoutRequest, responseBody, 200, nowMs);
     return jsonResponse(200, responseBody, event);
@@ -411,6 +461,7 @@ async function ensureStripeProductAndPrices({ dynamodbClient, stripe, item, nowM
   let productId = item.stripeProductId;
   let monthPriceId = item.stripePriceMonthId;
   let yearPriceId = item.stripePriceYearId;
+  let oneTimePriceId = item.stripePriceOneTimeId;
   let changed = false;
 
   if (!productId) {
@@ -426,7 +477,24 @@ async function ensureStripeProductAndPrices({ dynamodbClient, stripe, item, nowM
     changed = true;
   }
 
-  if (!monthPriceId) {
+  if (item.checkoutMode === "payment" && !oneTimePriceId) {
+    const grant = paidEntitlementGrant(item.itemId);
+    const price = await stripe.post("/prices", {
+      product: productId,
+      currency: item.currency,
+      unit_amount: String(item.amountOneTimeCents),
+      nickname: item.name,
+      "metadata[syncpoly_catalog_item_id]": item.itemId,
+      "metadata[syncpoly_billing_interval]": "one_time",
+      "metadata[syncpoly_entitlement_grant]": grant?.attribute || ""
+    }, {
+      idempotencyKey: stripeCatalogIdempotencyKey(item.itemId, "price-one-time")
+    });
+    oneTimePriceId = price.id;
+    changed = true;
+  }
+
+  if (item.checkoutMode !== "payment" && !monthPriceId) {
     const price = await stripe.post("/prices", {
       product: productId,
       currency: item.currency,
@@ -443,7 +511,7 @@ async function ensureStripeProductAndPrices({ dynamodbClient, stripe, item, nowM
     changed = true;
   }
 
-  if (!yearPriceId) {
+  if (item.checkoutMode !== "payment" && !yearPriceId) {
     const price = await stripe.post("/prices", {
       product: productId,
       currency: item.currency,
@@ -465,7 +533,8 @@ async function ensureStripeProductAndPrices({ dynamodbClient, stripe, item, nowM
     ...item,
     stripeProductId: productId,
     stripePriceMonthId: monthPriceId,
-    stripePriceYearId: yearPriceId
+    stripePriceYearId: yearPriceId,
+    stripePriceOneTimeId: oneTimePriceId
   };
   if (changed) {
     await persistStripeCatalogIds({ dynamodbClient, item: updated, nowMs });
@@ -488,6 +557,10 @@ async function persistStripeCatalogIds({ dynamodbClient, item, nowMs }) {
     values[":yearPriceId"] = { S: item.stripePriceYearId };
     updates.push("stripe_price_year_id = :yearPriceId");
   }
+  if (item.stripePriceOneTimeId) {
+    values[":oneTimePriceId"] = { S: item.stripePriceOneTimeId };
+    updates.push("stripe_price_one_time_id = :oneTimePriceId");
+  }
 
   await dynamodbClient.send(
     new UpdateItemCommand({
@@ -507,6 +580,7 @@ function yearlyAmountCents(item) {
 
 function catalogItemFromDynamo(item) {
   const amountMonthlyCents = item.amount_monthly_cents?.N ? Number(item.amount_monthly_cents.N) : 0;
+  const amountOneTimeCents = item.amount_one_time_cents?.N ? Number(item.amount_one_time_cents.N) : 0;
   const yearlyDiscountPercent = item.yearly_discount_percent?.N ? Number(item.yearly_discount_percent.N) : YEARLY_DISCOUNT_PERCENT;
   return {
     itemId: item.item_id.S,
@@ -517,13 +591,15 @@ function catalogItemFromDynamo(item) {
     status: item.status?.S || "active",
     currency: item.currency?.S || "usd",
     amountMonthlyCents,
+    amountOneTimeCents,
     amountYearlyCents: item.amount_yearly_cents?.N ? Number(item.amount_yearly_cents.N) : Math.round(amountMonthlyCents * 12 * (1 - yearlyDiscountPercent / 100)),
     yearlyDiscountPercent,
     sortOrder: item.sort_order?.N ? Number(item.sort_order.N) : 0,
     entitlements: parseEntitlements(item.entitlements_json?.S),
     stripeProductId: item.stripe_product_id?.S,
     stripePriceMonthId: item.stripe_price_month_id?.S,
-    stripePriceYearId: item.stripe_price_year_id?.S
+    stripePriceYearId: item.stripe_price_year_id?.S,
+    stripePriceOneTimeId: item.stripe_price_one_time_id?.S
   };
 }
 
@@ -536,6 +612,7 @@ function publicCatalogItem(item) {
     description: item.description,
     currency: item.currency,
     amountMonthlyCents: item.amountMonthlyCents,
+    amountOneTimeCents: item.amountOneTimeCents,
     amountYearlyCents: item.amountYearlyCents,
     yearlyDiscountPercent: item.yearlyDiscountPercent,
     resetStrategy: "monthly",
@@ -543,7 +620,8 @@ function publicCatalogItem(item) {
     entitlements: item.entitlements,
     stripeProductId: item.stripeProductId || null,
     stripePriceMonthId: item.stripePriceMonthId || null,
-    stripePriceYearId: item.stripePriceYearId || null
+    stripePriceYearId: item.stripePriceYearId || null,
+    stripePriceOneTimeId: item.stripePriceOneTimeId || null
   };
 }
 
@@ -685,6 +763,15 @@ function sanitizeSubscription(subscription) {
   };
 }
 
+function sanitizePaymentIntent(paymentIntent) {
+  return {
+    id: paymentIntent.id,
+    status: paymentIntent.status,
+    amount: paymentIntent.amount || null,
+    currency: paymentIntent.currency || null
+  };
+}
+
 function paymentChallengeFromSubscription(subscription) {
   const invoice = typeof subscription.latest_invoice === "object" ? subscription.latest_invoice : null;
   const paymentIntent = typeof invoice?.payment_intent === "object" ? invoice.payment_intent : null;
@@ -700,6 +787,51 @@ function paymentChallengeFromSubscription(subscription) {
     status: paymentIntent.status,
     nextActionType: paymentIntent.next_action?.type || null
   };
+}
+
+function paymentChallengeFromPaymentIntent(paymentIntent) {
+  if (!paymentIntent || paymentIntent.status !== "requires_action") {
+    return null;
+  }
+
+  return {
+    type: "payment_intent",
+    paymentIntentId: paymentIntent.id,
+    clientSecret: paymentIntent.client_secret || null,
+    status: paymentIntent.status,
+    nextActionType: paymentIntent.next_action?.type || null
+  };
+}
+
+async function grantEntitlementsForPaidItem({ dynamodbClient, item, userId, nowMs }) {
+  const grant = paidEntitlementGrant(item.itemId);
+  if (!grant) {
+    return;
+  }
+
+  await dynamodbClient.send(
+    new UpdateItemCommand({
+      TableName: process.env.USERS_TABLE_NAME,
+      Key: {
+        user_id: { S: userId }
+      },
+      UpdateExpression: `SET updated_at = :updatedAt ADD ${grant.attribute} :amount`,
+      ExpressionAttributeValues: {
+        ":amount": { N: String(grant.amount) },
+        ":updatedAt": { S: new Date(nowMs()).toISOString() }
+      }
+    })
+  );
+}
+
+function paidEntitlementGrant(itemId) {
+  if (itemId === "additional_website_one_time") {
+    return { attribute: "additional_website_credits", amount: 1 };
+  }
+  if (itemId === "media_storage_10mb_one_time") {
+    return { attribute: "additional_media_storage_mb", amount: 10 };
+  }
+  return null;
 }
 
 function checkoutRequestKey({ userId, itemId, interval, clientKey }) {

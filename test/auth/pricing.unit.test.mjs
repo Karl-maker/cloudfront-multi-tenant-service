@@ -396,6 +396,99 @@ test("pricing charges a saved non-default payment method before falling back to 
   assert.equal(fetchCalls.some((call) => call.path === "/v1/checkout/sessions"), false);
 });
 
+test("pricing charges the one-time additional website product and grants a website credit", async () => {
+  const fetchCalls = [];
+  const updates = [];
+  const handler = createPricingHandler({
+    dynamodbClient: createMockClient((command) => {
+      if (command instanceof GetItemCommand && command.input.TableName === "billing-catalog-table") {
+        return {
+          Item: catalogItem({
+            itemId: "additional_website_one_time",
+            itemType: "product",
+            checkoutMode: "payment",
+            name: "Additional Website",
+            amountOneTimeCents: 2999,
+            stripeProductId: "prod_existing",
+            stripePriceOneTimeId: "price_one_time_existing"
+          })
+        };
+      }
+      if (command instanceof GetItemCommand) {
+        return { Item: userItem({ stripeCustomerId: "cus_existing" }) };
+      }
+      if (command instanceof UpdateItemCommand) {
+        updates.push(command.input);
+        return {};
+      }
+      assert.fail(`unexpected command ${command.constructor.name}`);
+    }),
+    secretsClient: createStripeSecretClient(),
+    fetchImpl: createStripePricingFetch(fetchCalls, { hasDefaultPaymentMethod: true }),
+    nowMs: () => TEST_NOW_MS,
+    secretCache: {}
+  });
+
+  const response = await handler(checkoutEvent({ itemId: "additional_website_one_time" }));
+  const body = decodeJsonBody(response);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(body.checkoutRequired, false);
+  assert.equal(body.chargedSavedPaymentMethod, true);
+  assert.equal(body.paymentIntent.id, "pi_succeeded");
+  assert.equal(body.stripePriceId, "price_one_time_existing");
+  const paymentIntentCall = fetchCalls.find((call) => call.path === "/v1/payment_intents");
+  assert.equal(new URLSearchParams(paymentIntentCall.options.body).get("amount"), "2999");
+  assert.equal(new URLSearchParams(paymentIntentCall.options.body).get("metadata[syncpoly_catalog_item_id]"), "additional_website_one_time");
+  assert.match(paymentIntentCall.options.headers["idempotency-key"], /^syncpoly_payment-intent_/);
+  assert.ok(updates.some((update) => update.TableName === "users-table" && update.ExpressionAttributeValues[":amount"].N === "1"));
+});
+
+test("pricing charges the one-time media storage add-on and grants storage capacity", async () => {
+  const fetchCalls = [];
+  const updates = [];
+  const handler = createPricingHandler({
+    dynamodbClient: createMockClient((command) => {
+      if (command instanceof GetItemCommand && command.input.TableName === "billing-catalog-table") {
+        return {
+          Item: catalogItem({
+            itemId: "media_storage_10mb_one_time",
+            itemType: "product",
+            checkoutMode: "payment",
+            name: "10MB Media Storage",
+            amountOneTimeCents: 499,
+            stripeProductId: "prod_existing",
+            stripePriceOneTimeId: "price_media_existing"
+          })
+        };
+      }
+      if (command instanceof GetItemCommand) {
+        return { Item: userItem({ stripeCustomerId: "cus_existing" }) };
+      }
+      if (command instanceof UpdateItemCommand) {
+        updates.push(command.input);
+        return {};
+      }
+      assert.fail(`unexpected command ${command.constructor.name}`);
+    }),
+    secretsClient: createStripeSecretClient(),
+    fetchImpl: createStripePricingFetch(fetchCalls, { hasDefaultPaymentMethod: true }),
+    nowMs: () => TEST_NOW_MS,
+    secretCache: {}
+  });
+
+  const response = await handler(checkoutEvent({ itemId: "media_storage_10mb_one_time" }));
+  const body = decodeJsonBody(response);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(body.checkoutRequired, false);
+  assert.equal(body.paymentIntent.id, "pi_succeeded");
+  const paymentIntentCall = fetchCalls.find((call) => call.path === "/v1/payment_intents");
+  assert.equal(new URLSearchParams(paymentIntentCall.options.body).get("amount"), "499");
+  assert.equal(new URLSearchParams(paymentIntentCall.options.body).get("metadata[syncpoly_catalog_item_id]"), "media_storage_10mb_one_time");
+  assert.ok(updates.some((update) => update.TableName === "users-table" && update.UpdateExpression.includes("additional_media_storage_mb") && update.ExpressionAttributeValues[":amount"].N === "10"));
+});
+
 function checkoutEvent(body) {
   return {
     body: JSON.stringify(body),
@@ -482,6 +575,14 @@ function createStripePricingFetch(calls, { hasDefaultPaymentMethod, savedPayment
         latest_invoice: "in_paid"
       });
     }
+    if (parsed.pathname === "/v1/payment_intents") {
+      return createJsonResponse({
+        id: "pi_succeeded",
+        status: "succeeded",
+        amount: 2999,
+        currency: "usd"
+      });
+    }
     if (parsed.pathname === "/v1/checkout/sessions") {
       return createJsonResponse({
         id: "cs_created",
@@ -509,6 +610,7 @@ function catalogItem({
   name,
   description = "Catalog item",
   amountMonthlyCents = 0,
+  amountOneTimeCents = 0,
   yearlyDiscountPercent = 20,
   sortOrder = 10,
   entitlements = {
@@ -518,7 +620,8 @@ function catalogItem({
   },
   stripeProductId,
   stripePriceMonthId,
-  stripePriceYearId
+  stripePriceYearId,
+  stripePriceOneTimeId
 }) {
   return {
     item_id: { S: itemId },
@@ -529,11 +632,13 @@ function catalogItem({
     status: { S: "active" },
     currency: { S: "usd" },
     amount_monthly_cents: { N: String(amountMonthlyCents) },
+    amount_one_time_cents: { N: String(amountOneTimeCents) },
     yearly_discount_percent: { N: String(yearlyDiscountPercent) },
     sort_order: { N: String(sortOrder) },
     entitlements_json: { S: JSON.stringify(entitlements) },
     ...(stripeProductId ? { stripe_product_id: { S: stripeProductId } } : {}),
     ...(stripePriceMonthId ? { stripe_price_month_id: { S: stripePriceMonthId } } : {}),
-    ...(stripePriceYearId ? { stripe_price_year_id: { S: stripePriceYearId } } : {})
+    ...(stripePriceYearId ? { stripe_price_year_id: { S: stripePriceYearId } } : {}),
+    ...(stripePriceOneTimeId ? { stripe_price_one_time_id: { S: stripePriceOneTimeId } } : {})
   };
 }

@@ -124,15 +124,15 @@ describe("site config schema", () => {
     assert.equal(config.theme.colors.primary, "#2563eb");
     assert.match(config.theme.customCss, /site-header/);
     assert.match(config.theme.customCss, /\.contact-method\{padding:18px 20px/);
-    assert.match(config.theme.customCss, /\.map-layout\{padding:28px/);
+    assert.match(config.theme.customCss, /\.location-layout,.map-layout\{padding:28px/);
     assert.equal(config.seo.defaultImage, "/media/harbor-house.jpg");
     assert.equal(config.pages[0].sections[0].actions[0].href, "https://example.com/book");
     assert.equal(config.pages[0].sections[0].actions[1].href, "https://wa.me/18685550100");
     assert(config.footer.socialLinks.some((link) => link.platform === "whatsapp" && link.href === "https://wa.me/18685550100"));
     assert(config.footer.socialLinks.some((link) => link.platform === "phone" && link.href === "tel:+18685550100"));
     assert(config.pages[0].sections.some((section) => section.type === "mediaGallery"));
-    assert(config.pages[0].sections.some((section) => section.type === "pricing"));
-    assert(config.pages[0].sections.some((section) => section.type === "map"));
+    assert(config.pages[0].sections.some((section) => section.type === "rates"));
+    assert(config.pages[0].sections.some((section) => section.type === "location"));
   });
 
   it("omits pricing navigation when pricing is not configured", () => {
@@ -155,9 +155,9 @@ describe("site config schema", () => {
       ]
     }, { site: "clean-cuts", theme: "luxury", updatedAt: "2026-05-31" });
 
-    assert(!config.navigation.links.some((link) => link.href === "#pricing"));
-    assert(!config.footer.links.some((link) => link.href === "#pricing"));
-    assert(!config.pages[0].sections.some((section) => section.type === "pricing"));
+    assert(!config.navigation.links.some((link) => link.href === "#rates"));
+    assert(!config.footer.links.some((link) => link.href === "#rates"));
+    assert(!config.pages[0].sections.some((section) => section.type === "rates"));
   });
 
   it("merges per-site theme overrides into the generated config", () => {
@@ -233,6 +233,7 @@ describe("site config schema", () => {
     assert.match(files["robots.txt"], /Sitemap: https:\/\/harbor-house\.syncpoly\.com\/sitemap\.xml/);
     assert.match(files["sitemap.xml"], /<loc>https:\/\/harbor-house\.syncpoly\.com\/<\/loc>/);
     assert.match(files["llms.txt"], /Harbor House is represented by https:\/\/harbor-house\.syncpoly\.com/);
+    assert.equal(files["llm.txt"], files["llms.txt"]);
   });
 
   it("lists the built-in template theme presets", () => {
@@ -487,10 +488,11 @@ describe("site upload helpers", () => {
     assert(fs.existsSync(path.join(siteDir, "robots.txt")));
     assert(fs.existsSync(path.join(siteDir, "sitemap.xml")));
     assert(fs.existsSync(path.join(siteDir, "llms.txt")));
+    assert(fs.existsSync(path.join(siteDir, "llm.txt")));
     assert.deepEqual(validateSiteConfig(JSON.parse(fs.readFileSync(path.join(siteDir, "site.config.json"), "utf8"))), []);
     const generatedConfig = JSON.parse(fs.readFileSync(path.join(siteDir, "site.config.json"), "utf8"));
-    assert(generatedConfig.pages[0].sections.some((section) => section.type === "pricing"));
-    assert(generatedConfig.pages[0].sections.some((section) => section.type === "map"));
+    assert(generatedConfig.pages[0].sections.some((section) => section.type === "rates"));
+    assert(generatedConfig.pages[0].sections.some((section) => section.type === "location"));
   });
 
   it("lets the CLI choose a theme preset from --template", () => {
@@ -591,7 +593,7 @@ describe("site upload helpers", () => {
     assert.equal(input.booking.href, "https://example.com/book");
     assert.equal(input.contact.whatsapp, "+1 (868) 555-0100");
     assert.equal(input.pricing[0].price, "From $299");
-    assert.deepEqual(input.pricing[0].features, ["Pool access", "Concierge"]);
+    assert.deepEqual(input.pricing[0].amenities, ["Pool access", "Concierge"]);
     assert.equal(input.map.query, "Port of Spain, Trinidad");
     assert.match(manifest, /hero-pool\.jpg/);
   });

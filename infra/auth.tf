@@ -22,6 +22,7 @@ locals {
   auth_authorizer_function_name        = "syncpoly-builder-auth-authorizer"
   auth_billing_summary_function_name   = "syncpoly-builder-billing-summary"
   auth_pricing_function_name           = "syncpoly-builder-billing-pricing"
+  auth_websites_function_name          = "syncpoly-builder-websites"
   auth_google_login_function_name      = "syncpoly-builder-google-login"
   auth_me_function_name                = "syncpoly-builder-auth-me"
   auth_google_oauth_secret_name        = "syncpoly-builder-google-oauth"
@@ -30,6 +31,9 @@ locals {
   auth_stripe_webhook_function_name    = "syncpoly-builder-stripe-webhook"
   auth_users_table_name                = "syncpoly-builder-users"
   auth_logins_table_name               = "syncpoly-builder-logins"
+  auth_websites_table_name             = "syncpoly-builder-websites"
+  website_folders_table_name           = "syncpoly-builder-website-folders"
+  website_media_table_name             = "syncpoly-builder-website-media"
   billing_catalog_table_name           = "syncpoly-builder-billing-catalog"
   billing_checkout_requests_table_name = "syncpoly-builder-billing-checkout-requests"
   billing_events_table_name            = "syncpoly-builder-billing-events"
@@ -49,6 +53,7 @@ locals {
       name                    = "Free Website Plan"
       description             = "Starter website plan with Syncpoly branding, ads, simple SEO, and a location map."
       amount_monthly_cents    = 0
+      amount_one_time_cents   = 0
       yearly_discount_percent = 20
       sort_order              = 10
       entitlements_json = jsonencode({
@@ -60,6 +65,11 @@ locals {
           value = true
         }
         location_map = { type = "boolean", value = true }
+        included_websites = {
+          type  = "usage"
+          limit = 1
+        }
+        media_storage_mb = { type = "usage", limit = 10 }
       })
     }
     basic_website_plan = {
@@ -68,6 +78,7 @@ locals {
       name                    = "Basic Website Plan"
       description             = "Paid website plan with ads removed, no Syncpoly banner, SEO setup, a location map, and monthly change requests."
       amount_monthly_cents    = 3999
+      amount_one_time_cents   = 0
       yearly_discount_percent = 20
       sort_order              = 20
       entitlements_json = jsonencode({
@@ -79,6 +90,11 @@ locals {
           value = true
         }
         location_map = { type = "boolean", value = true }
+        included_websites = {
+          type  = "usage"
+          limit = 1
+        }
+        media_storage_mb = { type = "usage", limit = 50 }
       })
     }
     custom_solution_plan = {
@@ -87,6 +103,7 @@ locals {
       name                    = "Custom Solution Plan"
       description             = "Custom setup handled through an email conversation before billing is configured."
       amount_monthly_cents    = 0
+      amount_one_time_cents   = 0
       yearly_discount_percent = 20
       sort_order              = 30
       entitlements_json = jsonencode({
@@ -95,6 +112,21 @@ locals {
         change_requests       = { type = "usage", limit = -1, reset_strategy = "monthly" }
         seo_setup             = { type = "boolean", value = true }
         location_map          = { type = "boolean", value = true }
+        included_websites     = { type = "usage", limit = 1 }
+        media_storage_mb      = { type = "usage", limit = 200 }
+      })
+    }
+    additional_website_one_time = {
+      item_type               = "product"
+      checkout_mode           = "payment"
+      name                    = "Additional Website"
+      description             = "One-time purchase for one additional owned website."
+      amount_monthly_cents    = 0
+      amount_one_time_cents   = 2999
+      yearly_discount_percent = 0
+      sort_order              = 100
+      entitlements_json = jsonencode({
+        additional_website = { type = "usage", add = 1, reset_strategy = "never" }
       })
     }
     addon_5_change_requests = {
@@ -103,10 +135,24 @@ locals {
       name                    = "5 More Change Requests"
       description             = "Adds five extra website change requests each month."
       amount_monthly_cents    = 999
+      amount_one_time_cents   = 0
       yearly_discount_percent = 20
       sort_order              = 110
       entitlements_json = jsonencode({
         change_requests = { type = "usage", add = 5, reset_strategy = "monthly" }
+      })
+    }
+    media_storage_10mb_one_time = {
+      item_type               = "product"
+      checkout_mode           = "payment"
+      name                    = "10MB Media Storage"
+      description             = "One-time purchase for 10MB of additional media storage."
+      amount_monthly_cents    = 0
+      amount_one_time_cents   = 499
+      yearly_discount_percent = 0
+      sort_order              = 105
+      entitlements_json = jsonencode({
+        additional_media_storage_mb = { type = "usage", add = 10, reset_strategy = "never" }
       })
     }
     addon_managed_promotions = {
@@ -115,6 +161,7 @@ locals {
       name                    = "Managed Promotions"
       description             = "Adds ongoing promotion updates and campaign placement management."
       amount_monthly_cents    = 2999
+      amount_one_time_cents   = 0
       yearly_discount_percent = 20
       sort_order              = 120
       entitlements_json = jsonencode({
@@ -153,6 +200,12 @@ data "archive_file" "auth_pricing" {
   type        = "zip"
   source_file = "${path.module}/../lambdas/auth/pricing/index.mjs"
   output_path = "${path.module}/auth-pricing.zip"
+}
+
+data "archive_file" "auth_websites" {
+  type        = "zip"
+  source_file = "${path.module}/../lambdas/auth/websites/index.mjs"
+  output_path = "${path.module}/auth-websites.zip"
 }
 
 data "archive_file" "auth_stripe_webhook" {
@@ -243,6 +296,78 @@ resource "aws_dynamodb_table" "auth_logins" {
   }
 }
 
+resource "aws_dynamodb_table" "auth_websites" {
+  name                        = local.auth_websites_table_name
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "user_id"
+  range_key                   = "website_id"
+  deletion_protection_enabled = true
+
+  attribute {
+    name = "user_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "website_id"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+}
+
+resource "aws_dynamodb_table" "website_folders" {
+  name                        = local.website_folders_table_name
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "folder"
+  deletion_protection_enabled = true
+
+  attribute {
+    name = "folder"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+}
+
+resource "aws_dynamodb_table" "website_media" {
+  name                        = local.website_media_table_name
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "user_id"
+  range_key                   = "media_id"
+  deletion_protection_enabled = true
+
+  attribute {
+    name = "user_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "media_id"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+}
+
 resource "aws_dynamodb_table" "billing_events" {
   name                        = local.billing_events_table_name
   billing_mode                = "PAY_PER_REQUEST"
@@ -308,6 +433,7 @@ resource "aws_dynamodb_table_item" "billing_catalog_seed" {
     status                  = { S = "active" }
     currency                = { S = "usd" }
     amount_monthly_cents    = { N = tostring(each.value.amount_monthly_cents) }
+    amount_one_time_cents   = { N = tostring(each.value.amount_one_time_cents) }
     yearly_discount_percent = { N = tostring(each.value.yearly_discount_percent) }
     sort_order              = { N = tostring(each.value.sort_order) }
     entitlements_json       = { S = each.value.entitlements_json }
@@ -382,6 +508,11 @@ resource "aws_iam_role" "auth_pricing_lambda" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
+resource "aws_iam_role" "auth_websites_lambda" {
+  name               = "${local.auth_websites_function_name}-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
 resource "aws_iam_role" "auth_stripe_webhook_lambda" {
   name               = "${local.auth_stripe_webhook_function_name}-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
@@ -412,6 +543,11 @@ resource "aws_iam_role_policy_attachment" "auth_pricing_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "auth_websites_basic" {
+  role       = aws_iam_role.auth_websites_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
 resource "aws_iam_role_policy_attachment" "auth_stripe_webhook_basic" {
   role       = aws_iam_role.auth_stripe_webhook_lambda.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
@@ -439,6 +575,11 @@ resource "aws_iam_role_policy_attachment" "auth_billing_summary_xray" {
 
 resource "aws_iam_role_policy_attachment" "auth_pricing_xray" {
   role       = aws_iam_role.auth_pricing_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "auth_websites_xray" {
+  role       = aws_iam_role.auth_websites_lambda.name
   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
@@ -522,6 +663,7 @@ data "aws_iam_policy_document" "auth_billing_summary_lambda" {
 
     actions = [
       "dynamodb:GetItem",
+      "dynamodb:TransactWriteItems",
       "dynamodb:UpdateItem"
     ]
 
@@ -598,6 +740,38 @@ data "aws_iam_policy_document" "auth_pricing_lambda" {
   }
 }
 
+data "aws_iam_policy_document" "auth_websites_lambda" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem"
+    ]
+
+    resources = [
+      aws_dynamodb_table.auth_users.arn
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:TransactWriteItems"
+    ]
+
+    resources = [
+      aws_dynamodb_table.auth_websites.arn,
+      aws_dynamodb_table.website_folders.arn,
+      aws_dynamodb_table.website_media.arn
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "auth_stripe_webhook_lambda" {
   statement {
     effect = "Allow"
@@ -621,6 +795,18 @@ data "aws_iam_policy_document" "auth_stripe_webhook_lambda" {
 
     resources = [
       aws_dynamodb_table.billing_events.arn
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:UpdateItem"
+    ]
+
+    resources = [
+      aws_dynamodb_table.auth_users.arn
     ]
   }
 }
@@ -655,6 +841,12 @@ resource "aws_iam_role_policy" "auth_pricing_lambda" {
   policy = data.aws_iam_policy_document.auth_pricing_lambda.json
 }
 
+resource "aws_iam_role_policy" "auth_websites_lambda" {
+  name   = "${local.auth_websites_function_name}-policy"
+  role   = aws_iam_role.auth_websites_lambda.id
+  policy = data.aws_iam_policy_document.auth_websites_lambda.json
+}
+
 resource "aws_iam_role_policy" "auth_stripe_webhook_lambda" {
   name   = "${local.auth_stripe_webhook_function_name}-policy"
   role   = aws_iam_role.auth_stripe_webhook_lambda.id
@@ -683,6 +875,11 @@ resource "aws_cloudwatch_log_group" "auth_billing_summary" {
 
 resource "aws_cloudwatch_log_group" "auth_pricing" {
   name              = "/aws/lambda/${local.auth_pricing_function_name}"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_group" "auth_websites" {
+  name              = "/aws/lambda/${local.auth_websites_function_name}"
   retention_in_days = 30
 }
 
@@ -863,6 +1060,42 @@ resource "aws_lambda_function" "auth_pricing" {
   ]
 }
 
+resource "aws_lambda_function" "auth_websites" {
+  function_name    = local.auth_websites_function_name
+  description      = "Lists and creates websites owned by authenticated Syncpoly Builder users"
+  role             = aws_iam_role.auth_websites_lambda.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  architectures    = ["arm64"]
+  filename         = data.archive_file.auth_websites.output_path
+  source_code_hash = data.archive_file.auth_websites.output_base64sha256
+  timeout          = 10
+  memory_size      = 256
+
+  environment {
+    variables = {
+      AUTH_ALLOWED_ORIGINS       = join(",", var.auth_allowed_origins)
+      CLOUDFRONT_DOMAIN_NAME     = aws_cloudfront_distribution.sites.domain_name
+      CONTENT_BUCKET             = aws_s3_bucket.sites.bucket
+      USERS_TABLE_NAME           = aws_dynamodb_table.auth_users.name
+      WEBSITE_FOLDERS_TABLE_NAME = aws_dynamodb_table.website_folders.name
+      WEBSITE_MEDIA_TABLE_NAME   = aws_dynamodb_table.website_media.name
+      WEBSITES_TABLE_NAME        = aws_dynamodb_table.auth_websites.name
+    }
+  }
+
+  tracing_config {
+    mode = "Active"
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.auth_websites,
+    aws_iam_role_policy_attachment.auth_websites_basic,
+    aws_iam_role_policy_attachment.auth_websites_xray,
+    aws_iam_role_policy.auth_websites_lambda
+  ]
+}
+
 resource "aws_lambda_function" "auth_stripe_webhook" {
   function_name    = local.auth_stripe_webhook_function_name
   description      = "Verifies Stripe webhooks and records billing and dunning events"
@@ -881,6 +1114,7 @@ resource "aws_lambda_function" "auth_stripe_webhook" {
       BILLING_EVENTS_TABLE_NAME  = aws_dynamodb_table.billing_events.name
       BILLING_EVENTS_TTL_SECONDS = tostring(local.billing_event_ttl_seconds)
       STRIPE_SECRET_ARN          = data.aws_secretsmanager_secret.auth_stripe.arn
+      USERS_TABLE_NAME           = aws_dynamodb_table.auth_users.name
     }
   }
 
@@ -903,7 +1137,7 @@ resource "aws_apigatewayv2_api" "auth" {
   cors_configuration {
     allow_credentials = true
     allow_headers     = ["authorization", "content-type"]
-    allow_methods     = ["GET", "POST", "OPTIONS"]
+    allow_methods     = ["GET", "POST", "PUT", "OPTIONS"]
     allow_origins     = var.auth_allowed_origins
     max_age           = 300
   }
@@ -988,6 +1222,15 @@ resource "aws_apigatewayv2_integration" "auth_pricing" {
   timeout_milliseconds   = 10000
 }
 
+resource "aws_apigatewayv2_integration" "auth_websites" {
+  api_id                 = aws_apigatewayv2_api.auth.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = aws_lambda_function.auth_websites.invoke_arn
+  payload_format_version = "2.0"
+  timeout_milliseconds   = 10000
+}
+
 resource "aws_apigatewayv2_integration" "auth_stripe_webhook" {
   api_id                 = aws_apigatewayv2_api.auth.id
   integration_type       = "AWS_PROXY"
@@ -1063,6 +1306,120 @@ resource "aws_apigatewayv2_route" "auth_billing_checkout_options" {
   target    = "integrations/${aws_apigatewayv2_integration.auth_pricing.id}"
 }
 
+resource "aws_apigatewayv2_route" "auth_websites_list" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "GET /websites"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_create" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "POST /websites"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_get" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "GET /websites/{websiteId}"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_template" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "PUT /websites/{websiteId}/template"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_config" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "PUT /websites/{websiteId}/config"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_seo" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "PUT /websites/{websiteId}/seo"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_media_list" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "GET /websites/{websiteId}/media"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_media_upload" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "POST /websites/{websiteId}/media"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_deploy" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "POST /websites/{websiteId}/deploy"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /websites"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_get_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /websites/{websiteId}"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_template_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /websites/{websiteId}/template"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_config_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /websites/{websiteId}/config"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_seo_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /websites/{websiteId}/seo"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_media_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /websites/{websiteId}/media"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_websites_deploy_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /websites/{websiteId}/deploy"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_websites.id}"
+}
+
 resource "aws_apigatewayv2_route" "auth_stripe_webhook" {
   api_id    = aws_apigatewayv2_api.auth.id
   route_key = "POST /billing/stripe-webhook"
@@ -1111,6 +1468,14 @@ resource "aws_lambda_permission" "auth_pricing_api_gateway" {
   statement_id  = "AllowExecutionFromApiGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.auth_pricing.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.auth.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "auth_websites_api_gateway" {
+  statement_id  = "AllowExecutionFromApiGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.auth_websites.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.auth.execution_arn}/*/*"
 }

@@ -8,7 +8,7 @@
     "syncpoly-site": "bin/syncpoly-site.js"
   },
   "scripts": {
-    "build": "node --check cloudfront/domain-folder-router.js && node --check lib/site-config-schema.js && node --check lib/site-upload.js && node --check lib/godaddy-dns.js && node --check bin/syncpoly-site.js && node --check lambdas/auth/google-login/index.mjs && node --check lambdas/auth/authorizer/index.mjs && node --check lambdas/auth/me/index.mjs && node --check lambdas/auth/billing-summary/index.mjs && node --check lambdas/auth/pricing/index.mjs && node --check lambdas/auth/stripe-webhook/index.mjs && node --check test/cloudfront-function.test.js && node --check test/site-upload.test.js",
+    "build": "node --check cloudfront/domain-folder-router.js && node --check lib/site-config-schema.js && node --check lib/site-upload.js && node --check lib/godaddy-dns.js && node --check bin/syncpoly-site.js && node --check lambdas/auth/google-login/index.mjs && node --check lambdas/auth/authorizer/index.mjs && node --check lambdas/auth/me/index.mjs && node --check lambdas/auth/billing-summary/index.mjs && node --check lambdas/auth/pricing/index.mjs && node --check lambdas/auth/websites/index.mjs && node --check lambdas/auth/stripe-webhook/index.mjs && node --check test/cloudfront-function.test.js && node --check test/site-upload.test.js",
     "clawbot:start": "./bin/start-clawbot.sh",
     "clawbot:check": "docker compose config --quiet",
     "clawbot:openclaw": "./bin/openclaw-clawbot.sh",
