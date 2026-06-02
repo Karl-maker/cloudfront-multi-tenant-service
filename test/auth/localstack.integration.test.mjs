@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import {
   CreateTableCommand,
   DeleteTableCommand,
+  DescribeTableCommand,
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
-  QueryCommand,
-  waitUntilTableExists
+  QueryCommand
 } from "@aws-sdk/client-dynamodb";
 import {
   CreateSecretCommand,
@@ -302,15 +302,20 @@ async function createBillingEventsTable(dynamodbClient, billingEventsTable) {
 }
 
 async function waitForTable(dynamodbClient, tableName) {
-  await waitUntilTableExists(
-    {
-      client: dynamodbClient,
-      maxWaitTime: 30,
-      minDelay: 1,
-      maxDelay: 2
-    },
-    { TableName: tableName }
-  );
+  const deadline = Date.now() + 30_000;
+
+  while (Date.now() < deadline) {
+    const response = await dynamodbClient.send(new DescribeTableCommand({ TableName: tableName }));
+    if (response.Table?.TableStatus === "ACTIVE") {
+      return;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
+  }
+
+  throw new Error(`Timed out waiting for DynamoDB table ${tableName} to become ACTIVE.`);
 }
 
 async function cleanupTable(dynamodbClient, tableName) {

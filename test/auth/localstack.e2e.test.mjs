@@ -16,16 +16,16 @@ import {
 import {
   CreateTableCommand,
   DeleteTableCommand,
-  DynamoDBClient,
-  waitUntilTableExists
+  DescribeTableCommand,
+  DynamoDBClient
 } from "@aws-sdk/client-dynamodb";
 import { CreateRoleCommand, DeleteRoleCommand, IAMClient } from "@aws-sdk/client-iam";
 import {
   AddPermissionCommand,
   CreateFunctionCommand,
   DeleteFunctionCommand,
+  GetFunctionCommand,
   LambdaClient,
-  waitUntilFunctionActive
 } from "@aws-sdk/client-lambda";
 import {
   CreateSecretCommand,
@@ -412,15 +412,20 @@ async function createBillingEventsTable(dynamodbClient, billingEventsTable) {
 }
 
 async function waitForTable(dynamodbClient, tableName) {
-  await waitUntilTableExists(
-    {
-      client: dynamodbClient,
-      maxWaitTime: 30,
-      minDelay: 1,
-      maxDelay: 2
-    },
-    { TableName: tableName }
-  );
+  const deadline = Date.now() + 30_000;
+
+  while (Date.now() < deadline) {
+    const response = await dynamodbClient.send(new DescribeTableCommand({ TableName: tableName }));
+    if (response.Table?.TableStatus === "ACTIVE") {
+      return;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
+  }
+
+  throw new Error(`Timed out waiting for DynamoDB table ${tableName} to become ACTIVE.`);
 }
 
 async function createLambda(lambdaClient, { functionName, sourceDir, roleArn, env, extraFiles = {} }) {
@@ -446,7 +451,24 @@ async function createLambda(lambdaClient, { functionName, sourceDir, roleArn, en
     })
   );
 
-  await waitUntilFunctionActive({ client: lambdaClient, maxWaitTime: 30 }, { FunctionName: functionName });
+  await waitForFunction(lambdaClient, functionName);
+}
+
+async function waitForFunction(lambdaClient, functionName) {
+  const deadline = Date.now() + 30_000;
+
+  while (Date.now() < deadline) {
+    const response = await lambdaClient.send(new GetFunctionCommand({ FunctionName: functionName }));
+    if (response.Configuration?.State === "Active") {
+      return;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
+  }
+
+  throw new Error(`Timed out waiting for Lambda function ${functionName} to become Active.`);
 }
 
 async function zipLambdaSource(sourceDir, extraFiles = {}) {
