@@ -90,12 +90,8 @@ data "aws_secretsmanager_secret" "auth_stripe" {
 resource "aws_dynamodb_table" "auth_users" {
   name                        = local.auth_users_table_name
   billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "user_id"
   deletion_protection_enabled = true
-
-  key_schema {
-    attribute_name = "user_id"
-    key_type       = "HASH"
-  }
 
   attribute {
     name = "user_id"
@@ -109,12 +105,8 @@ resource "aws_dynamodb_table" "auth_users" {
 
   global_secondary_index {
     name            = "email-index"
+    hash_key        = "email"
     projection_type = "ALL"
-
-    key_schema {
-      attribute_name = "email"
-      key_type       = "HASH"
-    }
   }
 
   point_in_time_recovery {
@@ -129,17 +121,9 @@ resource "aws_dynamodb_table" "auth_users" {
 resource "aws_dynamodb_table" "auth_logins" {
   name                        = local.auth_logins_table_name
   billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "user_id"
+  range_key                   = "login_id"
   deletion_protection_enabled = true
-
-  key_schema {
-    attribute_name = "user_id"
-    key_type       = "HASH"
-  }
-
-  key_schema {
-    attribute_name = "login_id"
-    key_type       = "RANGE"
-  }
 
   attribute {
     name = "user_id"
@@ -168,17 +152,9 @@ resource "aws_dynamodb_table" "auth_logins" {
 resource "aws_dynamodb_table" "billing_events" {
   name                        = local.billing_events_table_name
   billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "stripe_customer_id"
+  range_key                   = "stripe_event_id"
   deletion_protection_enabled = true
-
-  key_schema {
-    attribute_name = "stripe_customer_id"
-    key_type       = "HASH"
-  }
-
-  key_schema {
-    attribute_name = "stripe_event_id"
-    key_type       = "RANGE"
-  }
 
   attribute {
     name = "stripe_customer_id"

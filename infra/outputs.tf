@@ -23,7 +23,7 @@ output "waf_rate_limit_per_five_minutes" {
 }
 
 output "auth_api_waf_web_acl_name" {
-  value = aws_wafv2_web_acl.auth_api.name
+  value = aws_wafv2_web_acl.sites.name
 }
 
 output "auth_api_endpoint" {
