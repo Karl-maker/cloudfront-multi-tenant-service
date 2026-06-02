@@ -37,3 +37,32 @@ jobs:
 
       - name: Validate Terraform
         run: terraform -chdir=infra init -backend=false && terraform -chdir=infra validate
+
+  auth-localstack-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start LocalStack
+        run: docker compose --profile test up -d --wait localstack
+
+      - name: Run LocalStack auth integration tests
+        run: npm run test:integration
+
+      - name: Run LocalStack auth e2e tests
+        run: npm run test:e2e
+
+      - name: Stop LocalStack
+        if: always()
+        run: docker compose --profile test down -v

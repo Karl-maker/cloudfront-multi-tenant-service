@@ -8,7 +8,7 @@
     "syncpoly-site": "bin/syncpoly-site.js"
   },
   "scripts": {
-    "build": "node --check cloudfront/domain-folder-router.js && node --check lib/site-config-schema.js && node --check lib/site-upload.js && node --check lib/godaddy-dns.js && node --check bin/syncpoly-site.js && node --check test/cloudfront-function.test.js && node --check test/site-upload.test.js",
+    "build": "node --check cloudfront/domain-folder-router.js && node --check lib/site-config-schema.js && node --check lib/site-upload.js && node --check lib/godaddy-dns.js && node --check bin/syncpoly-site.js && node --check lambdas/auth/google-login/index.mjs && node --check lambdas/auth/authorizer/index.mjs && node --check lambdas/auth/me/index.mjs && node --check lambdas/auth/billing-summary/index.mjs && node --check lambdas/auth/stripe-webhook/index.mjs && node --check test/cloudfront-function.test.js && node --check test/site-upload.test.js",
     "clawbot:start": "./bin/start-clawbot.sh",
     "clawbot:check": "docker compose config --quiet",
     "clawbot:openclaw": "./bin/openclaw-clawbot.sh",
@@ -33,8 +33,11 @@
     "site:screenshot-audit": "node bin/syncpoly-site.js screenshot-audit",
     "site:publish": "node bin/syncpoly-site.js publish",
     "godaddy:add-cname": "node bin/syncpoly-site.js add-cname",
-    "test": "node --test test/cloudfront-function.test.js test/site-upload.test.js",
-    "test:unit": "npm test",
+    "test": "node --test test/cloudfront-function.test.js test/site-upload.test.js test/auth/*.unit.test.mjs test/auth/terraform-auth.test.mjs test/auth/*.integration.test.mjs test/auth/*.e2e.test.mjs",
+    "test:unit": "node --test test/cloudfront-function.test.js test/site-upload.test.js test/auth/*.unit.test.mjs test/auth/terraform-auth.test.mjs",
+    "test:integration": "LOCALSTACK_ENDPOINT=${LOCALSTACK_ENDPOINT:-http://localhost:4566} node --test test/auth/*.integration.test.mjs",
+    "test:e2e": "LOCALSTACK_ENDPOINT=${LOCALSTACK_ENDPOINT:-http://localhost:4566} LOCALSTACK_E2E=1 node --test test/auth/*.e2e.test.mjs",
+    "test:localstack": "npm run test:integration && npm run test:e2e",
     "terraform:fmt": "terraform -chdir=infra fmt -check",
     "terraform:validate": "terraform -chdir=infra init -backend=false && terraform -chdir=infra validate"
   },
@@ -43,5 +46,12 @@
   },
   "optionalDependencies": {
     "sharp": "^0.34.5"
+  },
+  "dependencies": {
+    "@aws-sdk/client-apigatewayv2": "^3.1058.0",
+    "@aws-sdk/client-dynamodb": "^3.1058.0",
+    "@aws-sdk/client-iam": "^3.1058.0",
+    "@aws-sdk/client-lambda": "^3.1058.0",
+    "@aws-sdk/client-secrets-manager": "^3.1058.0"
   }
 }

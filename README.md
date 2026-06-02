@@ -56,6 +56,7 @@ s3://syncpoly-web-builder-sites/hello-site/media/logo.png
 - `infra/` creates the private S3 bucket, CloudFront Function, CloudFront distribution, AWS WAF, cache policies, security headers, Origin Access Control, and read-only S3 bucket policy.
 - `bin/bootstrap-tf-state.sh` creates the hardcoded Terraform state bucket and DynamoDB lock table.
 - `bin/upload-global-404.sh` uploads the shared 404 assets to the content bucket root.
+- `lambdas/auth/` contains the Google login API, API Gateway JWT authorizer, `/auth/me`, Stripe billing summary, and Stripe webhook handlers.
 
 ## Hardcoded Host Map
 
@@ -95,6 +96,17 @@ npm install
 npm run build
 npm test
 ```
+
+Auth-specific test layers:
+
+```bash
+npm run test:unit
+docker compose --profile test up -d --wait localstack
+npm run test:localstack
+docker compose --profile test down -v
+```
+
+`test:unit` covers Google OAuth error handling, Google ID token `aud`/`iss`/`exp`/verified-email checks, JWT signature/expiry/issuer/audience failures, malformed bearer headers, `/auth/me` authorization context, and Terraform security assertions. `test:localstack` adds DynamoDB/Secrets Manager integration coverage and an HTTP API/Lambda e2e path through LocalStack.
 
 Site upload CLI:
 
@@ -260,6 +272,77 @@ AWS_SECRET_ACCESS_KEY
 ```
 
 CI runs build, tests, Terraform formatting, and Terraform validation. The manual `Terraform` workflow bootstraps state, plans, and can apply when you choose `apply`.
+
+The `Deploy Changed Lambdas` workflow deploys only Lambda folders changed in a push to `main`. Terraform still owns the Lambda configuration, IAM, API Gateway, DynamoDB, Secrets Manager, and CloudFront resources.
+
+## Auth API
+
+Terraform creates these auth resources:
+
+- `syncpoly-builder-google-login`: `POST /auth/google`, exchanges a Google OAuth authorization code.
+- `syncpoly-builder-auth-authorizer`: API Gateway Lambda authorizer for Syncpoly JWT bearer tokens.
+- `syncpoly-builder-auth-me`: `GET /auth/me`, protected by the authorizer.
+- `syncpoly-builder-billing-summary`: `GET /billing/summary`, protected by the authorizer.
+- `syncpoly-builder-stripe-webhook`: `POST /billing/stripe-webhook`, verifies Stripe signatures and records billing/dunning events.
+- `syncpoly-builder-users`, `syncpoly-builder-logins`, and `syncpoly-builder-billing-events`: DynamoDB tables for users, login audit records, and Stripe billing events.
+- `syncpoly-builder-google-oauth`, `syncpoly-builder-jwt-signing-key`, and `syncpoly-builder-stripe`: Secrets Manager secrets.
+- A CloudFront distribution in front of the HTTP API.
+- A regional AWS WAF on the API Gateway stage with the same managed rules and 2,000 requests per 5 minutes per-IP rate limit as the static-site CloudFront WAF.
+
+Set `auth_allowed_origins` in Terraform for the frontend domains allowed to call the API; it defaults to `https://syncpoly.com`.
+
+After the first Terraform apply, set secret values directly in AWS Secrets Manager:
+
+```json
+{
+  "client_id": "google-client-id.apps.googleusercontent.com",
+  "client_secret": "google-client-secret",
+  "redirect_uri": "https://example.com/auth/callback"
+}
+```
+
+```json
+{
+  "signing_key": "a-long-random-jwt-signing-key"
+}
+```
+
+```json
+{
+  "secret_key": "sk_live_or_test_key",
+  "webhook_secret": "whsec_stripe_webhook_signing_secret"
+}
+```
+
+Call login with:
+
+```bash
+curl -X POST "$AUTH_API/auth/google" \
+  -H "content-type: application/json" \
+  -d '{"code":"GOOGLE_AUTHORIZATION_CODE","redirectUri":"https://example.com/auth/callback"}'
+```
+
+Use the returned `accessToken` for protected endpoints:
+
+```bash
+curl "$AUTH_API/auth/me" \
+  -H "authorization: Bearer ACCESS_TOKEN"
+```
+
+Billing summary is also protected. It uses the authenticated user only, auto-creates a Stripe Customer if the user does not have `stripe_customer_id`, stores that id on the user record, and returns sanitized customer, invoice, subscription, payment method, payment status, and dunning data:
+
+```bash
+curl "$AUTH_API/billing/summary" \
+  -H "authorization: Bearer ACCESS_TOKEN"
+```
+
+Configure the Stripe webhook endpoint to:
+
+```text
+POST $AUTH_API/billing/stripe-webhook
+```
+
+The webhook validates the `Stripe-Signature` header before writing invoice/subscription dunning events.
 
 Terraform intentionally ignores manual changes to CloudFront aliases and viewer certificates, so adding custom domains later in the AWS console will not be removed by the next apply.
 

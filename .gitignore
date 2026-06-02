@@ -35,6 +35,7 @@ sites/*/assets/
 sites/*/media/
 *.log
 .terraform/
+infra/*.zip
 *.tfstate
 *.tfstate.*
 tfplan

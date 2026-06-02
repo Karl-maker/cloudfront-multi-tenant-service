@@ -1,0 +1,123 @@
+name: Deploy Changed Lambdas
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "lambdas/**"
+      - ".github/workflows/lambda-deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-changed-lambdas:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed Lambda folders
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            changed_files="$(find lambdas -type f | sort)"
+          elif [[ "${{ github.event.before }}" =~ ^0+$ ]]; then
+            changed_files="$(git diff --name-only HEAD~1 HEAD)"
+          else
+            changed_files="$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")"
+          fi
+
+          has_google_login=false
+          has_authorizer=false
+          has_me=false
+          has_billing_summary=false
+          has_stripe_webhook=false
+
+          if grep -q '^lambdas/auth/google-login/' <<< "$changed_files"; then
+            has_google_login=true
+          fi
+
+          if grep -q '^lambdas/auth/authorizer/' <<< "$changed_files"; then
+            has_authorizer=true
+          fi
+
+          if grep -q '^lambdas/auth/me/' <<< "$changed_files"; then
+            has_me=true
+          fi
+
+          if grep -q '^lambdas/auth/billing-summary/' <<< "$changed_files"; then
+            has_billing_summary=true
+          fi
+
+          if grep -q '^lambdas/auth/stripe-webhook/' <<< "$changed_files"; then
+            has_stripe_webhook=true
+          fi
+
+          {
+            echo "google_login=$has_google_login"
+            echo "authorizer=$has_authorizer"
+            echo "me=$has_me"
+            echo "billing_summary=$has_billing_summary"
+            echo "stripe_webhook=$has_stripe_webhook"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Deploy Google login Lambda
+        if: steps.changes.outputs.google_login == 'true'
+        run: |
+          cd lambdas/auth/google-login
+          zip -qr "$RUNNER_TEMP/google-login.zip" .
+          aws lambda update-function-code \
+            --function-name syncpoly-builder-google-login \
+            --zip-file "fileb://$RUNNER_TEMP/google-login.zip" \
+            --publish
+
+      - name: Deploy JWT authorizer Lambda
+        if: steps.changes.outputs.authorizer == 'true'
+        run: |
+          cd lambdas/auth/authorizer
+          zip -qr "$RUNNER_TEMP/authorizer.zip" .
+          aws lambda update-function-code \
+            --function-name syncpoly-builder-auth-authorizer \
+            --zip-file "fileb://$RUNNER_TEMP/authorizer.zip" \
+            --publish
+
+      - name: Deploy /auth/me Lambda
+        if: steps.changes.outputs.me == 'true'
+        run: |
+          cd lambdas/auth/me
+          zip -qr "$RUNNER_TEMP/me.zip" .
+          aws lambda update-function-code \
+            --function-name syncpoly-builder-auth-me \
+            --zip-file "fileb://$RUNNER_TEMP/me.zip" \
+            --publish
+
+      - name: Deploy billing summary Lambda
+        if: steps.changes.outputs.billing_summary == 'true'
+        run: |
+          cd lambdas/auth/billing-summary
+          zip -qr "$RUNNER_TEMP/billing-summary.zip" .
+          aws lambda update-function-code \
+            --function-name syncpoly-builder-billing-summary \
+            --zip-file "fileb://$RUNNER_TEMP/billing-summary.zip" \
+            --publish
+
+      - name: Deploy Stripe webhook Lambda
+        if: steps.changes.outputs.stripe_webhook == 'true'
+        run: |
+          cd lambdas/auth/stripe-webhook
+          zip -qr "$RUNNER_TEMP/stripe-webhook.zip" .
+          aws lambda update-function-code \
+            --function-name syncpoly-builder-stripe-webhook \
+            --zip-file "fileb://$RUNNER_TEMP/stripe-webhook.zip" \
+            --publish
