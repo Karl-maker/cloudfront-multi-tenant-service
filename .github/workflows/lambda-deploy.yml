@@ -72,8 +72,38 @@ jobs:
             echo "stripe_webhook=$has_stripe_webhook"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Check provisioned Lambda functions
+        id: existing
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_function() {
+            local output_name="$1"
+            local function_name="$2"
+            local should_check="$3"
+
+            if [[ "$should_check" != "true" ]]; then
+              echo "$output_name=false" >> "$GITHUB_OUTPUT"
+              return
+            fi
+
+            if aws lambda get-function --function-name "$function_name" >/dev/null 2>&1; then
+              echo "$output_name=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::notice title=Lambda not provisioned::$function_name does not exist yet. Terraform owns initial Lambda creation; run the Terraform workflow with action=apply first."
+              echo "$output_name=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
+
+          check_function google_login syncpoly-builder-google-login "${{ steps.changes.outputs.google_login }}"
+          check_function authorizer syncpoly-builder-auth-authorizer "${{ steps.changes.outputs.authorizer }}"
+          check_function me syncpoly-builder-auth-me "${{ steps.changes.outputs.me }}"
+          check_function billing_summary syncpoly-builder-billing-summary "${{ steps.changes.outputs.billing_summary }}"
+          check_function stripe_webhook syncpoly-builder-stripe-webhook "${{ steps.changes.outputs.stripe_webhook }}"
+
       - name: Deploy Google login Lambda
-        if: steps.changes.outputs.google_login == 'true'
+        if: steps.changes.outputs.google_login == 'true' && steps.existing.outputs.google_login == 'true'
         run: |
           cd lambdas/auth/google-login
           zip -qr "$RUNNER_TEMP/google-login.zip" .
@@ -83,7 +113,7 @@ jobs:
             --publish
 
       - name: Deploy JWT authorizer Lambda
-        if: steps.changes.outputs.authorizer == 'true'
+        if: steps.changes.outputs.authorizer == 'true' && steps.existing.outputs.authorizer == 'true'
         run: |
           cd lambdas/auth/authorizer
           zip -qr "$RUNNER_TEMP/authorizer.zip" .
@@ -93,7 +123,7 @@ jobs:
             --publish
 
       - name: Deploy /auth/me Lambda
-        if: steps.changes.outputs.me == 'true'
+        if: steps.changes.outputs.me == 'true' && steps.existing.outputs.me == 'true'
         run: |
           cd lambdas/auth/me
           zip -qr "$RUNNER_TEMP/me.zip" .
@@ -103,7 +133,7 @@ jobs:
             --publish
 
       - name: Deploy billing summary Lambda
-        if: steps.changes.outputs.billing_summary == 'true'
+        if: steps.changes.outputs.billing_summary == 'true' && steps.existing.outputs.billing_summary == 'true'
         run: |
           cd lambdas/auth/billing-summary
           zip -qr "$RUNNER_TEMP/billing-summary.zip" .
@@ -113,7 +143,7 @@ jobs:
             --publish
 
       - name: Deploy Stripe webhook Lambda
-        if: steps.changes.outputs.stripe_webhook == 'true'
+        if: steps.changes.outputs.stripe_webhook == 'true' && steps.existing.outputs.stripe_webhook == 'true'
         run: |
           cd lambdas/auth/stripe-webhook
           zip -qr "$RUNNER_TEMP/stripe-webhook.zip" .

@@ -55,7 +55,32 @@ jobs:
         run: npm ci
 
       - name: Start LocalStack
-        run: docker compose --profile test up -d --wait localstack
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker compose --profile test up -d localstack
+
+          for attempt in {1..60}; do
+            if curl -fsS http://localhost:4566/_localstack/health >/dev/null; then
+              docker compose --profile test ps localstack
+              exit 0
+            fi
+
+            container_id="$(docker compose --profile test ps -q localstack)"
+            state="$(docker inspect -f '{{.State.Status}}' "$container_id" 2>/dev/null || true)"
+            if [[ "$state" == "exited" || "$state" == "dead" ]]; then
+              docker compose --profile test ps localstack
+              docker compose --profile test logs localstack
+              exit 1
+            fi
+
+            sleep 2
+          done
+
+          docker compose --profile test ps localstack
+          docker compose --profile test logs localstack
+          exit 1
 
       - name: Run LocalStack auth integration tests
         run: npm run test:integration

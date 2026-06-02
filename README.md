@@ -101,7 +101,7 @@ Auth-specific test layers:
 
 ```bash
 npm run test:unit
-docker compose --profile test up -d --wait localstack
+docker compose --profile test up -d localstack
 npm run test:localstack
 docker compose --profile test down -v
 ```
@@ -273,7 +273,7 @@ AWS_SECRET_ACCESS_KEY
 
 CI runs build, tests, Terraform formatting, and Terraform validation. The manual `Terraform` workflow bootstraps state, plans, and can apply when you choose `apply`.
 
-The `Deploy Changed Lambdas` workflow deploys only Lambda folders changed in a push to `main`. Terraform still owns the Lambda configuration, IAM, API Gateway, DynamoDB, Secrets Manager, and CloudFront resources.
+The `Deploy Changed Lambdas` workflow deploys only Lambda folders changed in a push to `main`. Terraform still owns initial Lambda creation, Lambda configuration, IAM, API Gateway, DynamoDB, Secrets Manager, and CloudFront resources. If a Lambda does not exist yet, the changed-Lambda workflow skips it and prints a notice to run the Terraform workflow with `action=apply` first.
 
 ## Auth API
 

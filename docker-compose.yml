@@ -53,17 +53,18 @@ x-openclaw-volumes: &openclaw-volumes
 
 services:
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:3.8.1
     profiles:
       - test
     environment:
       AWS_DEFAULT_REGION: us-east-1
       DEBUG: ${LOCALSTACK_DEBUG:-0}
       GATEWAY_LISTEN: 0.0.0.0:4566
-      SERVICES: apigateway,apigatewayv2,dynamodb,iam,lambda,logs,secretsmanager,sts
     ports:
       - "4566:4566"
+      - "4510-4559:4510-4559"
     volumes:
+      - ${LOCALSTACK_VOLUME_DIR:-./tmp/localstack}:/var/lib/localstack
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test:
