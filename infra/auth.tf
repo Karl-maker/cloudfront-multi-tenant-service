@@ -1,7 +1,7 @@
 variable "auth_allowed_origins" {
   description = "Browser origins allowed to call the auth API."
   type        = list(string)
-  default     = ["https://syncpoly.com"]
+  default     = ["https://syncpoly.com", "https://www.syncpoly.com"]
 }
 
 variable "auth_login_retention_days" {

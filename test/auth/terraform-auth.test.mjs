@@ -27,6 +27,7 @@ test("auth Terraform exposes a prod API Gateway stage through CloudFront", () =>
 
 test("auth Terraform avoids wildcard credentialed CORS and enables DynamoDB protections", () => {
   assert.match(authTf, /allow_credentials\s+=\s+true/);
+  assert.match(authTf, /https:\/\/www\.syncpoly\.com/);
   assert.doesNotMatch(authTf, /allow_origins\s+=\s+\["\*"\]/);
   assert.match(authTf, /deletion_protection_enabled\s+=\s+true/);
   assert.match(authTf, /point_in_time_recovery\s+\{\s+enabled\s+=\s+true\s+\}/s);
