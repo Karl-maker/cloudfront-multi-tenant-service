@@ -266,7 +266,7 @@ async function createAuthTables(dynamodbClient, usersTable, loginsTable) {
     })
   );
 
-  await waitUntilTableExists({ client: dynamodbClient, maxWaitTime: 20 }, { TableName: loginsTable });
+  await waitForTable(dynamodbClient, loginsTable);
 }
 
 async function createUsersTable(dynamodbClient, usersTable) {
@@ -279,7 +279,7 @@ async function createUsersTable(dynamodbClient, usersTable) {
     })
   );
 
-  await waitUntilTableExists({ client: dynamodbClient, maxWaitTime: 20 }, { TableName: usersTable });
+  await waitForTable(dynamodbClient, usersTable);
 }
 
 async function createBillingEventsTable(dynamodbClient, billingEventsTable) {
@@ -298,7 +298,19 @@ async function createBillingEventsTable(dynamodbClient, billingEventsTable) {
     })
   );
 
-  await waitUntilTableExists({ client: dynamodbClient, maxWaitTime: 20 }, { TableName: billingEventsTable });
+  await waitForTable(dynamodbClient, billingEventsTable);
+}
+
+async function waitForTable(dynamodbClient, tableName) {
+  await waitUntilTableExists(
+    {
+      client: dynamodbClient,
+      maxWaitTime: 30,
+      minDelay: 1,
+      maxDelay: 2
+    },
+    { TableName: tableName }
+  );
 }
 
 async function cleanupTable(dynamodbClient, tableName) {
