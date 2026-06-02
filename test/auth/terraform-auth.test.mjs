@@ -41,6 +41,10 @@ test("auth Terraform protects billing summary with JWT auth and leaves Stripe we
   assert.match(authTf, /route_key\s+=\s+"POST \/billing\/stripe-webhook"/);
 });
 
+test("auth Terraform lets Google login write and update auth records", () => {
+  assert.match(authTf, /data "aws_iam_policy_document" "auth_google_login_lambda"[\s\S]*"dynamodb:PutItem"[\s\S]*"dynamodb:UpdateItem"[\s\S]*aws_dynamodb_table\.auth_users\.arn[\s\S]*aws_dynamodb_table\.auth_logins\.arn/);
+});
+
 test("auth Terraform defines unauthenticated OPTIONS routes for CORS preflight", () => {
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/auth\/google"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/auth\/me"/);
