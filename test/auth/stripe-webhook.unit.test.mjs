@@ -71,6 +71,8 @@ test("Stripe webhook verifies the raw body, records dunning events, and deduplic
   assert.equal(dynamodbClient.calls[0].input.Item.stripe_customer_id.S, "cus_123");
   assert.equal(dynamodbClient.calls[0].input.Item.ttl.N, String(TEST_NOW_SECONDS + 86400));
   assert.equal(dynamodbClient.calls[1].input.Key.stripe_event_id.S, "latest-invoice:in_failed");
+  assert.match(dynamodbClient.calls[1].input.UpdateExpression, /#ttl = :ttl/);
+  assert.equal(dynamodbClient.calls[1].input.ExpressionAttributeNames["#ttl"], "ttl");
 });
 
 test("Stripe webhook rejects invalid signatures before writing records", async () => {

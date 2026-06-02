@@ -148,10 +148,11 @@ async function recordStripeEvent(dynamodbClient, stripeEvent, nowSeconds) {
           "next_payment_attempt = :nextPaymentAttempt",
           "amount_remaining = :amountRemaining",
           "created_at = :createdAt",
-          "ttl = :ttl"
+          "#ttl = :ttl"
         ].join(", "),
         ExpressionAttributeNames: {
-          "#status": "status"
+          "#status": "status",
+          "#ttl": "ttl"
         },
         ExpressionAttributeValues: {
           ":eventType": { S: stripeEvent.type },
