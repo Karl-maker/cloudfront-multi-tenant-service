@@ -14,6 +14,10 @@ export async function handleMe(event, deps = {}) {
   const dynamodbClient = deps.dynamodbClient || dynamodb;
 
   try {
+    if (event.requestContext?.http?.method === "OPTIONS") {
+      return jsonResponse(204, {}, event);
+    }
+
     const authorizer = event.requestContext?.authorizer?.lambda || {};
     const userId = authorizer.userId;
 

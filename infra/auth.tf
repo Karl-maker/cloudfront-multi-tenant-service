@@ -710,12 +710,24 @@ resource "aws_apigatewayv2_route" "auth_google_login" {
   target    = "integrations/${aws_apigatewayv2_integration.auth_google_login.id}"
 }
 
+resource "aws_apigatewayv2_route" "auth_google_login_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /auth/google"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_google_login.id}"
+}
+
 resource "aws_apigatewayv2_route" "auth_me" {
   api_id             = aws_apigatewayv2_api.auth.id
   route_key          = "GET /auth/me"
   authorization_type = "CUSTOM"
   authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
   target             = "integrations/${aws_apigatewayv2_integration.auth_me.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_me_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /auth/me"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_me.id}"
 }
 
 resource "aws_apigatewayv2_route" "auth_billing_summary" {
@@ -726,9 +738,21 @@ resource "aws_apigatewayv2_route" "auth_billing_summary" {
   target             = "integrations/${aws_apigatewayv2_integration.auth_billing_summary.id}"
 }
 
+resource "aws_apigatewayv2_route" "auth_billing_summary_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /billing/summary"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_billing_summary.id}"
+}
+
 resource "aws_apigatewayv2_route" "auth_stripe_webhook" {
   api_id    = aws_apigatewayv2_api.auth.id
   route_key = "POST /billing/stripe-webhook"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_stripe_webhook.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_stripe_webhook_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /billing/stripe-webhook"
   target    = "integrations/${aws_apigatewayv2_integration.auth_stripe_webhook.id}"
 }
 

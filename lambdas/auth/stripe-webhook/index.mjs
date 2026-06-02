@@ -34,6 +34,10 @@ export async function handleStripeWebhook(event, deps = {}) {
   const secretCache = deps.secretCache || {};
 
   try {
+    if (event.requestContext?.http?.method === "OPTIONS") {
+      return jsonResponse(204, {}, event);
+    }
+
     const signature = getHeader(event.headers, "stripe-signature");
     const body = event.isBase64Encoded ? Buffer.from(event.body || "", "base64").toString("utf8") : event.body || "";
     const stripeSecret = await getStripeSecret(secretsClient, secretCache);

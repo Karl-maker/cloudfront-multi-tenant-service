@@ -37,6 +37,10 @@ export async function handleBillingSummary(event, deps = {}) {
   const secretCache = deps.secretCache || {};
 
   try {
+    if (event.requestContext?.http?.method === "OPTIONS") {
+      return jsonResponse(204, {}, event);
+    }
+
     const userId = event.requestContext?.authorizer?.lambda?.userId;
     if (!userId) {
       return jsonResponse(401, { message: "Unauthorized." }, event);

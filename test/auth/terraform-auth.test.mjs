@@ -41,6 +41,14 @@ test("auth Terraform protects billing summary with JWT auth and leaves Stripe we
   assert.match(authTf, /route_key\s+=\s+"POST \/billing\/stripe-webhook"/);
 });
 
+test("auth Terraform defines unauthenticated OPTIONS routes for CORS preflight", () => {
+  assert.match(authTf, /route_key\s+=\s+"OPTIONS \/auth\/google"/);
+  assert.match(authTf, /route_key\s+=\s+"OPTIONS \/auth\/me"/);
+  assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/summary"/);
+  assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/stripe-webhook"/);
+  assert.doesNotMatch(authTf, /route_key\s+=\s+"OPTIONS [^"]+"[\s\S]{0,160}authorization_type\s+=\s+"CUSTOM"/);
+});
+
 test("auth Terraform protects API traffic through CloudFront WAF and rate limiting", () => {
   assert.match(authTf, /resource "aws_cloudfront_distribution" "auth_api"[\s\S]*web_acl_id\s+=\s+aws_wafv2_web_acl\.sites\.arn/);
   assert.doesNotMatch(authTf, /resource "aws_wafv2_web_acl_association" "auth_api_stage"/);
