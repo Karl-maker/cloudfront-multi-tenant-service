@@ -54,6 +54,10 @@ output "auth_billing_summary_function_name" {
   value = aws_lambda_function.auth_billing_summary.function_name
 }
 
+output "auth_pricing_function_name" {
+  value = aws_lambda_function.auth_pricing.function_name
+}
+
 output "auth_stripe_webhook_function_name" {
   value = aws_lambda_function.auth_stripe_webhook.function_name
 }

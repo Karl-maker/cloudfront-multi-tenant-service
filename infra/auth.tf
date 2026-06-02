@@ -17,24 +17,112 @@ variable "billing_event_retention_days" {
 }
 
 locals {
-  auth_api_name                      = "syncpoly-builder-auth-api"
-  auth_api_cloudfront_origin_id      = "syncpoly-builder-auth-api-origin"
-  auth_authorizer_function_name      = "syncpoly-builder-auth-authorizer"
-  auth_billing_summary_function_name = "syncpoly-builder-billing-summary"
-  auth_google_login_function_name    = "syncpoly-builder-google-login"
-  auth_me_function_name              = "syncpoly-builder-auth-me"
-  auth_google_oauth_secret_name      = "syncpoly-builder-google-oauth"
-  auth_jwt_secret_name               = "syncpoly-builder-jwt-signing-key"
-  auth_stripe_secret_name            = "syncpoly-builder-stripe"
-  auth_stripe_webhook_function_name  = "syncpoly-builder-stripe-webhook"
-  auth_users_table_name              = "syncpoly-builder-users"
-  auth_logins_table_name             = "syncpoly-builder-logins"
-  billing_events_table_name          = "syncpoly-builder-billing-events"
-  auth_jwt_issuer                    = "syncpoly-builder"
-  auth_jwt_audience                  = "syncpoly-builder-api"
-  auth_access_token_ttl_seconds      = 3600
-  auth_login_retention_ttl_seconds   = var.auth_login_retention_days * 24 * 60 * 60
-  billing_event_ttl_seconds          = var.billing_event_retention_days * 24 * 60 * 60
+  auth_api_name                        = "syncpoly-builder-auth-api"
+  auth_api_cloudfront_origin_id        = "syncpoly-builder-auth-api-origin"
+  auth_authorizer_function_name        = "syncpoly-builder-auth-authorizer"
+  auth_billing_summary_function_name   = "syncpoly-builder-billing-summary"
+  auth_pricing_function_name           = "syncpoly-builder-billing-pricing"
+  auth_google_login_function_name      = "syncpoly-builder-google-login"
+  auth_me_function_name                = "syncpoly-builder-auth-me"
+  auth_google_oauth_secret_name        = "syncpoly-builder-google-oauth"
+  auth_jwt_secret_name                 = "syncpoly-builder-jwt-signing-key"
+  auth_stripe_secret_name              = "syncpoly-builder-stripe"
+  auth_stripe_webhook_function_name    = "syncpoly-builder-stripe-webhook"
+  auth_users_table_name                = "syncpoly-builder-users"
+  auth_logins_table_name               = "syncpoly-builder-logins"
+  billing_catalog_table_name           = "syncpoly-builder-billing-catalog"
+  billing_checkout_requests_table_name = "syncpoly-builder-billing-checkout-requests"
+  billing_events_table_name            = "syncpoly-builder-billing-events"
+  billing_checkout_success_url         = "https://syncpoly.com/billing/success"
+  billing_checkout_cancel_url          = "https://syncpoly.com/billing/cancel"
+  billing_custom_solution_email        = "hello@syncpoly.com"
+  auth_jwt_issuer                      = "syncpoly-builder"
+  auth_jwt_audience                    = "syncpoly-builder-api"
+  auth_access_token_ttl_seconds        = 3600
+  auth_login_retention_ttl_seconds     = var.auth_login_retention_days * 24 * 60 * 60
+  billing_checkout_request_ttl_seconds = 7 * 24 * 60 * 60
+  billing_event_ttl_seconds            = var.billing_event_retention_days * 24 * 60 * 60
+  billing_catalog_seed_items = {
+    free_website_plan = {
+      item_type               = "plan"
+      checkout_mode           = "free"
+      name                    = "Free Website Plan"
+      description             = "Starter website plan with Syncpoly branding, ads, simple SEO, and a location map."
+      amount_monthly_cents    = 0
+      yearly_discount_percent = 20
+      sort_order              = 10
+      entitlements_json = jsonencode({
+        ads_removed     = { type = "boolean", value = false }
+        syncpoly_banner = { type = "boolean", value = true }
+        change_requests = { type = "usage", limit = 0, reset_strategy = "monthly" }
+        simple_seo_setup = {
+          type  = "boolean"
+          value = true
+        }
+        location_map = { type = "boolean", value = true }
+      })
+    }
+    basic_website_plan = {
+      item_type               = "plan"
+      checkout_mode           = "subscription"
+      name                    = "Basic Website Plan"
+      description             = "Paid website plan with ads removed, no Syncpoly banner, SEO setup, a location map, and monthly change requests."
+      amount_monthly_cents    = 3999
+      yearly_discount_percent = 20
+      sort_order              = 20
+      entitlements_json = jsonencode({
+        ads_removed     = { type = "boolean", value = true }
+        syncpoly_banner = { type = "boolean", value = false }
+        change_requests = { type = "usage", limit = 3, reset_strategy = "monthly" }
+        seo_setup = {
+          type  = "boolean"
+          value = true
+        }
+        location_map = { type = "boolean", value = true }
+      })
+    }
+    custom_solution_plan = {
+      item_type               = "plan"
+      checkout_mode           = "conversation"
+      name                    = "Custom Solution Plan"
+      description             = "Custom setup handled through an email conversation before billing is configured."
+      amount_monthly_cents    = 0
+      yearly_discount_percent = 20
+      sort_order              = 30
+      entitlements_json = jsonencode({
+        custom_setup_required = { type = "boolean", value = true }
+        email_conversation    = { type = "boolean", value = true }
+        change_requests       = { type = "usage", limit = -1, reset_strategy = "monthly" }
+        seo_setup             = { type = "boolean", value = true }
+        location_map          = { type = "boolean", value = true }
+      })
+    }
+    addon_5_change_requests = {
+      item_type               = "addon"
+      checkout_mode           = "subscription"
+      name                    = "5 More Change Requests"
+      description             = "Adds five extra website change requests each month."
+      amount_monthly_cents    = 999
+      yearly_discount_percent = 20
+      sort_order              = 110
+      entitlements_json = jsonencode({
+        change_requests = { type = "usage", add = 5, reset_strategy = "monthly" }
+      })
+    }
+    addon_managed_promotions = {
+      item_type               = "addon"
+      checkout_mode           = "subscription"
+      name                    = "Managed Promotions"
+      description             = "Adds ongoing promotion updates and campaign placement management."
+      amount_monthly_cents    = 2999
+      yearly_discount_percent = 20
+      sort_order              = 120
+      entitlements_json = jsonencode({
+        managed_promotions = { type = "boolean", value = true }
+        promotion_updates  = { type = "usage", limit = 4, reset_strategy = "monthly" }
+      })
+    }
+  }
 }
 
 data "archive_file" "auth_google_login" {
@@ -59,6 +147,12 @@ data "archive_file" "auth_billing_summary" {
   type        = "zip"
   source_file = "${path.module}/../lambdas/auth/billing-summary/index.mjs"
   output_path = "${path.module}/auth-billing-summary.zip"
+}
+
+data "archive_file" "auth_pricing" {
+  type        = "zip"
+  source_file = "${path.module}/../lambdas/auth/pricing/index.mjs"
+  output_path = "${path.module}/auth-pricing.zip"
 }
 
 data "archive_file" "auth_stripe_webhook" {
@@ -180,6 +274,76 @@ resource "aws_dynamodb_table" "billing_events" {
   }
 }
 
+resource "aws_dynamodb_table" "billing_catalog" {
+  name                        = local.billing_catalog_table_name
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "item_id"
+  deletion_protection_enabled = true
+
+  attribute {
+    name = "item_id"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+}
+
+resource "aws_dynamodb_table_item" "billing_catalog_seed" {
+  for_each   = local.billing_catalog_seed_items
+  table_name = aws_dynamodb_table.billing_catalog.name
+  hash_key   = aws_dynamodb_table.billing_catalog.hash_key
+
+  item = jsonencode({
+    item_id                 = { S = each.key }
+    item_type               = { S = each.value.item_type }
+    checkout_mode           = { S = each.value.checkout_mode }
+    name                    = { S = each.value.name }
+    description             = { S = each.value.description }
+    status                  = { S = "active" }
+    currency                = { S = "usd" }
+    amount_monthly_cents    = { N = tostring(each.value.amount_monthly_cents) }
+    yearly_discount_percent = { N = tostring(each.value.yearly_discount_percent) }
+    sort_order              = { N = tostring(each.value.sort_order) }
+    entitlements_json       = { S = each.value.entitlements_json }
+    reset_strategy          = { S = "monthly" }
+  })
+
+  lifecycle {
+    ignore_changes = [item]
+  }
+}
+
+resource "aws_dynamodb_table" "billing_checkout_requests" {
+  name                        = local.billing_checkout_requests_table_name
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "idempotency_key"
+  deletion_protection_enabled = true
+
+  attribute {
+    name = "idempotency_key"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+}
+
 data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
     effect = "Allow"
@@ -213,6 +377,11 @@ resource "aws_iam_role" "auth_billing_summary_lambda" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
+resource "aws_iam_role" "auth_pricing_lambda" {
+  name               = "${local.auth_pricing_function_name}-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
 resource "aws_iam_role" "auth_stripe_webhook_lambda" {
   name               = "${local.auth_stripe_webhook_function_name}-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
@@ -238,6 +407,11 @@ resource "aws_iam_role_policy_attachment" "auth_billing_summary_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "auth_pricing_basic" {
+  role       = aws_iam_role.auth_pricing_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
 resource "aws_iam_role_policy_attachment" "auth_stripe_webhook_basic" {
   role       = aws_iam_role.auth_stripe_webhook_lambda.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
@@ -260,6 +434,11 @@ resource "aws_iam_role_policy_attachment" "auth_me_xray" {
 
 resource "aws_iam_role_policy_attachment" "auth_billing_summary_xray" {
   role       = aws_iam_role.auth_billing_summary_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "auth_pricing_xray" {
+  role       = aws_iam_role.auth_pricing_lambda.name
   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
@@ -364,6 +543,61 @@ data "aws_iam_policy_document" "auth_billing_summary_lambda" {
   }
 }
 
+data "aws_iam_policy_document" "auth_pricing_lambda" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue"
+    ]
+
+    resources = [
+      data.aws_secretsmanager_secret.auth_stripe.arn
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem"
+    ]
+
+    resources = [
+      aws_dynamodb_table.auth_users.arn
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:Scan",
+      "dynamodb:UpdateItem"
+    ]
+
+    resources = [
+      aws_dynamodb_table.billing_catalog.arn
+    ]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem"
+    ]
+
+    resources = [
+      aws_dynamodb_table.billing_checkout_requests.arn
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "auth_stripe_webhook_lambda" {
   statement {
     effect = "Allow"
@@ -415,6 +649,12 @@ resource "aws_iam_role_policy" "auth_billing_summary_lambda" {
   policy = data.aws_iam_policy_document.auth_billing_summary_lambda.json
 }
 
+resource "aws_iam_role_policy" "auth_pricing_lambda" {
+  name   = "${local.auth_pricing_function_name}-policy"
+  role   = aws_iam_role.auth_pricing_lambda.id
+  policy = data.aws_iam_policy_document.auth_pricing_lambda.json
+}
+
 resource "aws_iam_role_policy" "auth_stripe_webhook_lambda" {
   name   = "${local.auth_stripe_webhook_function_name}-policy"
   role   = aws_iam_role.auth_stripe_webhook_lambda.id
@@ -438,6 +678,11 @@ resource "aws_cloudwatch_log_group" "auth_me" {
 
 resource "aws_cloudwatch_log_group" "auth_billing_summary" {
   name              = "/aws/lambda/${local.auth_billing_summary_function_name}"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_group" "auth_pricing" {
+  name              = "/aws/lambda/${local.auth_pricing_function_name}"
   retention_in_days = 30
 }
 
@@ -580,6 +825,44 @@ resource "aws_lambda_function" "auth_billing_summary" {
   ]
 }
 
+resource "aws_lambda_function" "auth_pricing" {
+  function_name    = local.auth_pricing_function_name
+  description      = "Returns billing catalog data and creates Stripe checkout or subscription selections"
+  role             = aws_iam_role.auth_pricing_lambda.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  architectures    = ["arm64"]
+  filename         = data.archive_file.auth_pricing.output_path
+  source_code_hash = data.archive_file.auth_pricing.output_base64sha256
+  timeout          = 10
+  memory_size      = 256
+
+  environment {
+    variables = {
+      AUTH_ALLOWED_ORIGINS                 = join(",", var.auth_allowed_origins)
+      BILLING_CATALOG_TABLE_NAME           = aws_dynamodb_table.billing_catalog.name
+      BILLING_CHECKOUT_CANCEL_URL          = local.billing_checkout_cancel_url
+      BILLING_CHECKOUT_REQUESTS_TABLE_NAME = aws_dynamodb_table.billing_checkout_requests.name
+      BILLING_CHECKOUT_REQUEST_TTL_SECONDS = tostring(local.billing_checkout_request_ttl_seconds)
+      BILLING_CHECKOUT_SUCCESS_URL         = local.billing_checkout_success_url
+      BILLING_CUSTOM_SOLUTION_EMAIL        = local.billing_custom_solution_email
+      STRIPE_SECRET_ARN                    = data.aws_secretsmanager_secret.auth_stripe.arn
+      USERS_TABLE_NAME                     = aws_dynamodb_table.auth_users.name
+    }
+  }
+
+  tracing_config {
+    mode = "Active"
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.auth_pricing,
+    aws_iam_role_policy_attachment.auth_pricing_basic,
+    aws_iam_role_policy_attachment.auth_pricing_xray,
+    aws_iam_role_policy.auth_pricing_lambda
+  ]
+}
+
 resource "aws_lambda_function" "auth_stripe_webhook" {
   function_name    = local.auth_stripe_webhook_function_name
   description      = "Verifies Stripe webhooks and records billing and dunning events"
@@ -696,6 +979,15 @@ resource "aws_apigatewayv2_integration" "auth_billing_summary" {
   timeout_milliseconds   = 10000
 }
 
+resource "aws_apigatewayv2_integration" "auth_pricing" {
+  api_id                 = aws_apigatewayv2_api.auth.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = aws_lambda_function.auth_pricing.invoke_arn
+  payload_format_version = "2.0"
+  timeout_milliseconds   = 10000
+}
+
 resource "aws_apigatewayv2_integration" "auth_stripe_webhook" {
   api_id                 = aws_apigatewayv2_api.auth.id
   integration_type       = "AWS_PROXY"
@@ -745,6 +1037,32 @@ resource "aws_apigatewayv2_route" "auth_billing_summary_options" {
   target    = "integrations/${aws_apigatewayv2_integration.auth_billing_summary.id}"
 }
 
+resource "aws_apigatewayv2_route" "auth_billing_catalog" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "GET /billing/catalog"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_pricing.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_billing_catalog_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /billing/catalog"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_pricing.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_billing_checkout" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "POST /billing/checkout"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_pricing.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_billing_checkout_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /billing/checkout"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_pricing.id}"
+}
+
 resource "aws_apigatewayv2_route" "auth_stripe_webhook" {
   api_id    = aws_apigatewayv2_api.auth.id
   route_key = "POST /billing/stripe-webhook"
@@ -785,6 +1103,14 @@ resource "aws_lambda_permission" "auth_billing_summary_api_gateway" {
   statement_id  = "AllowExecutionFromApiGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.auth_billing_summary.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.auth.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "auth_pricing_api_gateway" {
+  statement_id  = "AllowExecutionFromApiGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.auth_pricing.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.auth.execution_arn}/*/*"
 }

@@ -283,8 +283,9 @@ Terraform creates these auth resources:
 - `syncpoly-builder-auth-authorizer`: API Gateway Lambda authorizer for Syncpoly JWT bearer tokens.
 - `syncpoly-builder-auth-me`: `GET /auth/me`, protected by the authorizer.
 - `syncpoly-builder-billing-summary`: `GET /billing/summary`, protected by the authorizer.
+- `syncpoly-builder-billing-pricing`: `GET /billing/catalog` and protected `POST /billing/checkout`.
 - `syncpoly-builder-stripe-webhook`: `POST /billing/stripe-webhook`, verifies Stripe signatures and records billing/dunning events.
-- `syncpoly-builder-users`, `syncpoly-builder-logins`, and `syncpoly-builder-billing-events`: DynamoDB tables for users, login audit records, and Stripe billing events.
+- `syncpoly-builder-users`, `syncpoly-builder-logins`, `syncpoly-builder-billing-catalog`, and `syncpoly-builder-billing-events`: DynamoDB tables for users, login audit records, pricing/entitlement catalog records, and Stripe billing events.
 - `syncpoly-builder-google-oauth`, `syncpoly-builder-jwt-signing-key`, and `syncpoly-builder-stripe`: Secrets Manager secrets.
 - A CloudFront distribution in front of the HTTP API.
 - A regional AWS WAF on the API Gateway stage with the same managed rules and 2,000 requests per 5 minutes per-IP rate limit as the static-site CloudFront WAF.
@@ -327,6 +328,21 @@ Use the returned `accessToken` for protected endpoints:
 ```bash
 curl "$AUTH_API/auth/me" \
   -H "authorization: Bearer ACCESS_TOKEN"
+```
+
+Pricing catalog is public and returns seeded plans/add-ons with boolean and usage entitlements. Usage entitlements reset monthly. The default catalog includes Free Website Plan, Basic Website Plan at $39.99/month, Custom Solution Plan, 5 More Change Requests, and Managed Promotions. Yearly prices are calculated with a 20% discount.
+
+```bash
+curl "$AUTH_API/billing/catalog"
+```
+
+Checkout selection is protected. If the selected paid catalog item does not yet have Stripe product/price IDs, the API creates them and stores the IDs on the catalog record. If the Stripe customer already has a default payment method or any saved payment method, the API creates the subscription directly so Stripe charges the saved card. If the card requires authentication, the response includes `paymentActionRequired: true` with a Stripe PaymentIntent `clientSecret` for the frontend challenge. If there is no saved payment method, it returns a Stripe Checkout Session URL. The endpoint stores checkout responses by idempotency key, so repeated button taps replay the same result instead of creating a second subscription or checkout session.
+
+```bash
+curl -X POST "$AUTH_API/billing/checkout" \
+  -H "authorization: Bearer ACCESS_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"itemId":"basic_website_plan","interval":"month","idempotencyKey":"frontend-button-click-id"}'
 ```
 
 Billing summary is also protected. It uses the authenticated user only, auto-creates a Stripe Customer if the user does not have `stripe_customer_id`, stores that id on the user record, and returns sanitized customer, invoice, subscription, payment method, payment status, and dunning data:

@@ -38,6 +38,7 @@ test("auth Terraform avoids wildcard credentialed CORS and enables DynamoDB prot
 
 test("auth Terraform protects billing summary with JWT auth and leaves Stripe webhook unsigned by JWT", () => {
   assert.match(authTf, /route_key\s+=\s+"GET \/billing\/summary"[\s\S]*authorization_type\s+=\s+"CUSTOM"[\s\S]*authorizer_id\s+=\s+aws_apigatewayv2_authorizer\.auth_jwt\.id/);
+  assert.match(authTf, /route_key\s+=\s+"POST \/billing\/checkout"[\s\S]*authorization_type\s+=\s+"CUSTOM"[\s\S]*authorizer_id\s+=\s+aws_apigatewayv2_authorizer\.auth_jwt\.id/);
   assert.match(authTf, /route_key\s+=\s+"POST \/billing\/stripe-webhook"/);
 });
 
@@ -45,10 +46,31 @@ test("auth Terraform lets Google login write and update auth records", () => {
   assert.match(authTf, /data "aws_iam_policy_document" "auth_google_login_lambda"[\s\S]*"dynamodb:PutItem"[\s\S]*"dynamodb:UpdateItem"[\s\S]*aws_dynamodb_table\.auth_users\.arn[\s\S]*aws_dynamodb_table\.auth_logins\.arn/);
 });
 
+test("auth Terraform seeds billing catalog plans, addons, and entitlements", () => {
+  assert.match(authTf, /resource "aws_dynamodb_table" "billing_catalog"/);
+  assert.match(authTf, /resource "aws_dynamodb_table_item" "billing_catalog_seed"/);
+  assert.match(authTf, /resource "aws_dynamodb_table" "billing_checkout_requests"[\s\S]*hash_key\s+=\s+"idempotency_key"[\s\S]*ttl\s+\{[\s\S]*attribute_name\s+=\s+"ttl"[\s\S]*enabled\s+=\s+true/);
+  assert.match(authTf, /free_website_plan[\s\S]*Free Website Plan[\s\S]*syncpoly_banner[\s\S]*value = true/);
+  assert.match(authTf, /basic_website_plan[\s\S]*Basic Website Plan[\s\S]*amount_monthly_cents\s+=\s+3999[\s\S]*change_requests[\s\S]*limit = 3/);
+  assert.match(authTf, /custom_solution_plan[\s\S]*Custom Solution Plan[\s\S]*email_conversation/);
+  assert.match(authTf, /addon_5_change_requests[\s\S]*change_requests[\s\S]*add = 5/);
+  assert.match(authTf, /addon_managed_promotions[\s\S]*managed_promotions/);
+});
+
+test("auth Terraform lets pricing read catalog, update Stripe ids, and use Stripe secret", () => {
+  assert.match(authTf, /data "aws_iam_policy_document" "auth_pricing_lambda"[\s\S]*"secretsmanager:GetSecretValue"[\s\S]*data\.aws_secretsmanager_secret\.auth_stripe\.arn/);
+  assert.match(authTf, /data "aws_iam_policy_document" "auth_pricing_lambda"[\s\S]*"dynamodb:Scan"[\s\S]*"dynamodb:UpdateItem"[\s\S]*aws_dynamodb_table\.billing_catalog\.arn/);
+  assert.match(authTf, /data "aws_iam_policy_document" "auth_pricing_lambda"[\s\S]*"dynamodb:PutItem"[\s\S]*aws_dynamodb_table\.billing_checkout_requests\.arn/);
+  assert.match(authTf, /resource "aws_lambda_function" "auth_pricing"/);
+  assert.match(authTf, /BILLING_CHECKOUT_REQUESTS_TABLE_NAME\s+=\s+aws_dynamodb_table\.billing_checkout_requests\.name/);
+});
+
 test("auth Terraform defines unauthenticated OPTIONS routes for CORS preflight", () => {
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/auth\/google"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/auth\/me"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/summary"/);
+  assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/catalog"/);
+  assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/checkout"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/stripe-webhook"/);
   assert.doesNotMatch(authTf, /route_key\s+=\s+"OPTIONS [^"]+"[\s\S]{0,160}authorization_type\s+=\s+"CUSTOM"/);
 });
