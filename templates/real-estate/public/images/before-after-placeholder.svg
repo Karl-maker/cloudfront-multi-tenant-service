@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 760" role="img" aria-labelledby="title desc">
+  <title id="title">Before and after pressure washing placeholder</title>
+  <desc id="desc">Split before and after exterior cleaning placeholder.</desc>
+  <rect width="1100" height="760" rx="28" fill="#ffffff"/>
+  <rect x="56" y="72" width="988" height="560" rx="24" fill="#c6d7dc"/>
+  <path d="M550 72v560" stroke="#ffffff" stroke-width="10"/>
+  <rect x="96" y="112" width="380" height="470" rx="22" fill="#62747b" opacity=".48"/>
+  <rect x="624" y="112" width="380" height="470" rx="22" fill="#f4fbfd"/>
+  <path d="M96 250h908M96 390h908M96 530h908" stroke="#ffffff" stroke-width="8" opacity=".5"/>
+  <path d="M668 430c76-58 170-88 284-90" stroke="#29b6a8" stroke-width="26" stroke-linecap="round" fill="none"/>
+  <rect x="120" y="126" width="148" height="48" rx="24" fill="#102932"/>
+  <text x="148" y="158" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Before</text>
+  <rect x="648" y="126" width="118" height="48" rx="24" fill="#075f73"/>
+  <text x="680" y="158" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="700">After</text>
+  <text x="70" y="704" fill="#075f73" font-family="Arial, sans-serif" font-size="34" font-weight="700">Replace with a real before-and-after image</text>
+</svg>
+

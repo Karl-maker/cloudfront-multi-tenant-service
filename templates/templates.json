@@ -1,0 +1,16 @@
+{
+  "templates": {
+    "service": {
+      "source": "real-estate",
+      "description": "Service-business website template export."
+    },
+    "real-estate": {
+      "source": "real-estate",
+      "description": "Property, villa, venue, and real-estate website template export."
+    },
+    "pressure-washer": {
+      "source": "real-estate",
+      "description": "Legacy pressure-washer template alias."
+    }
+  }
+}

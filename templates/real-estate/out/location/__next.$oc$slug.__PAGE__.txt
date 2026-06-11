@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[12648,["/_next/static/chunks/0js144q98njfp.js","/_next/static/chunks/15ah33yo81bc_.js","/_next/static/chunks/0jmmeys3liya5.js","/_next/static/chunks/0r3thwma2xzhb.js","/_next/static/chunks/0_7rl-q.hmxeh.js"],"ConfiguredPageClient"]
+3:I[37435,["/_next/static/chunks/0js144q98njfp.js","/_next/static/chunks/15ah33yo81bc_.js","/_next/static/chunks/0jmmeys3liya5.js","/_next/static/chunks/0r3thwma2xzhb.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"RealEstateAgent\",\"name\":\"Aurum Realty Group\",\"address\":{\"@type\":\"PostalAddress\",\"streetAddress\":\"4 De Verteuil St\",\"addressLocality\":\"Port of Spain\",\"addressCountry\":\"TT\"}}"}}],["$","$L2",null,{"path":"/location/"}]],[["$","script","script-0",{"src":"/_next/static/chunks/0_7rl-q.hmxeh.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"3UMwTAP8rRZMj5DuzTfJl"}
+5:null

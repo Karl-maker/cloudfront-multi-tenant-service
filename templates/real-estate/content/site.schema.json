@@ -1,0 +1,456 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/site.schema.json",
+  "title": "Static Site Template Config",
+  "type": "object",
+  "required": ["site", "seo", "theme", "navigation", "pages", "footer"],
+  "additionalProperties": true,
+  "properties": {
+    "deployment": {
+      "type": "object",
+      "description": "Optional static hosting path controls. Leave empty for an S3 bucket or CloudFront distribution hosted at the domain root.",
+      "properties": {
+        "basePath": {
+          "type": "string",
+          "description": "Use only when the site is hosted under a subdirectory, for example /campaign."
+        },
+        "assetPrefix": {
+          "type": "string",
+          "description": "Optional CDN prefix for static assets. Usually empty for S3 plus CloudFront."
+        }
+      }
+    },
+    "trial": {
+      "type": "boolean",
+      "description": "When true, show the top trial attribution banner."
+    },
+    "trialBanner": {
+      "type": "object",
+      "description": "Optional content for the top trial attribution banner.",
+      "properties": {
+        "text": { "type": "string" },
+        "href": { "type": "string" },
+        "buttonLabel": { "type": "string" },
+        "image": { "$ref": "#/$defs/image" }
+      }
+    },
+    "site": {
+      "type": "object",
+      "required": ["name", "shortName", "url", "locale", "description"],
+      "properties": {
+        "name": { "type": "string" },
+        "shortName": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "locale": { "type": "string" },
+        "description": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "author": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "url": { "type": "string" }
+          }
+        },
+        "social": {
+          "type": "object",
+          "properties": {
+            "twitterHandle": { "type": "string" },
+            "sameAs": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "manifest": {
+          "type": "object",
+          "properties": {
+            "display": { "type": "string" },
+            "orientation": { "type": "string" },
+            "backgroundColor": { "type": "string" },
+            "themeColor": { "type": "string" },
+            "icon": { "type": "string" },
+            "categories": { "type": "array", "items": { "type": "string" } },
+            "screenshots": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["src", "sizes", "type"],
+                "properties": {
+                  "src": { "type": "string" },
+                  "sizes": { "type": "string" },
+                  "type": { "type": "string" },
+                  "formFactor": { "type": "string", "enum": ["narrow", "wide"] },
+                  "label": { "type": "string" }
+                }
+              }
+            },
+            "shortcuts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "url"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "shortName": { "type": "string" },
+                  "description": { "type": "string" },
+                  "url": { "type": "string" },
+                  "icon": { "type": "string" }
+                }
+              }
+            },
+            "preferRelatedApplications": { "type": "boolean" }
+          }
+        },
+        "pwa": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "serviceWorker": { "type": "string" },
+            "offlinePath": { "type": "string" },
+            "cacheName": { "type": "string" }
+          }
+        },
+        "llms": {
+          "type": "object",
+          "properties": {
+            "summary": { "type": "string" },
+            "notes": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "required": ["defaultTitle", "defaultImage"],
+      "properties": {
+        "titleTemplate": { "type": "string" },
+        "defaultTitle": { "type": "string" },
+        "defaultImage": { "type": "string" },
+        "robots": {
+          "type": "object",
+          "properties": {
+            "index": { "type": "boolean" },
+            "follow": { "type": "boolean" },
+            "allow": { "type": "array", "items": { "type": "string" } },
+            "disallow": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "structuredData": {
+          "type": "object",
+          "description": "JSON-LD object. Replace placeholder values with verified company or site data."
+        }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "required": ["colors", "fonts", "radius", "maxWidth"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["light", "dark"] },
+        "colors": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "fonts": {
+          "type": "object",
+          "properties": {
+            "heading": { "type": "string" },
+            "body": { "type": "string" }
+          }
+        },
+        "radius": { "type": "string" },
+        "maxWidth": { "type": "string" },
+        "background": { "$ref": "#/$defs/background" },
+        "customCss": { "type": "string" }
+      }
+    },
+    "navigation": {
+      "type": "object",
+      "required": ["logoText", "links"],
+      "properties": {
+        "logoText": { "type": "string" },
+        "logo": { "$ref": "#/$defs/image" },
+        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
+        "cta": { "$ref": "#/$defs/action" }
+      }
+    },
+    "blocks": {
+      "type": "object",
+      "description": "Reusable default section blocks. Pages can insert them with { \"use\": \"blockName\" } and override any field.",
+      "additionalProperties": { "$ref": "#/$defs/section" }
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "title", "description", "sections"],
+        "properties": {
+          "path": { "type": "string" },
+          "title": { "type": "string" },
+          "layout": { "type": "string" },
+          "description": { "type": "string" },
+          "background": { "$ref": "#/$defs/background" },
+          "seo": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "image": { "type": "string" },
+              "keywords": { "type": "array", "items": { "type": "string" } },
+              "structuredData": { "type": "object" }
+            }
+          },
+          "sections": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/sectionInput" }
+          }
+        }
+      }
+    },
+    "footer": {
+      "type": "object",
+      "properties": {
+        "tagline": { "type": "string" },
+        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
+        "socialLinks": {
+          "type": "array",
+          "description": "Optional footer social media links. They render only when present.",
+          "items": { "$ref": "#/$defs/socialLink" }
+        },
+        "copyright": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "link": {
+      "type": "object",
+      "required": ["label", "href"],
+      "properties": {
+        "label": { "type": "string" },
+        "href": { "type": "string" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["label", "href"],
+      "properties": {
+        "label": { "type": "string" },
+        "href": { "type": "string" },
+        "style": { "type": "string", "enum": ["primary", "secondary", "text"] }
+      }
+    },
+    "socialLink": {
+      "type": "object",
+      "required": ["platform", "label", "href"],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "description": "Supported examples: github, linkedin, x, instagram, facebook, youtube, tiktok, discord, mastodon, threads, bluesky, email, website."
+        },
+        "label": { "type": "string" },
+        "href": { "type": "string" }
+      }
+    },
+    "image": {
+      "type": "object",
+      "required": ["src", "alt"],
+      "properties": {
+        "type": { "type": "string", "enum": ["image", "video", "embed"] },
+        "src": { "type": "string" },
+        "alt": { "type": "string" },
+        "caption": { "type": "string" },
+        "poster": { "type": "string" },
+        "title": { "type": "string" },
+        "autoplay": { "type": "boolean" },
+        "controls": { "type": "boolean" },
+        "muted": { "type": "boolean" },
+        "loop": { "type": "boolean" }
+      }
+    },
+    "carousel": {
+      "type": "object",
+      "description": "Optional carousel settings for hero mediaItems. Omit this or leave enabled true to use the gallery; set enabled false to fall back to media.",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "autoPlay": { "type": "boolean" },
+        "intervalMs": {
+          "type": "number",
+          "minimum": 2500,
+          "description": "Autoplay interval in milliseconds. Values below 2500 are clamped by the renderer."
+        },
+        "label": {
+          "type": "string",
+          "description": "Accessible label for the carousel region."
+        }
+      }
+    },
+    "background": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["solid", "gradient", "image"] },
+        "value": { "type": "string" },
+        "overlay": { "type": "string" }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": [
+            "hero",
+            "mediaGallery",
+            "rates",
+            "amenities",
+            "location",
+            "featureGrid",
+            "split",
+            "cardGrid",
+            "stats",
+            "timeline",
+            "faq",
+            "testimonials",
+            "cta",
+            "richText",
+            "logoCloud",
+            "contact"
+          ]
+        },
+        "className": { "type": "string" },
+        "kicker": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "variant": { "type": "string" },
+        "columns": { "type": "number" },
+        "background": { "$ref": "#/$defs/background" },
+        "media": { "$ref": "#/$defs/image" },
+        "mediaItems": {
+          "type": "array",
+          "description": "Optional gallery images for hero carousel. Existing media-only configs remain supported.",
+          "items": { "$ref": "#/$defs/image" }
+        },
+        "carousel": { "$ref": "#/$defs/carousel" },
+        "map": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "embedUrl": { "type": "string" },
+            "query": { "type": "string" },
+            "title": { "type": "string" },
+            "address": { "type": "string" },
+            "latitude": { "type": "number" },
+            "longitude": { "type": "number" },
+            "zoom": { "type": "number" }
+          }
+        },
+        "actions": { "type": "array", "items": { "$ref": "#/$defs/action" } },
+        "methods": { "type": "array", "items": { "type": "object" } },
+        "form": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "action": { "type": "string" },
+            "method": { "type": "string" },
+            "encType": { "type": "string" },
+            "submitLabel": { "type": "string" },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "label"],
+                "additionalProperties": true,
+                "properties": {
+                  "name": { "type": "string" },
+                  "label": { "type": "string" },
+                  "type": { "type": "string", "enum": ["text", "email", "tel", "textarea", "select"] },
+                  "placeholder": { "type": "string" },
+                  "required": { "type": "boolean" },
+                  "autoComplete": { "type": "string" },
+                  "rows": { "type": "number" },
+                  "options": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "items": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "sectionInput": {
+      "oneOf": [
+        { "$ref": "#/$defs/section" },
+        {
+          "type": "object",
+          "required": ["use"],
+          "additionalProperties": true,
+          "properties": {
+            "use": { "type": "string" },
+            "id": { "type": "string" },
+            "className": { "type": "string" },
+            "kicker": { "type": "string" },
+            "title": { "type": "string" },
+            "body": { "type": "string" },
+            "variant": { "type": "string" },
+            "columns": { "type": "number" },
+            "background": { "$ref": "#/$defs/background" },
+            "media": { "$ref": "#/$defs/image" },
+            "mediaItems": {
+              "type": "array",
+              "description": "Optional gallery images for hero carousel. Existing media-only configs remain supported.",
+              "items": { "$ref": "#/$defs/image" }
+            },
+            "carousel": { "$ref": "#/$defs/carousel" },
+            "map": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "embedUrl": { "type": "string" },
+                "query": { "type": "string" },
+                "title": { "type": "string" },
+                "address": { "type": "string" },
+                "latitude": { "type": "number" },
+                "longitude": { "type": "number" },
+                "zoom": { "type": "number" }
+              }
+            },
+            "actions": { "type": "array", "items": { "$ref": "#/$defs/action" } },
+            "methods": { "type": "array", "items": { "type": "object" } },
+            "form": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "action": { "type": "string" },
+                "method": { "type": "string" },
+                "encType": { "type": "string" },
+                "submitLabel": { "type": "string" },
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "label"],
+                    "additionalProperties": true,
+                    "properties": {
+                      "name": { "type": "string" },
+                      "label": { "type": "string" },
+                      "type": { "type": "string", "enum": ["text", "email", "tel", "textarea", "select"] },
+                      "placeholder": { "type": "string" },
+                      "required": { "type": "boolean" },
+                      "autoComplete": { "type": "string" },
+                      "rows": { "type": "number" },
+                      "options": { "type": "array", "items": { "type": "string" } }
+                    }
+                  }
+                }
+              }
+            },
+            "items": { "type": "array", "items": { "type": "object" } }
+          }
+        }
+      ]
+    }
+  }
+}

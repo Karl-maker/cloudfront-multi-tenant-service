@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Aurum Eco Power Wash</title>
+  <desc id="desc">Open Graph preview for Aurum Eco Power Wash.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06070a"/>
+      <stop offset=".52" stop-color="#11151b"/>
+      <stop offset="1" stop-color="#071b18"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8c6426"/>
+      <stop offset=".5" stop-color="#d7ae5b"/>
+      <stop offset="1" stop-color="#ffe2a2"/>
+    </linearGradient>
+    <linearGradient id="aqua" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#32e6b8"/>
+      <stop offset="1" stop-color="#eafffb"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <path d="M74 108h1052M74 522h1052" stroke="#2b3440" stroke-width="2"/>
+  <path d="M696 130l250 132" stroke="url(#gold)" stroke-width="28" stroke-linecap="round"/>
+  <path d="M920 254l-78 140" stroke="url(#gold)" stroke-width="40" stroke-linecap="round"/>
+  <path d="M818 410c-132 42-282 62-450 58" fill="none" stroke="url(#aqua)" stroke-width="28" stroke-linecap="round"/>
+  <path d="M788 454c-174 36-354 40-540 12" fill="none" stroke="#effffb" stroke-width="30" stroke-linecap="round" opacity=".78"/>
+  <path d="M154 350c36-72 90-115 162-130h196c78 16 144 61 198 134l64 16c38 11 63 34 76 70l-20 48H146l-28-52c5-38 17-67 36-86Z" fill="#090c12" stroke="#d7ae5b" stroke-width="5"/>
+  <circle cx="282" cy="488" r="48" fill="#050608" stroke="#2b3440" stroke-width="12"/>
+  <circle cx="282" cy="488" r="20" fill="none" stroke="url(#gold)" stroke-width="8"/>
+  <circle cx="674" cy="488" r="48" fill="#050608" stroke="#2b3440" stroke-width="12"/>
+  <circle cx="674" cy="488" r="20" fill="none" stroke="url(#gold)" stroke-width="8"/>
+  <text x="92" y="142" fill="#32e6b8" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">ECO CAR POWER WASHING</text>
+  <text x="92" y="206" fill="#f4f1e8" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="900">Aurum Eco</text>
+  <text x="92" y="282" fill="#d7ae5b" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="900">Power Wash</text>
+  <text x="92" y="580" fill="#a8b0b8" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">Cars | Wheels | Trucks | Small fleets</text>
+</svg>

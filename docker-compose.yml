@@ -45,11 +45,11 @@ x-openclaw-volumes: &openclaw-volumes
   - ./lib:/workspace/web-builder/lib:ro
   - ./site:/workspace/web-builder/site:ro
   - ./sites:/workspace/web-builder/sites:rw
+  - ./templates:/workspace/web-builder/templates:rw
   - ./test:/workspace/web-builder/test:ro
   - ./README.md:/workspace/web-builder/README.md:ro
   - ./package.json:/workspace/web-builder/package.json:ro
   - ./package-lock.json:/workspace/web-builder/package-lock.json:ro
-  - /Users/family/Documents/syncpoly-ou/web-builder-templates/next-static-config-template:/workspace/templates/next-static-config-template:ro
 
 services:
   localstack:

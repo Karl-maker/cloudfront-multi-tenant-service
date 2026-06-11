@@ -5,13 +5,13 @@ CloudFront Function setup for serving many domains from different folders in one
 The browser keeps the original URL:
 
 ```text
-https://hello.com/about
+https://atlantic-villa-tobago.syncpoly.com/faq
 ```
 
 CloudFront rewrites the origin request to:
 
 ```text
-s3://syncpoly-web-builder-sites/syncpoly/templates/pressure-washer/about/index.html
+s3://syncpoly-web-builder-sites/syncpoly/templates/real-estate/faq/index.html
 ```
 
 Tenant-owned public files are mapped to the tenant folder instead of the shared template. Requests for:
@@ -64,8 +64,7 @@ For now, edit this object directly in `cloudfront/domain-folder-router.js`:
 
 ```js
 var sitesByHost = {
-  "hello.com": { folder: "hello-site", template: "pressure-washer" },
-  "www.hello.com": { folder: "hello-site", template: "pressure-washer" }
+  "atlantic-villa-tobago.syncpoly.com": { folder: "atlantic-villa-tobago", template: "real-estate" }
 };
 ```
 
@@ -119,13 +118,14 @@ npm run site:make-seo -- --site ./sites/example
 npm run site:audit -- --site ./sites/example
 npm run site:add-route -- --site example --template real-estate
 npm run site:launch-check -- --site ./sites/example --run-checks
-npm run site:upload-template -- --template-name service --source /Users/family/Documents/syncpoly-ou/web-builder-templates/next-static-config-template/out --profile prod
+npm run site:upload-templates -- --templates service,real-estate
+npm run site:upload-template -- --template-name service
 npm run site:validate-config -- --file ./sites/example/site.config.json
 npm run site:upload-config -- --file ./sites/example/site.config.json
 npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json
 npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json --max-width 1600 --quality 72
 npm run site:upload-seo -- --source ./sites/example --config ./sites/example/site.config.json
-npm run site -- preview --site ./sites/example --template /Users/family/Documents/syncpoly-ou/web-builder-templates/next-static-config-template --port 4173
+npm run site -- preview --site ./sites/example --template ./templates/real-estate --port 4173
 npm run site:screenshot -- --site ./sites/example --url http://127.0.0.1:4173/ --out ./sites/example/screenshots
 npm run site:screenshot-audit -- --site ./sites/example
 npm run site:make-outreach -- --site ./sites/example --benefit findability
@@ -147,6 +147,8 @@ Use `site:make-input`, `site:media-manifest`, and `site:make` to turn lightweigh
 `upload-media` optimizes media before uploading to S3. JPG/PNG/WebP/AVIF files are resized to fit within `1920x1920`, compressed for web delivery, and JPG/PNG/AVIF files also get a generated `.webp` sibling by default. Use `--no-webp` or `SITE_MEDIA_WEBP=0` to disable WebP variants.
 
 Put every tenant-owned image in `sites/<name>/media`, including logos, favicons, OG/social images, hero photos, and gallery images. `upload-folder` rejects image files unless the target prefix is `media`; use `upload-media` for images so compression and WebP generation stay consistent.
+
+Template types are registered in `templates/templates.json`; `real-estate` is the first vendored template folder under `templates/real-estate`. `service` and the legacy `pressure-washer` alias currently point at that same export until they get their own folders. `site:publish` uploads the selected shared template before tenant config/media/SEO unless `--skip-template-upload` or `--skip-upload` is used. The `Deploy Changed Templates` GitHub Actions workflow maps changed `templates/<source-folder>` folders through the registry and uploads only the affected S3 template prefixes.
 
 Use `syncpoly-site preview` and `syncpoly-site screenshot` for QA screenshots. Preview overlays a generated site folder onto the template export and serves it on localhost, so outreach screenshots come from `http://127.0.0.1:<port>/` instead of the public domain.
 
@@ -199,7 +201,7 @@ The real `.env` file is not mounted into the OpenClaw workspace. Docker Compose 
 
 - the Syncpoly website project tools at `/workspace/web-builder`
 - the custom skill at `/workspace/.agents/skills/syncpoly-site-cli/SKILL.md`
-- the template at `/workspace/templates/next-static-config-template`
+- the template at `/workspace/web-builder/templates/real-estate`
 
 The model defaults are cost-aware: the primary site-building model is `openai/gpt-5.4-mini`, heartbeat work uses `openai/gpt-5.4-nano`, and higher-cost models are not the default.
 

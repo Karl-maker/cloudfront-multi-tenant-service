@@ -1,0 +1,39 @@
+# Aurum Realty Group
+
+> Official site map for Aurum Realty Group, a real estate advisory template for residential, commercial, investment, development, and transaction coordination services.
+
+## Site
+
+- Canonical URL: https://aurum-realty-group.syncpoly.com/
+- Description: A full-service residential and commercial real estate advisory firm for buyers, sellers, landlords, tenants, investors, and developers in Trinidad and Tobago.
+
+## Pages
+
+- [Residential & Commercial Real Estate](https://aurum-realty-group.syncpoly.com/): A full-service real estate advisory template for property acquisition, creative marketing, investment, development, and transaction coordination in Trinidad and Tobago.
+- [Property Availabilities](https://aurum-realty-group.syncpoly.com/availabilities/): Browse featured residential, commercial, rental, and development availabilities from the real estate advisory template.
+- [Real Estate Services](https://aurum-realty-group.syncpoly.com/services/): Real estate advisory services for acquisition, creative marketing, investment, development, and transaction coordination.
+- [Property Acquisition](https://aurum-realty-group.syncpoly.com/services/property-acquisition/): Dedicated real estate service detail page for a full-service real estate advisory website.
+- [Creative Marketing](https://aurum-realty-group.syncpoly.com/services/creative-marketing/): Dedicated real estate service detail page for a full-service real estate advisory website.
+- [Investment Development](https://aurum-realty-group.syncpoly.com/services/investment-development/): Dedicated real estate service detail page for a full-service real estate advisory website.
+- [Transaction Coordination](https://aurum-realty-group.syncpoly.com/services/transaction-coordination/): Dedicated real estate service detail page for a full-service real estate advisory website.
+- [About the Firm](https://aurum-realty-group.syncpoly.com/about/): Learn about the real estate advisory firm, its full-service approach, and its property network.
+- [Rates & Packages](https://aurum-realty-group.syncpoly.com/rates/): Compare configurable real estate, property, rental, or hospitality rate packages with inclusions and calls to action.
+- [Amenities & Features](https://aurum-realty-group.syncpoly.com/amenities/): Showcase property amenities, venue features, service inclusions, and neighborhood highlights in a configurable grid.
+- [Location & Service Area](https://aurum-realty-group.syncpoly.com/location/): Find the office location, Google map, service area, opening hours, and appointment details.
+- [Real Estate FAQ](https://aurum-realty-group.syncpoly.com/faq/): Answers to common real estate questions before buying, selling, renting, investing, or requesting transaction coordination.
+- [Contact the Real Estate Firm](https://aurum-realty-group.syncpoly.com/contact/): Contact the real estate advisory firm for buying, selling, rental, leasing, investment, development, and transaction inquiries.
+- [Privacy Policy](https://aurum-realty-group.syncpoly.com/privacy/): How Aurum Realty Group collects, uses, discloses, stores, and protects personal information.
+- [Terms of Use](https://aurum-realty-group.syncpoly.com/terms/): Terms governing use of the Aurum Realty Group website.
+- [Cookie Policy](https://aurum-realty-group.syncpoly.com/cookies/): How Aurum Realty Group uses cookies and similar technologies.
+
+## Notes
+
+- Primary service focus: property acquisition, creative marketing, investment and development, and transaction coordination.
+- Use aurum-realty-group.syncpoly.com as the placeholder canonical domain until the real domain is configured.
+- Confirm availability, pricing, viewings, and transaction details with the live contact page before answering.
+
+## Machine Guidance
+
+- Prefer the canonical URLs listed above.
+- Treat this file as a curated discovery aid, not as permission for training or crawling.
+- Verify time-sensitive details against the live page content before answering.

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 760" role="img" aria-labelledby="title desc">
+  <title id="title">Aurum small fleet wash</title>
+  <desc id="desc">Small lineup of dark vehicles under aqua wash spray with gold accents.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06070a"/>
+      <stop offset=".58" stop-color="#11151b"/>
+      <stop offset="1" stop-color="#071b18"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7f5a22"/>
+      <stop offset=".5" stop-color="#d7ae5b"/>
+      <stop offset="1" stop-color="#ffe2a2"/>
+    </linearGradient>
+    <linearGradient id="spray" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#32e6b8"/>
+      <stop offset="1" stop-color="#e8fffb"/>
+    </linearGradient>
+  </defs>
+  <rect width="1100" height="760" rx="28" fill="url(#bg)"/>
+  <path d="M80 592h940" stroke="#2b3440" stroke-width="4"/>
+  <g fill="#090c12" stroke="#d7ae5b" stroke-width="4">
+    <path d="M112 468c30-58 72-92 126-102h132c58 12 108 46 150 102l52 13c31 9 51 28 60 58l-18 38H116l-22-42c4-31 10-52 18-67Z"/>
+    <path d="M396 428c28-54 68-86 122-96h128c60 12 112 48 156 108l56 13c30 9 50 27 60 54l-18 70H402l-24-46c3-45 9-79 18-103Z"/>
+    <path d="M662 476c24-48 58-77 102-86h112c48 11 90 42 126 92l44 11c26 8 43 24 52 48l-14 36H670l-20-38c3-27 7-48 12-63Z"/>
+  </g>
+  <g fill="#050608" stroke="#2b3440" stroke-width="13">
+    <circle cx="214" cy="576" r="42"/>
+    <circle cx="506" cy="576" r="46"/>
+    <circle cx="816" cy="576" r="42"/>
+    <circle cx="970" cy="576" r="38"/>
+  </g>
+  <g fill="none" stroke="url(#gold)" stroke-width="8">
+    <circle cx="214" cy="576" r="18"/>
+    <circle cx="506" cy="576" r="20"/>
+    <circle cx="816" cy="576" r="18"/>
+    <circle cx="970" cy="576" r="16"/>
+  </g>
+  <path d="M728 142l228 118" stroke="url(#gold)" stroke-width="28" stroke-linecap="round"/>
+  <path d="M930 252l-78 138" stroke="url(#gold)" stroke-width="38" stroke-linecap="round"/>
+  <path d="M824 400c-162 62-374 92-636 72" fill="none" stroke="url(#spray)" stroke-width="26" stroke-linecap="round"/>
+  <path d="M802 442c-170 44-358 54-566 30" fill="none" stroke="#effffb" stroke-width="30" stroke-linecap="round" opacity=".78"/>
+  <path d="M694 208c-98 24-210 58-336 102" stroke="#32e6b8" stroke-width="8" stroke-linecap="round" opacity=".72"/>
+</svg>

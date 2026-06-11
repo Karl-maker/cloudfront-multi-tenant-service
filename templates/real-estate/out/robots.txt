@@ -1,0 +1,6 @@
+User-Agent: *
+Allow: /
+Disallow: /offline/
+
+Host: https://aurum-realty-group.syncpoly.com/
+Sitemap: https://aurum-realty-group.syncpoly.com/sitemap.xml

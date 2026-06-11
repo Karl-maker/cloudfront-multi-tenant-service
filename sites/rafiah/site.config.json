@@ -1,5 +1,5 @@
 {
-  "$schema": "../../templates/next-static-config-template/content/site.schema.json",
+  "$schema": "../../templates/real-estate/content/site.schema.json",
   "deployment": {
     "basePath": "",
     "assetPrefix": ""

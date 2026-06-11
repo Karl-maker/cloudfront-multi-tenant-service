@@ -132,7 +132,7 @@ The browser URL stays tenant-specific, and CloudFront maps the request to the co
 The template schema lives at:
 
 ```text
-/workspace/templates/next-static-config-template/content/site.schema.json
+/workspace/web-builder/templates/real-estate/content/site.schema.json
 ```
 
 Keep `site.config.json` as strict JSON: no comments, no trailing commas, UTF-8 encoding, absolute canonical URLs, and tenant image paths that start with `/media/`.
@@ -578,24 +578,27 @@ Use versioned filenames for long-lived media when possible:
 
 ## Uploading The Shared Template
 
-The Next static config template is deployed as the shared CloudFront template named `service`.
+The first Next static config template is vendored in this repo under `templates/real-estate`.
 
-Build the template export, then upload the `out/` folder with the CLI:
+Template types are registered in `templates/templates.json`. The current `service`, `real-estate`, and `pressure-washer` template types share the same export but upload to separate S3 prefixes under `syncpoly/templates/<template-type>/`. On pushes to `main`, the `Deploy Changed Templates` workflow detects which `templates/<source-folder>` changed, resolves matching template keys from the registry, uploads only those prefixes, and invalidates the corresponding shared CloudFront template paths.
+
+Build or refresh the template export, then upload the registered template types with the CLI:
 
 ```bash
-cd /workspace/templates/next-static-config-template
+cd /workspace/web-builder/templates/real-estate
 npm run build
 cd /workspace/web-builder
-syncpoly-site upload-template --template-name service --source /workspace/templates/next-static-config-template/out --profile prod
+syncpoly-site upload-templates --templates service,real-estate
 ```
 
-The successful proof string is:
+The successful proof strings are:
 
 ```text
 Template uploaded: syncpoly/templates/service/ (... file(s))
+Template uploaded: syncpoly/templates/real-estate/ (... file(s))
 ```
 
-The template upload includes its static shell files and generated static discovery files in `out/`. Tenant-specific `site.config.json`, media, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt` are still uploaded per site with `upload-config`, `upload-media`, and `upload-seo`.
+The template upload includes its static shell files, route pages such as `/amenities/index.html`, and generated static discovery files in `out/`. Tenant-specific `site.config.json`, media, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt` are still uploaded per site with `upload-config`, `upload-media`, and `upload-seo`. `syncpoly-site publish` uploads the selected shared template before tenant files unless `--skip-template-upload` or `--skip-upload` is used.
 
 ## Adding A New Site
 

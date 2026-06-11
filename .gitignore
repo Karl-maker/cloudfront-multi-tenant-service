@@ -33,6 +33,11 @@ tmp/
 sites
 sites/*/assets/
 sites/*/media/
+templates/*/.next/
+templates/*/.swc/
+templates/*/node_modules/
+templates/*/test-results/
+templates/*/tsconfig.tsbuildinfo
 *.log
 .terraform/
 infra/*.zip

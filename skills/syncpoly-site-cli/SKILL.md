@@ -46,8 +46,8 @@ Work from:
 
 ```text
 project: /workspace/web-builder
-template: /workspace/templates/next-static-config-template
-schema: /workspace/templates/next-static-config-template/content/site.schema.json
+template: /workspace/web-builder/templates/real-estate
+schema: /workspace/web-builder/templates/real-estate/content/site.schema.json
 ```
 
 Run project commands from `/workspace/web-builder`.
@@ -157,8 +157,8 @@ Use this gate order. Do not skip a gate unless it is impossible, and report why.
 ```bash
 pwd
 syncpoly-site --help
-test -d /workspace/templates/next-static-config-template
-test -f /workspace/templates/next-static-config-template/content/site.schema.json
+test -d /workspace/web-builder/templates/real-estate
+test -f /workspace/web-builder/templates/real-estate/content/site.schema.json
 ```
 
 If `syncpoly-site` is unavailable, run from `/workspace/web-builder` with:
@@ -267,10 +267,10 @@ Do not upload tenant images with `upload-folder --prefix assets`. `upload-folder
 If the operator asks to push or refresh the shared service template itself, build the template export first, then use the CLI template upload command. Do not use raw `aws s3 sync` for template pushes:
 
 ```bash
-cd /workspace/templates/next-static-config-template
+cd /workspace/web-builder/templates/real-estate
 npm run build
 cd /workspace/web-builder
-syncpoly-site upload-template --template-name service --source /workspace/templates/next-static-config-template/out --profile prod
+syncpoly-site upload-template --template-name service --source /workspace/web-builder/templates/real-estate/out --profile prod
 ```
 
 The proof string is `Template uploaded: syncpoly/templates/service/ (... file(s))`.
@@ -305,7 +305,7 @@ Do screenshot QA from a localhost preview, not from the public `syncpoly.com` UR
 Start the local preview from `/workspace/web-builder`:
 
 ```bash
-syncpoly-site preview --site ./sites/<unique-name> --template /workspace/templates/next-static-config-template --port 4173
+syncpoly-site preview --site ./sites/<unique-name> --template /workspace/web-builder/templates/real-estate --port 4173
 ```
 
 Capture screenshots with the CLI:
