@@ -68,13 +68,14 @@ test("google login handles CORS preflight for www.syncpoly.com", async () => {
   const response = await handler({
     headers: {
       Origin: "https://www.syncpoly.com",
-      "access-control-request-headers": "content-type"
+      "access-control-request-headers": "content-type, x-requested-with"
     },
     requestContext: { http: { method: "OPTIONS" } }
   });
 
   assert.equal(response.statusCode, 204);
   assert.equal(response.headers["access-control-allow-origin"], "https://www.syncpoly.com");
+  assert.match(response.headers["access-control-allow-headers"], /x-requested-with/);
   assert.match(response.headers["access-control-allow-methods"], /POST/);
   assert.equal(response.body, "");
 });

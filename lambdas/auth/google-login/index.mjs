@@ -344,7 +344,7 @@ function responseHeaders(event) {
   const headers = {
     "content-type": "application/json",
     "cache-control": "no-store",
-    "access-control-allow-headers": "authorization, content-type",
+    "access-control-allow-headers": "authorization, content-type, accept, origin, x-requested-with, x-api-key, x-amz-date, x-amz-security-token, x-csrf-token, x-syncpoly-client, x-syncpoly-site",
     "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-max-age": "300"
   };
