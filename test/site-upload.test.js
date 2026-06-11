@@ -738,6 +738,40 @@ describe("site upload helpers", () => {
     assert.match(output, /Template uploaded: syncpoly\/templates\/real-estate\/ \(1 file\(s\)\)/);
   });
 
+  it("prints site-specific HTML upload commands through the CLI", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-site-html-upload-test-"));
+    const siteDir = path.join(dir, "sites", "harbor-house");
+    const outDir = path.join(dir, "out");
+    fs.mkdirSync(path.join(outDir, "_next", "static"), { recursive: true });
+    fs.mkdirSync(siteDir, { recursive: true });
+    fs.writeFileSync(path.join(outDir, "index.html"), "<!doctype html>");
+    fs.writeFileSync(path.join(outDir, "_next", "static", "app.js"), "console.log('ok');");
+    const config = validConfig();
+    config.syncpoly = { folder: "harbor-house" };
+    config.site.url = "https://harbor-house.syncpoly.com";
+    fs.writeFileSync(path.join(siteDir, "site.config.json"), JSON.stringify(config));
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "upload-site-html",
+        "--site",
+        siteDir,
+        "--html-source",
+        outDir,
+        "--dry-run"
+      ],
+      { cwd: dir, env: { PATH: process.env.PATH }, encoding: "utf8" }
+    );
+
+    assert.match(output, /s3:\/\/syncpoly-web-builder-sites\/harbor-house\/_site\/index\.html/);
+    assert.match(output, /s3:\/\/syncpoly-web-builder-sites\/harbor-house\/_site\/_next\/static\/app\.js/);
+    assert.match(output, /no-cache, max-age=0/);
+    assert.match(output, /public, max-age=31536000, immutable/);
+    assert.match(output, /Site HTML uploaded: harbor-house\/_site\/ \(2 file\(s\)\)/);
+  });
+
   it("generates outreach text from site input", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-outreach-test-"));
     const siteDir = path.join(dir, "sites", "harbor-house");

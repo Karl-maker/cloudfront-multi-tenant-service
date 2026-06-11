@@ -70,6 +70,8 @@ async function main() {
     await uploadTemplate(args);
   } else if (command === "upload-templates") {
     await uploadTemplates(args);
+  } else if (command === "upload-site-html") {
+    await uploadSiteHtml(args);
   } else if (command === "upload-media") {
     await uploadMedia(args);
   } else if (command === "upload-seo") {
@@ -171,6 +173,53 @@ async function uploadTemplates(args) {
   for (const templateName of names) {
     await uploadTemplate({ ...args, templateName });
   }
+}
+
+async function uploadSiteHtml(args) {
+  const siteDir = resolveExistingOrNamedSiteDir(args);
+  const configPath = requirePath(args.config || path.join(siteDir, "site.config.json"), "config");
+  const config = validateAndReadConfig(configPath);
+  const target = resolveTarget(args, config);
+  const templateName = args.template || config.syncpoly?.template || process.env.SITE_TEMPLATE || "real-estate";
+  const prefix = args.prefix || config.syncpoly?.htmlPrefix || "_site";
+  const source = args.htmlSource || args.out || process.env.SITE_HTML_SOURCE || buildSiteHtmlExport({
+    args,
+    configPath,
+    templateName
+  });
+  const sourceRoot = requirePath(source, "source");
+  const files = listFiles(sourceRoot);
+
+  if (files.length === 0) {
+    throw new Error(`No site HTML files found in ${sourceRoot}`);
+  }
+
+  const uploads = uploadFiles({
+    files,
+    sourceRoot,
+    bucket: target.bucket,
+    folder: target.folder,
+    prefix,
+    kind: "template",
+    dryRun: isDryRun(args),
+    region: process.env.AWS_REGION,
+    profile: awsProfile(args)
+  });
+  printUploads(uploads);
+  console.log(`Site HTML uploaded: ${target.folder}/${prefix}/ (${files.length} file(s))`);
+}
+
+function buildSiteHtmlExport({ args, configPath, templateName }) {
+  const templateRoot = resolveTemplateRoot(args, templateName, args.templateRoot || args.templateDir);
+  const buildArgs = ["run", "build", "--prefix", templateRoot, "--", "--webpack"];
+  const env = {
+    ...process.env,
+    SITE_CONFIG: path.resolve(configPath),
+    BUILD_SITE_CONFIG: path.resolve(configPath)
+  };
+
+  execFileSync("npm", buildArgs, { stdio: "inherit", env });
+  return path.join(templateRoot, "out");
 }
 
 async function uploadMedia(args) {
@@ -460,6 +509,7 @@ async function publishSite(args) {
       await uploadMedia({ ...args, source: mediaDir, folder });
     }
     await uploadSeo({ ...args, source: siteDir, folder });
+    await uploadSiteHtml({ ...args, site: siteDir, folder, template });
   } else {
     console.log("Skipped uploads because --skip-upload was set.");
   }
@@ -1458,6 +1508,7 @@ function printHelp() {
   syncpoly-site list-themes
   syncpoly-site upload-template --template-name service --source /workspace/web-builder/templates/real-estate/out [--profile prod]
   syncpoly-site upload-templates [--templates service,real-estate]
+  syncpoly-site upload-site-html --site ./sites/example --template real-estate
   syncpoly-site upload-config --file ./site.config.json [--folder site-folder]
   syncpoly-site upload-media --source ./media --config ./site.config.json [--max-width 1920] [--quality 78] [--no-webp]
   syncpoly-site upload-seo --source ./seo --config ./site.config.json
@@ -1488,6 +1539,7 @@ Environment:
   SITE_MEDIA_WEBP=0                  Disable generated .webp variants.
   SITE_UPLOAD_PREFIX                 Prefix for upload-folder. Image files are rejected unless the target prefix is media.
   SITE_TEMPLATE_OUT                  Static template export used by upload-template. Defaults to <template>/out.
+  SITE_HTML_SOURCE                   Prebuilt site-specific HTML export used by upload-site-html.
   SITE_TEMPLATE_REGISTRY             JSON registry of template types. Defaults to templates/templates.json.
   GODADDY_API_KEY                    GoDaddy production API key.
   GODADDY_API_SECRET                 GoDaddy production API secret.

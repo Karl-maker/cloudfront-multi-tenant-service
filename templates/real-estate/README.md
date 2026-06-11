@@ -46,6 +46,8 @@ SITE_CONFIG=/path/to/site.config.json npm run build
 
 `BUILD_SITE_CONFIG` is also supported. The exported HTML then contains that site's `<title>`, description, Open Graph, Twitter card, canonical URL, icons, manifest link, JSON-LD, and page routes. Deploy those generated HTML files as the HTML served for that site, not as a shared template for multiple unrelated sites.
 
+In the SyncPoly repo, the deployment workflow does this automatically for configs under `sites/<folder>/site.config.json`: it builds this template with the config, uploads the generated HTML under `/<folder>/_site/`, and CloudFront serves that HTML for page requests. Social platforms then see config-specific preview tags before any browser JavaScript runs.
+
 S3 cannot dynamically compute files like `sitemap.xml`, `robots.txt`, `manifest.webmanifest`, or `llms.txt` from JSON at request time. The build therefore emits generic shell versions. To make those discovery files match a project config, run this after `npm run build`:
 
 ```bash

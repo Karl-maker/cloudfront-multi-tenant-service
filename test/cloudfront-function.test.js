@@ -9,43 +9,49 @@ const { describe, it } = require("node:test");
 const handler = loadCloudFrontFunction();
 
 describe("cloudfront domain-folder-router", () => {
-  it("rewrites the configured domain root to its template index", () => {
+  it("rewrites the configured domain root to its site-specific index", () => {
     const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/"));
 
-    assert.equal(result.uri, "/syncpoly/templates/real-estate/index.html");
+    assert.equal(result.uri, "/atlantic-villa-tobago/_site/index.html");
   });
 
-  it("rewrites a configured domain page route to a template index document", () => {
+  it("rewrites a configured domain page route to a site-specific index document", () => {
     const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/faq"));
 
-    assert.equal(result.uri, "/syncpoly/templates/real-estate/faq/index.html");
+    assert.equal(result.uri, "/atlantic-villa-tobago/_site/faq/index.html");
   });
 
-  it("rewrites the Atlantic Villa syncpoly subdomain to the real-estate template", () => {
+  it("rewrites the Atlantic Villa syncpoly subdomain to its site-specific export", () => {
     const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/location/"));
 
-    assert.equal(result.uri, "/syncpoly/templates/real-estate/location/index.html");
+    assert.equal(result.uri, "/atlantic-villa-tobago/_site/location/index.html");
   });
 
-  it("rewrites Atlantic Villa extensionless pages to the real-estate template", () => {
+  it("rewrites Atlantic Villa extensionless pages to its site-specific export", () => {
     assert.equal(
       handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/amenities")).uri,
-      "/syncpoly/templates/real-estate/amenities/index.html"
+      "/atlantic-villa-tobago/_site/amenities/index.html"
     );
     assert.equal(
       handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/amenities/")).uri,
-      "/syncpoly/templates/real-estate/amenities/index.html"
+      "/atlantic-villa-tobago/_site/amenities/index.html"
     );
     assert.equal(
       handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/faq")).uri,
-      "/syncpoly/templates/real-estate/faq/index.html"
+      "/atlantic-villa-tobago/_site/faq/index.html"
     );
   });
 
-  it("rewrites non-tenant static files under the matched template", () => {
+  it("rewrites non-tenant static files under the site-specific export", () => {
     const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/logo.svg"));
 
-    assert.equal(result.uri, "/syncpoly/templates/real-estate/logo.svg");
+    assert.equal(result.uri, "/atlantic-villa-tobago/_site/logo.svg");
+  });
+
+  it("rewrites Next static files under the site-specific export", () => {
+    const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/_next/static/chunks/app.js"));
+
+    assert.equal(result.uri, "/atlantic-villa-tobago/_site/_next/static/chunks/app.js");
   });
 
   it("rewrites tenant-owned public files to the mapped site folder", () => {
@@ -87,7 +93,7 @@ describe("cloudfront domain-folder-router", () => {
   it("matches hosts case-insensitively", () => {
     const result = handler(eventFor("ATLANTIC-VILLA-TOBAGO.SYNCPOLY.COM", "/logo.svg"));
 
-    assert.equal(result.uri, "/syncpoly/templates/real-estate/logo.svg");
+    assert.equal(result.uri, "/atlantic-villa-tobago/_site/logo.svg");
   });
 
   it("leaves global 404 assets at the bucket root", () => {

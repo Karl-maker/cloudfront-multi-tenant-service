@@ -51,8 +51,10 @@ function handler(event) {
   }
 
   request.uri =
-    "/syncpoly/templates/" +
-    trimSlashes(site.template || "pressure-washer") +
+    "/" +
+    trimSlashes(site.folder) +
+    "/" +
+    trimSlashes(site.htmlPrefix || "_site") +
     normalizeStaticSiteUri(request.uri);
   return request;
 }

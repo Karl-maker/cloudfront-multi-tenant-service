@@ -20,6 +20,7 @@
     "site:upload-folder": "node bin/syncpoly-site.js upload-folder",
     "site:upload-template": "node bin/syncpoly-site.js upload-template",
     "site:upload-templates": "node bin/syncpoly-site.js upload-templates",
+    "site:upload-html": "node bin/syncpoly-site.js upload-site-html",
     "site:upload-media": "node bin/syncpoly-site.js upload-media",
     "site:upload-seo": "node bin/syncpoly-site.js upload-seo",
     "site:validate-config": "node bin/syncpoly-site.js validate-config",

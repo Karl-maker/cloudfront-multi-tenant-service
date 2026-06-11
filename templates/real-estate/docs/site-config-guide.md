@@ -46,6 +46,8 @@ SITE_CONFIG=/path/to/site.config.json npm run build
 
 Use `BUILD_SITE_CONFIG` instead of `SITE_CONFIG` if the deployment environment already reserves `SITE_CONFIG` for another step. The generated HTML should be served for that specific site; otherwise a shared template export will keep sharing one site's Open Graph title, description, image, canonical URL, and JSON-LD across every site that uses it.
 
+In the SyncPoly deployment workflow, configs under `sites/<folder>/site.config.json` are built this way automatically and uploaded to `/<folder>/_site/`, which is the HTML CloudFront serves for page requests.
+
 For deployment, run a normal build:
 
 ```bash

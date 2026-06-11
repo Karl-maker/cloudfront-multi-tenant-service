@@ -1,4 +1,4 @@
-name: Deploy Changed Templates
+name: Deploy Changed Templates And Sites
 
 on:
   push:
@@ -6,12 +6,18 @@ on:
       - main
     paths:
       - "templates/**"
+      - "sites/**"
       - "bin/syncpoly-site.js"
+      - "cloudfront/**"
       - ".github/workflows/template-deploy.yml"
   workflow_dispatch:
     inputs:
       templates:
         description: "Optional comma-separated template keys to deploy. Leave blank to deploy all registered templates."
+        required: false
+        type: string
+      sites:
+        description: "Optional comma-separated site folders to deploy. Leave blank to deploy all sites when templates change."
         required: false
         type: string
 
@@ -41,6 +47,7 @@ jobs:
         shell: bash
         env:
           EXPLICIT_TEMPLATES: ${{ inputs.templates }}
+          EXPLICIT_SITES: ${{ inputs.sites }}
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
           CURRENT_SHA: ${{ github.sha }}
@@ -66,19 +73,33 @@ jobs:
           changed_template_dirs="$(
             awk -F/ '/^templates\/[^/]+\// { print $2 }' <<< "$changed_files" | sort -u | tr '\n' ' '
           )"
+          changed_site_dirs="$(
+            awk -F/ '/^sites\/[^/]+\// { print $2 }' <<< "$changed_files" | sort -u | tr '\n' ' '
+          )"
 
           registry_changed=false
           if grep -qx 'templates/templates.json' <<< "$changed_files"; then
             registry_changed=true
           fi
 
+          deploy_all_sites=false
+          if grep -Eq '^(templates/|bin/syncpoly-site\.js|cloudfront/|\.github/workflows/template-deploy\.yml)' <<< "$changed_files"; then
+            deploy_all_sites=true
+          fi
+
           CHANGED_TEMPLATE_DIRS="$changed_template_dirs" \
+          CHANGED_SITE_DIRS="$changed_site_dirs" \
           REGISTRY_CHANGED="$registry_changed" \
+          DEPLOY_ALL_SITES="$deploy_all_sites" \
           node <<'NODE' >> "$GITHUB_OUTPUT"
           const fs = require("fs");
 
           const registry = JSON.parse(fs.readFileSync("templates/templates.json", "utf8")).templates || {};
           const explicit = (process.env.EXPLICIT_TEMPLATES || "")
+            .split(/[,\s]+/)
+            .map((value) => value.trim())
+            .filter(Boolean);
+          const explicitSites = (process.env.EXPLICIT_SITES || "")
             .split(/[,\s]+/)
             .map((value) => value.trim())
             .filter(Boolean);
@@ -88,11 +109,22 @@ jobs:
               .map((value) => value.trim())
               .filter(Boolean)
           );
+          const changedSites = new Set(
+            (process.env.CHANGED_SITE_DIRS || "")
+              .split(/\s+/)
+              .map((value) => value.trim())
+              .filter(Boolean)
+          );
           const registryChanged = process.env.REGISTRY_CHANGED === "true";
+          const deployAllSites = process.env.DEPLOY_ALL_SITES === "true" || registryChanged;
 
           function sourceFolder(name, entry) {
             const source = String((entry && entry.source) || name || "").replace(/^\.?\/*templates\//, "");
             return source.split(/[\\/]/)[0];
+          }
+
+          function hasConfig(site) {
+            return fs.existsSync(`sites/${site}/site.config.json`);
           }
 
           const names = explicit.length > 0
@@ -105,9 +137,19 @@ jobs:
           const sourceNames = [
             ...new Set(uniqueNames.map((name) => sourceFolder(name, registry[name])))
           ].filter((source) => fs.existsSync(`templates/${source}/package.json`));
+          const allSites = fs.existsSync("sites")
+            ? fs.readdirSync("sites", { withFileTypes: true })
+                .filter((entry) => entry.isDirectory() && hasConfig(entry.name))
+                .map((entry) => entry.name)
+            : [];
+          const siteNames = explicitSites.length > 0
+            ? explicitSites.filter(hasConfig)
+            : (deployAllSites ? allSites : [...changedSites].filter(hasConfig));
           console.log(`templates=${uniqueNames.join(",")}`);
           console.log(`sources=${sourceNames.join(",")}`);
           console.log(`has_changes=${uniqueNames.length > 0 ? "true" : "false"}`);
+          console.log(`sites=${[...new Set(siteNames)].join(",")}`);
+          console.log(`has_site_changes=${siteNames.length > 0 ? "true" : "false"}`);
           NODE
 
       - name: Build changed template exports
@@ -122,7 +164,7 @@ jobs:
             template_dir="templates/$source_name"
             echo "Building $template_dir"
             npm ci --include=dev --prefix "$template_dir"
-            npm run build --prefix "$template_dir"
+            npm run build --prefix "$template_dir" -- --webpack
           done
 
       - name: Upload changed templates
@@ -161,6 +203,56 @@ jobs:
             --distribution-id "$distribution_id" \
             --paths "${paths[@]}"
 
+      - name: Build and upload site-specific HTML
+        if: steps.changes.outputs.has_site_changes == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          npm ci --include=dev --prefix templates/real-estate
+
+          IFS=',' read -ra site_names <<< "${{ steps.changes.outputs.sites }}"
+          for site_name in "${site_names[@]}"; do
+            [[ -n "$site_name" ]] || continue
+            site_dir="sites/$site_name"
+            config_file="$site_dir/site.config.json"
+
+            echo "Uploading runtime config for $site_name"
+            node bin/syncpoly-site.js upload-config --file "$config_file"
+
+            if [[ -d "$site_dir/media" ]]; then
+              echo "Uploading media for $site_name"
+              node bin/syncpoly-site.js upload-media --source "$site_dir/media" --config "$config_file"
+            fi
+
+            echo "Uploading SEO discovery files for $site_name"
+            node bin/syncpoly-site.js upload-seo --source "$site_dir" --config "$config_file"
+
+            echo "Building and uploading site-specific HTML for $site_name"
+            node bin/syncpoly-site.js upload-site-html --site "$site_dir" --template real-estate
+          done
+
+      - name: Invalidate site-specific paths
+        if: steps.changes.outputs.has_site_changes == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          distribution_id="$(
+            aws cloudfront list-distributions \
+              --query "DistributionList.Items[?Aliases.Items && contains(Aliases.Items, '*.syncpoly.com')].Id | [0]" \
+              --output text
+          )"
+
+          if [[ -z "$distribution_id" || "$distribution_id" == "None" ]]; then
+            echo "::notice title=CloudFront invalidation skipped::No distribution with *.syncpoly.com alias was found."
+            exit 0
+          fi
+
+          aws cloudfront create-invalidation \
+            --distribution-id "$distribution_id" \
+            --paths "/*"
+
       - name: Report no template changes
-        if: steps.changes.outputs.has_changes != 'true'
-        run: echo "No registered template folders changed."
+        if: steps.changes.outputs.has_changes != 'true' && steps.changes.outputs.has_site_changes != 'true'
+        run: echo "No registered template or site folders changed."

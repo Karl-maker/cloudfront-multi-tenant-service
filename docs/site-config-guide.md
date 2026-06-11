@@ -2,11 +2,11 @@
 
 This project serves many sites from one CloudFront distribution and one S3 bucket.
 
-Most page requests use a shared template:
+Most page requests use a site-specific static export generated from the shared template and the tenant config:
 
 ```text
 /about
--> s3://syncpoly-web-builder-sites/syncpoly/templates/service/about/index.html
+-> s3://syncpoly-web-builder-sites/aurum-eco-power-wash/_site/about/index.html
 ```
 
 Tenant-owned files use the mapped site folder:
@@ -32,6 +32,12 @@ syncpoly/
         app.js
 
 aurum-eco-power-wash/
+  _site/
+    index.html
+    about/
+      index.html
+    _next/
+      static/
   site.config.json
   llm.txt
   llms.txt
@@ -61,7 +67,8 @@ var sitesByHost = {
 Each host entry has:
 
 - `folder`: the tenant-owned folder in S3.
-- `template`: the shared template under `syncpoly/templates`.
+- `template`: the shared template used to build this site's generated HTML.
+- `htmlPrefix`: optional generated HTML folder inside `folder`; defaults to `_site`.
 
 ## Naming Conventions
 
@@ -112,16 +119,19 @@ These routes map to the tenant folder:
 /public/favicon.svg     -> /<folder>/media/favicon.svg
 ```
 
-All other paths map to the shared template:
+All other paths map to the site's generated static HTML export:
 
 ```text
 /<path>
--> /syncpoly/templates/<template>/<path>
+-> /<folder>/_site/<path>
 ```
 
 ## Site Config Contract
 
-The shared Next static template fetches tenant config from:
+The Next static template uses tenant config in two places:
+
+- Build time: `site.config.json` is loaded into the exported HTML metadata for social previews, canonical URLs, JSON-LD, manifests, icons, and page routes.
+- Runtime: the browser fetches the tenant config from:
 
 ```text
 /site.config.json
@@ -580,7 +590,7 @@ Use versioned filenames for long-lived media when possible:
 
 The first Next static config template is vendored in this repo under `templates/real-estate`.
 
-Template types are registered in `templates/templates.json`. The current `service`, `real-estate`, and `pressure-washer` template types share the same export but upload to separate S3 prefixes under `syncpoly/templates/<template-type>/`. On pushes to `main`, the `Deploy Changed Templates` workflow detects which `templates/<source-folder>` changed, resolves matching template keys from the registry, uploads only those prefixes, and invalidates the corresponding shared CloudFront template paths.
+Template types are registered in `templates/templates.json`. The current `service`, `real-estate`, and `pressure-washer` template types share the same source template. On pushes to `main`, the `Deploy Changed Templates` workflow rebuilds the shared template export and also rebuilds each affected site with its own `site.config.json`, uploading the generated HTML to `/<folder>/_site/`.
 
 Build or refresh the template export, then upload the registered template types with the CLI:
 
@@ -598,7 +608,7 @@ Template uploaded: syncpoly/templates/service/ (... file(s))
 Template uploaded: syncpoly/templates/real-estate/ (... file(s))
 ```
 
-The template upload includes its static shell files, route pages such as `/amenities/index.html`, and generated static discovery files in `out/`. Tenant-specific `site.config.json`, media, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt` are still uploaded per site with `upload-config`, `upload-media`, and `upload-seo`. `syncpoly-site publish` uploads the selected shared template before tenant files unless `--skip-template-upload` or `--skip-upload` is used.
+The site-specific upload includes raw HTML with config-derived social preview tags for Open Graph, Twitter/X cards, canonical URLs, JSON-LD, icons, manifest, and page metadata. Tenant-specific `site.config.json`, media, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt` are still uploaded per site with `upload-config`, `upload-media`, and `upload-seo`. `syncpoly-site publish` uploads the selected shared template, tenant files, and the site-specific HTML export unless `--skip-template-upload` or `--skip-upload` is used.
 
 ## Adding A New Site
 
