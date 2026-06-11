@@ -126,7 +126,7 @@ npm run site:upload-config -- --file ./sites/example/site.config.json
 npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json
 npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json --max-width 1600 --quality 72
 npm run site:upload-seo -- --source ./sites/example --config ./sites/example/site.config.json
-npm run site -- preview --site ./sites/example --template /Users/family/Documents/syncpoly-ou/web-builder-templates/next-static-config-template --port 4173
+npm run site -- preview --site ./sites/example --template ./templates/real-estate --port 4173
 npm run site:screenshot -- --site ./sites/example --url http://127.0.0.1:4173/ --out ./sites/example/screenshots
 npm run site:screenshot-audit -- --site ./sites/example
 npm run site:make-outreach -- --site ./sites/example --benefit findability
@@ -149,7 +149,7 @@ Use `site:make-input`, `site:media-manifest`, and `site:make` to turn lightweigh
 
 Put every tenant-owned image in `sites/<name>/media`, including logos, favicons, OG/social images, hero photos, and gallery images. `upload-folder` rejects image files unless the target prefix is `media`; use `upload-media` for images so compression and WebP generation stay consistent.
 
-Template types are registered in `templates/templates.json`; `service`, `real-estate`, and the legacy `pressure-washer` alias currently share the vendored `templates/next-static-config-template` export. `site:publish` uploads the selected shared template before tenant config/media/SEO unless `--skip-template-upload` or `--skip-upload` is used.
+Template types are registered in `templates/templates.json`; `real-estate` is the first vendored template folder under `templates/real-estate`. `service` and the legacy `pressure-washer` alias currently point at that same export until they get their own folders. `site:publish` uploads the selected shared template before tenant config/media/SEO unless `--skip-template-upload` or `--skip-upload` is used. The `Deploy Changed Templates` GitHub Actions workflow maps changed `templates/<source-folder>` folders through the registry and uploads only the affected S3 template prefixes.
 
 Use `syncpoly-site preview` and `syncpoly-site screenshot` for QA screenshots. Preview overlays a generated site folder onto the template export and serves it on localhost, so outreach screenshots come from `http://127.0.0.1:<port>/` instead of the public domain.
 
@@ -202,7 +202,7 @@ The real `.env` file is not mounted into the OpenClaw workspace. Docker Compose 
 
 - the Syncpoly website project tools at `/workspace/web-builder`
 - the custom skill at `/workspace/.agents/skills/syncpoly-site-cli/SKILL.md`
-- the template at `/workspace/templates/next-static-config-template`
+- the template at `/workspace/web-builder/templates/real-estate`
 
 The model defaults are cost-aware: the primary site-building model is `openai/gpt-5.4-mini`, heartbeat work uses `openai/gpt-5.4-nano`, and higher-cost models are not the default.
 

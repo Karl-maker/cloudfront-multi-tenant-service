@@ -1,0 +1,166 @@
+name: Deploy Changed Templates
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "templates/**"
+      - "bin/syncpoly-site.js"
+      - ".github/workflows/template-deploy.yml"
+  workflow_dispatch:
+    inputs:
+      templates:
+        description: "Optional comma-separated template keys to deploy. Leave blank to deploy all registered templates."
+        required: false
+        type: string
+
+jobs:
+  deploy-changed-templates:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      CONTENT_BUCKET: syncpoly-web-builder-sites
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Detect changed templates
+        id: changes
+        shell: bash
+        env:
+          EXPLICIT_TEMPLATES: ${{ inputs.templates }}
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ -n "${EXPLICIT_TEMPLATES:-}" ]]; then
+              changed_files=""
+            else
+              changed_files="$(find templates -type f | sort)"
+            fi
+          elif [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            if [[ "$(git rev-list --count HEAD)" -gt 1 ]]; then
+              changed_files="$(git diff --name-only HEAD~1 HEAD)"
+            else
+              changed_files="$(git ls-tree -r --name-only HEAD)"
+            fi
+          else
+            changed_files="$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")"
+          fi
+
+          changed_template_dirs="$(
+            awk -F/ '/^templates\/[^/]+\// { print $2 }' <<< "$changed_files" | sort -u | tr '\n' ' '
+          )"
+
+          registry_changed=false
+          if grep -qx 'templates/templates.json' <<< "$changed_files"; then
+            registry_changed=true
+          fi
+
+          CHANGED_TEMPLATE_DIRS="$changed_template_dirs" \
+          REGISTRY_CHANGED="$registry_changed" \
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const fs = require("fs");
+
+          const registry = JSON.parse(fs.readFileSync("templates/templates.json", "utf8")).templates || {};
+          const explicit = (process.env.EXPLICIT_TEMPLATES || "")
+            .split(/[,\s]+/)
+            .map((value) => value.trim())
+            .filter(Boolean);
+          const changedDirs = new Set(
+            (process.env.CHANGED_TEMPLATE_DIRS || "")
+              .split(/\s+/)
+              .map((value) => value.trim())
+              .filter(Boolean)
+          );
+          const registryChanged = process.env.REGISTRY_CHANGED === "true";
+
+          function sourceFolder(name, entry) {
+            const source = String((entry && entry.source) || name || "").replace(/^\.?\/*templates\//, "");
+            return source.split(/[\\/]/)[0];
+          }
+
+          const names = explicit.length > 0
+            ? explicit
+            : Object.entries(registry)
+                .filter(([name, entry]) => registryChanged || changedDirs.has(name) || changedDirs.has(sourceFolder(name, entry)))
+                .map(([name]) => name);
+
+          const uniqueNames = [...new Set(names)].filter((name) => registry[name]);
+          const sourceNames = [
+            ...new Set(uniqueNames.map((name) => sourceFolder(name, registry[name])))
+          ].filter((source) => fs.existsSync(`templates/${source}/package.json`));
+          console.log(`templates=${uniqueNames.join(",")}`);
+          console.log(`sources=${sourceNames.join(",")}`);
+          console.log(`has_changes=${uniqueNames.length > 0 ? "true" : "false"}`);
+          NODE
+
+      - name: Build changed template exports
+        if: steps.changes.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IFS=',' read -ra source_names <<< "${{ steps.changes.outputs.sources }}"
+          for source_name in "${source_names[@]}"; do
+            [[ -n "$source_name" ]] || continue
+            template_dir="templates/$source_name"
+            echo "Building $template_dir"
+            npm ci --include=dev --prefix "$template_dir"
+            npm run build --prefix "$template_dir"
+          done
+
+      - name: Upload changed templates
+        if: steps.changes.outputs.has_changes == 'true'
+        run: node bin/syncpoly-site.js upload-templates --templates "${{ steps.changes.outputs.templates }}"
+
+      - name: Invalidate changed template paths
+        if: steps.changes.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          distribution_id="$(
+            aws cloudfront list-distributions \
+              --query "DistributionList.Items[?Aliases.Items && contains(Aliases.Items, '*.syncpoly.com')].Id | [0]" \
+              --output text
+          )"
+
+          if [[ -z "$distribution_id" || "$distribution_id" == "None" ]]; then
+            echo "::notice title=CloudFront invalidation skipped::No distribution with *.syncpoly.com alias was found."
+            exit 0
+          fi
+
+          IFS=',' read -ra template_names <<< "${{ steps.changes.outputs.templates }}"
+          paths=()
+          for template_name in "${template_names[@]}"; do
+            [[ -n "$template_name" ]] || continue
+            paths+=("/syncpoly/templates/$template_name/*")
+          done
+
+          if [[ "${#paths[@]}" -eq 0 ]]; then
+            exit 0
+          fi
+
+          aws cloudfront create-invalidation \
+            --distribution-id "$distribution_id" \
+            --paths "${paths[@]}"
+
+      - name: Report no template changes
+        if: steps.changes.outputs.has_changes != 'true'
+        run: echo "No registered template folders changed."

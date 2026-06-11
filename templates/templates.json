@@ -1,15 +1,15 @@
 {
   "templates": {
     "service": {
-      "source": "next-static-config-template",
+      "source": "real-estate",
       "description": "Service-business website template export."
     },
     "real-estate": {
-      "source": "next-static-config-template",
+      "source": "real-estate",
       "description": "Property, villa, venue, and real-estate website template export."
     },
     "pressure-washer": {
-      "source": "next-static-config-template",
+      "source": "real-estate",
       "description": "Legacy pressure-washer template alias."
     }
   }

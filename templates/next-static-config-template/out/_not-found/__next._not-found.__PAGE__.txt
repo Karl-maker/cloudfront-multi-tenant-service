@@ -1,6 +1,0 @@
-1:"$Sreact.fragment"
-2:I[22016,["/_next/static/chunks/13h-0fd.p-1ga.js","/_next/static/chunks/0p5h2hnader9n.js","/_next/static/chunks/0g7cr~4dz08b~.js","/_next/static/chunks/0d3shmwh5_nmn.js"],""]
-3:I[97367,["/_next/static/chunks/13h-0fd.p-1ga.js","/_next/static/chunks/0p5h2hnader9n.js","/_next/static/chunks/0g7cr~4dz08b~.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
-4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","main",null,{"id":"main","className":"not-found","children":["$","div",null,{"className":"not-found__inner","children":[["$","p",null,{"className":"kicker","children":"404"}],["$","h1",null,{"children":"Page not found"}],["$","p",null,{"children":["Aurum Realty Group"," does not have a static page for this route."]}],["$","$L2",null,{"className":"button button--primary","href":"/","children":"Go home"}]]}]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"RMCmuuH3dcI9KapMPzACa"}
-5:null

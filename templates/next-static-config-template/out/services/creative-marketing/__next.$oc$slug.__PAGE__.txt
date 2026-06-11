@@ -1,6 +1,0 @@
-1:"$Sreact.fragment"
-2:I[1910,["/_next/static/chunks/13h-0fd.p-1ga.js","/_next/static/chunks/0p5h2hnader9n.js","/_next/static/chunks/0g7cr~4dz08b~.js","/_next/static/chunks/0d3shmwh5_nmn.js","/_next/static/chunks/0-cqcl_uwosmx.js"],"ConfiguredPageClient"]
-3:I[97367,["/_next/static/chunks/13h-0fd.p-1ga.js","/_next/static/chunks/0p5h2hnader9n.js","/_next/static/chunks/0g7cr~4dz08b~.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
-4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"WebPage\",\"name\":\"Creative Marketing\",\"description\":\"Dedicated real estate service detail page for a full-service real estate advisory website.\",\"url\":\"https://aurum-realty-group.syncpoly.com/services/creative-marketing/\",\"isPartOf\":{\"@type\":\"WebSite\",\"name\":\"Aurum Realty Group\",\"url\":\"https://aurum-realty-group.syncpoly.com/\"}}"}}],["$","$L2",null,{"path":"/services/creative-marketing/"}]],[["$","script","script-0",{"src":"/_next/static/chunks/0-cqcl_uwosmx.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"RMCmuuH3dcI9KapMPzACa"}
-5:null

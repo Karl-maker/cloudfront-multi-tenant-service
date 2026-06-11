@@ -1,0 +1,48 @@
+{
+  "name": "real-estate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "validate:config": "node scripts/validate-config.mjs",
+    "validate:presets": "node scripts/validate-config.mjs --all",
+    "runtime:prepare": "node scripts/prepare-runtime-config.mjs",
+    "preset:list": "node scripts/use-preset.mjs --list",
+    "preset:use": "node scripts/use-preset.mjs",
+    "preview": "node scripts/serve-out.mjs",
+    "test": "NODE_ENV=test jest",
+    "test:unit": "NODE_ENV=test jest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "check": "npm run validate:presets && npm run typecheck && npm run test:unit && npm run build",
+    "check:full": "npm run check && npm run test:e2e"
+  },
+  "dependencies": {
+    "lucide-react": "^1.17.0",
+    "next": "^16.2.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-icons": "^5.6.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "24.13.2",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "^19.0.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

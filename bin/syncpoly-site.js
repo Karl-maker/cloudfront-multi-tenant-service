@@ -1346,9 +1346,9 @@ function readTemplateRegistry(args = {}) {
   if (!fs.existsSync(registryPath)) {
     return {
       templates: {
-        service: { source: "next-static-config-template" },
-        "real-estate": { source: "next-static-config-template" },
-        "pressure-washer": { source: "next-static-config-template" }
+        service: { source: "real-estate" },
+        "real-estate": { source: "real-estate" },
+        "pressure-washer": { source: "real-estate" }
       }
     };
   }
@@ -1362,7 +1362,7 @@ function readTemplateRegistry(args = {}) {
 
 function resolveTemplateEntry(args = {}, templateName = "") {
   const registry = readTemplateRegistry(args);
-  return registry.templates?.[templateName] || { source: templateName || "next-static-config-template" };
+  return registry.templates?.[templateName] || { source: templateName || "real-estate" };
 }
 
 function resolveTemplateRoot(args = {}, templateName = "", explicitRoot) {
@@ -1375,7 +1375,7 @@ function resolveTemplateRoot(args = {}, templateName = "", explicitRoot) {
   }
 
   const entry = resolveTemplateEntry(args, templateName);
-  const source = entry.source || "next-static-config-template";
+  const source = entry.source || "real-estate";
   const localRoot = path.resolve("templates", source);
   if (fs.existsSync(localRoot)) {
     return localRoot;
@@ -1456,7 +1456,7 @@ function printHelp() {
   syncpoly-site launch-check --site ./sites/example [--run-checks]
   syncpoly-site make-outreach --site ./sites/example --benefit findability
   syncpoly-site list-themes
-  syncpoly-site upload-template --template-name service --source /workspace/templates/next-static-config-template/out [--profile prod]
+  syncpoly-site upload-template --template-name service --source /workspace/web-builder/templates/real-estate/out [--profile prod]
   syncpoly-site upload-templates [--templates service,real-estate]
   syncpoly-site upload-config --file ./site.config.json [--folder site-folder]
   syncpoly-site upload-media --source ./media --config ./site.config.json [--max-width 1920] [--quality 78] [--no-webp]
@@ -1465,7 +1465,7 @@ function printHelp() {
   syncpoly-site validate-config --file ./site.config.json
   syncpoly-site add-cname aurum-eco-power-wash --domain syncpoly.com --value d111111abcdef8.cloudfront.net
   syncpoly-site add-cname --config ./site.config.json --value d111111abcdef8.cloudfront.net
-  syncpoly-site preview --site ./sites/example --template /workspace/templates/next-static-config-template --port 4173
+  syncpoly-site preview --site ./sites/example --template /workspace/web-builder/templates/real-estate --port 4173
   syncpoly-site screenshot --site ./sites/example --url http://127.0.0.1:4173/ --out ./sites/example/screenshots
   syncpoly-site screenshot-audit --site ./sites/example
   syncpoly-site publish --site ./sites/example --template real-estate [--skip-upload] [--skip-dns]
