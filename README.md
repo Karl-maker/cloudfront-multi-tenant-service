@@ -133,6 +133,15 @@ npm run site:publish -- --site ./sites/example --template real-estate --skip-upl
 npm run godaddy:add-cname -- --domain syncpoly.com --name example --value d111111abcdef8.cloudfront.net
 ```
 
+Google Places lead finder:
+
+```bash
+GOOGLE_PLACES_API_KEY=... npm run companies:no-website -- --query "pressure washing in Tampa, FL" --format table
+npm run companies:no-website -- --industry "villa rental" --location "Tobago" --format csv --out ./tmp/no-website-leads.csv
+```
+
+The lead finder uses Google Places Text Search and filters for businesses where Google does not return a `websiteUri`. It accepts API keys from `GOOGLE_PLACES_API_KEY`, `GOOGLE_MAPS_API_KEY`, or `GOOGLE_API_KEY`; it also loads `.env` by default. The default field mask includes `places.websiteUri`, business name, address, phone, status, type, and Google Maps URL. `websiteUri` is required for filtering, so custom `--field-mask` values must include `places.websiteUri`.
+
 Use `site:make-input`, `site:media-manifest`, and `site:make` to turn lightweight business facts and tenant media into `site.input.json`, `site.config.json`, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt`. Pass `--template service` or `--template real-estate` so the CLI selects the matching default preset; `--theme` remains available when a site intentionally needs to override that template default. The service template owns the modern layout for hero, gallery, service cards, rates, booking CTAs, WhatsApp click-to-chat, location/Google Maps, contact, and SEO support. AI agents should focus on text, contact details, media paths, services, prices, FAQs, booking links, and service areas instead of writing CSS or SEO files by hand. `site:audit`, `site:add-route`, `site:launch-check`, `site:screenshot-audit`, `site:make-outreach`, and `site:publish` cover the proof gates that agents used to perform manually.
 
 `upload-media` optimizes media before uploading to S3. JPG/PNG/WebP/AVIF files are resized to fit within `1920x1920`, compressed for web delivery, and JPG/PNG/AVIF files also get a generated `.webp` sibling by default. Use `--no-webp` or `SITE_MEDIA_WEBP=0` to disable WebP variants.

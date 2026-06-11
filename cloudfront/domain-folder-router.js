@@ -13,15 +13,7 @@ function handler(event) {
     "customco.com": { folder: "customco-site", template: "pressure-washer" },
     "www.customco.com": { folder: "customco-site", template: "pressure-washer" },
     // real
-    "canboulay.syncpoly.com": { folder: "canboulay", template: "service" },
-    "barber-tonio.syncpoly.com": { folder: "barber-tonio", template: "service" },
-    "d1mp8fjhswh27j.cloudfront.net": { folder: "syncpoly", template: "pressure-washer" },
-    "aurum-eco-power-wash.syncpoly.com": { folder: "aurum-eco-power-wash", template: "pressure-washer" },
-    "atlantic-villa-tobago.syncpoly.com": { folder: "atlantic-villa-tobago", template: "real-estate" },
-    "atlantic-villa-tt.syncpoly.com": { folder: "atlantic-villa-tobago", template: "real-estate" },
-    "rafiah.syncpoly.com": { folder: "rafiah", template: "real-estate" },
-    "yacht-lux.syncpoly.com": { folder: "yacht-lux", template: "real-estate" },
-    "cj-events-tt.syncpoly.com": { folder: "cj-events-tt", template: "real-estate" },
+    "atlantic-villa-tobago.syncpoly.com": { folder: "atlantic-villa-tobago", template: "real-estate" }
   };
 
   var site = sitesByHost[host];
