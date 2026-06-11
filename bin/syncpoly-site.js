@@ -68,6 +68,8 @@ async function main() {
     await uploadFolder(args);
   } else if (command === "upload-template") {
     await uploadTemplate(args);
+  } else if (command === "upload-templates") {
+    await uploadTemplates(args);
   } else if (command === "upload-media") {
     await uploadMedia(args);
   } else if (command === "upload-seo") {
@@ -138,19 +140,7 @@ async function uploadTemplate(args) {
     throw new Error("Missing --template-name for upload-template.");
   }
 
-  const source = requirePath(
-    args.source ||
-      args.dir ||
-      process.env.SITE_TEMPLATE_OUT ||
-      path.join(
-        args.templateRoot ||
-          process.env.SITE_TEMPLATE_DIR ||
-          process.env.TEMPLATE_DIR ||
-          "/workspace/templates/next-static-config-template",
-        "out"
-      ),
-    "source"
-  );
+  const source = requirePath(resolveTemplateOut(args, templateName), "source");
   const files = listFiles(source);
   if (files.length === 0) {
     throw new Error(`No template files found in ${source}`);
@@ -169,6 +159,18 @@ async function uploadTemplate(args) {
   });
   printUploads(uploads);
   console.log(`Template uploaded: syncpoly/templates/${templateName}/ (${files.length} file(s))`);
+}
+
+async function uploadTemplates(args) {
+  const registry = readTemplateRegistry(args);
+  const names = parseTemplateNames(args.templates || args.templateNames || args._.join(",") || Object.keys(registry.templates || {}).join(","));
+  if (names.length === 0) {
+    throw new Error("No templates registered for upload.");
+  }
+
+  for (const templateName of names) {
+    await uploadTemplate({ ...args, templateName });
+  }
 }
 
 async function uploadMedia(args) {
@@ -443,6 +445,15 @@ async function publishSite(args) {
   execFileSync("npm", ["test"], { stdio: "inherit" });
 
   if (!args.skipUpload) {
+    if (!args.skipTemplate && !args.skipTemplateUpload) {
+      await uploadTemplate({
+        ...args,
+        templateName: template,
+        source: args.templateSource || args.templateOut
+      });
+    } else {
+      console.log("Skipped template upload because --skip-template-upload was set.");
+    }
     await uploadConfig({ ...args, file: configPath, folder });
     const mediaDir = path.join(siteDir, "media");
     if (fs.existsSync(mediaDir)) {
@@ -496,12 +507,7 @@ async function previewSite(args) {
     args: { folder: args.folder || args._[0] },
     config
   });
-  const templateRoot = path.resolve(
-    args.template ||
-      process.env.SITE_TEMPLATE_DIR ||
-      process.env.TEMPLATE_DIR ||
-      "/workspace/templates/next-static-config-template"
-  );
+  const templateRoot = resolveTemplateRoot(args, args.templateName || process.env.SITE_TEMPLATE || "service", args.template);
   const templateOut = path.join(templateRoot, "out");
 
   if (!fs.existsSync(templateOut)) {
@@ -1328,6 +1334,64 @@ function requirePath(value, label) {
   return resolved;
 }
 
+function parseTemplateNames(value) {
+  return String(value || "")
+    .split(/[,\s]+/)
+    .map((item) => normalizeFolderName(item))
+    .filter(Boolean);
+}
+
+function readTemplateRegistry(args = {}) {
+  const registryPath = path.resolve(args.templateRegistry || process.env.SITE_TEMPLATE_REGISTRY || path.join("templates", "templates.json"));
+  if (!fs.existsSync(registryPath)) {
+    return {
+      templates: {
+        service: { source: "next-static-config-template" },
+        "real-estate": { source: "next-static-config-template" },
+        "pressure-washer": { source: "next-static-config-template" }
+      }
+    };
+  }
+
+  const registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
+  if (!registry || typeof registry !== "object" || !registry.templates || typeof registry.templates !== "object") {
+    throw new Error(`Template registry must contain a templates object: ${registryPath}`);
+  }
+  return registry;
+}
+
+function resolveTemplateEntry(args = {}, templateName = "") {
+  const registry = readTemplateRegistry(args);
+  return registry.templates?.[templateName] || { source: templateName || "next-static-config-template" };
+}
+
+function resolveTemplateRoot(args = {}, templateName = "", explicitRoot) {
+  if (explicitRoot && fs.existsSync(path.resolve(explicitRoot))) {
+    return path.resolve(explicitRoot);
+  }
+
+  if (args.templateRoot || process.env.SITE_TEMPLATE_DIR || process.env.TEMPLATE_DIR) {
+    return path.resolve(args.templateRoot || process.env.SITE_TEMPLATE_DIR || process.env.TEMPLATE_DIR);
+  }
+
+  const entry = resolveTemplateEntry(args, templateName);
+  const source = entry.source || "next-static-config-template";
+  const localRoot = path.resolve("templates", source);
+  if (fs.existsSync(localRoot)) {
+    return localRoot;
+  }
+
+  return path.resolve("/workspace/templates", source);
+}
+
+function resolveTemplateOut(args = {}, templateName = "") {
+  if (args.source || args.dir || process.env.SITE_TEMPLATE_OUT) {
+    return args.source || args.dir || process.env.SITE_TEMPLATE_OUT;
+  }
+
+  return path.join(resolveTemplateRoot(args, templateName), "out");
+}
+
 function isDryRun(args) {
   return args.dryRun || process.env.DRY_RUN === "1";
 }
@@ -1393,6 +1457,7 @@ function printHelp() {
   syncpoly-site make-outreach --site ./sites/example --benefit findability
   syncpoly-site list-themes
   syncpoly-site upload-template --template-name service --source /workspace/templates/next-static-config-template/out [--profile prod]
+  syncpoly-site upload-templates [--templates service,real-estate]
   syncpoly-site upload-config --file ./site.config.json [--folder site-folder]
   syncpoly-site upload-media --source ./media --config ./site.config.json [--max-width 1920] [--quality 78] [--no-webp]
   syncpoly-site upload-seo --source ./seo --config ./site.config.json
@@ -1423,6 +1488,7 @@ Environment:
   SITE_MEDIA_WEBP=0                  Disable generated .webp variants.
   SITE_UPLOAD_PREFIX                 Prefix for upload-folder. Image files are rejected unless the target prefix is media.
   SITE_TEMPLATE_OUT                  Static template export used by upload-template. Defaults to <template>/out.
+  SITE_TEMPLATE_REGISTRY             JSON registry of template types. Defaults to templates/templates.json.
   GODADDY_API_KEY                    GoDaddy production API key.
   GODADDY_API_SECRET                 GoDaddy production API secret.
   GODADDY_DOMAIN                     Domain to modify, for example syncpoly.com.

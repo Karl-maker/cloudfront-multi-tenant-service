@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" role="img" aria-labelledby="title desc">
+  <title id="title">Roof cleaning placeholder</title>
+  <desc id="desc">Roof and gutter soft wash placeholder.</desc>
+  <rect width="900" height="540" rx="24" fill="#f4fbfd"/>
+  <path d="M94 314L450 104l356 210z" fill="#075f73"/>
+  <path d="M164 314h572v144H164z" fill="#ffffff"/>
+  <path d="M178 314h544" stroke="#29b6a8" stroke-width="18" stroke-linecap="round"/>
+  <path d="M226 274h448M286 238h328M348 202h204" stroke="#e5f5f8" stroke-width="10" stroke-linecap="round" opacity=".72"/>
+  <path d="M650 154c-96 38-172 86-228 146" stroke="#29b6a8" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <text x="82" y="500" fill="#075f73" font-family="Arial, sans-serif" font-size="30" font-weight="700">Roof and gutter image placeholder</text>
+</svg>
+

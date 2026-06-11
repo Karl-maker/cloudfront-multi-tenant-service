@@ -119,7 +119,8 @@ npm run site:make-seo -- --site ./sites/example
 npm run site:audit -- --site ./sites/example
 npm run site:add-route -- --site example --template real-estate
 npm run site:launch-check -- --site ./sites/example --run-checks
-npm run site:upload-template -- --template-name service --source /Users/family/Documents/syncpoly-ou/web-builder-templates/next-static-config-template/out --profile prod
+npm run site:upload-templates -- --templates service,real-estate
+npm run site:upload-template -- --template-name service
 npm run site:validate-config -- --file ./sites/example/site.config.json
 npm run site:upload-config -- --file ./sites/example/site.config.json
 npm run site:upload-media -- --source ./sites/example/media --config ./sites/example/site.config.json
@@ -147,6 +148,8 @@ Use `site:make-input`, `site:media-manifest`, and `site:make` to turn lightweigh
 `upload-media` optimizes media before uploading to S3. JPG/PNG/WebP/AVIF files are resized to fit within `1920x1920`, compressed for web delivery, and JPG/PNG/AVIF files also get a generated `.webp` sibling by default. Use `--no-webp` or `SITE_MEDIA_WEBP=0` to disable WebP variants.
 
 Put every tenant-owned image in `sites/<name>/media`, including logos, favicons, OG/social images, hero photos, and gallery images. `upload-folder` rejects image files unless the target prefix is `media`; use `upload-media` for images so compression and WebP generation stay consistent.
+
+Template types are registered in `templates/templates.json`; `service`, `real-estate`, and the legacy `pressure-washer` alias currently share the vendored `templates/next-static-config-template` export. `site:publish` uploads the selected shared template before tenant config/media/SEO unless `--skip-template-upload` or `--skip-upload` is used.
 
 Use `syncpoly-site preview` and `syncpoly-site screenshot` for QA screenshots. Preview overlays a generated site folder onto the template export and serves it on localhost, so outreach screenshots come from `http://127.0.0.1:<port>/` instead of the public domain.
 

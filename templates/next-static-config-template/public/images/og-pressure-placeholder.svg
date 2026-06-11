@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">AquaBright Pressure Washing</title>
+  <desc id="desc">Default Open Graph placeholder for the pressure washing website.</desc>
+  <rect width="1200" height="630" fill="#f4fbfd"/>
+  <rect x="70" y="70" width="1060" height="490" rx="34" fill="#075f73"/>
+  <path d="M208 158c42 58 84 110 84 166 0 54-37 94-84 94s-84-40-84-94c0-56 42-108 84-166z" fill="#e5f5f8"/>
+  <path d="M168 338c26 24 64 32 112 18" fill="none" stroke="#29b6a8" stroke-width="18" stroke-linecap="round"/>
+  <rect x="360" y="156" width="480" height="42" rx="21" fill="#ffffff"/>
+  <rect x="360" y="234" width="680" height="30" rx="15" fill="#d8f7ef"/>
+  <rect x="360" y="294" width="560" height="30" rx="15" fill="#d8f7ef"/>
+  <rect x="360" y="410" width="220" height="70" rx="35" fill="#29b6a8"/>
+  <rect x="620" y="410" width="220" height="70" rx="35" fill="#ffffff"/>
+</svg>

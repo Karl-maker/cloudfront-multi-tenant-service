@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+  <title id="title">Pressure washing hero image placeholder</title>
+  <desc id="desc">Illustrated placeholder showing a pressure washing wand cleaning a driveway.</desc>
+  <rect width="1200" height="820" rx="36" fill="#d8f7ef"/>
+  <rect x="64" y="64" width="1072" height="692" rx="28" fill="#f7fcfd"/>
+  <rect x="64" y="470" width="1072" height="286" rx="28" fill="#c6d7dc"/>
+  <path d="M64 504h1072" stroke="#ffffff" stroke-width="10" opacity=".65"/>
+  <path d="M112 604h976" stroke="#ffffff" stroke-width="8" opacity=".5"/>
+  <path d="M160 704h880" stroke="#ffffff" stroke-width="8" opacity=".45"/>
+  <path d="M724 190l236 138" stroke="#075f73" stroke-width="30" stroke-linecap="round"/>
+  <path d="M928 312l-54 92" stroke="#075f73" stroke-width="42" stroke-linecap="round"/>
+  <path d="M868 410c-56 12-120 32-192 62-116 48-214 60-322 50" fill="none" stroke="#29b6a8" stroke-width="32" stroke-linecap="round" opacity=".9"/>
+  <path d="M850 438c-134 62-306 96-518 78" fill="none" stroke="#ffffff" stroke-width="40" stroke-linecap="round" opacity=".86"/>
+  <circle cx="236" cy="190" r="54" fill="#29b6a8" opacity=".25"/>
+  <circle cx="314" cy="146" r="26" fill="#29b6a8" opacity=".3"/>
+  <rect x="110" y="112" width="248" height="54" rx="27" fill="#075f73"/>
+  <rect x="136" y="130" width="148" height="18" rx="9" fill="#ffffff"/>
+  <text x="112" y="736" fill="#075f73" font-family="Arial, sans-serif" font-size="34" font-weight="700">Replace with a real pressure washing photo</text>
+</svg>
+

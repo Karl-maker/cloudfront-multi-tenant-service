@@ -708,6 +708,36 @@ describe("site upload helpers", () => {
     assert.match(output, /Template uploaded: syncpoly\/templates\/service\/ \(2 file\(s\)\)/);
   });
 
+  it("uploads every registered template type through the CLI", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-template-registry-test-"));
+    const outDir = path.join(dir, "templates", "shared", "out");
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(path.join(outDir, "index.html"), "<!doctype html>");
+    fs.writeFileSync(path.join(dir, "templates", "templates.json"), JSON.stringify({
+      templates: {
+        service: { source: "shared" },
+        "real-estate": { source: "shared" }
+      }
+    }));
+
+    const output = execFileSync(
+      process.execPath,
+      [
+        path.join(__dirname, "../bin/syncpoly-site.js"),
+        "upload-templates",
+        "--template-registry",
+        path.join(dir, "templates", "templates.json"),
+        "--dry-run"
+      ],
+      { cwd: dir, env: { PATH: process.env.PATH }, encoding: "utf8" }
+    );
+
+    assert.match(output, /s3:\/\/syncpoly-web-builder-sites\/syncpoly\/templates\/service\/index\.html/);
+    assert.match(output, /s3:\/\/syncpoly-web-builder-sites\/syncpoly\/templates\/real-estate\/index\.html/);
+    assert.match(output, /Template uploaded: syncpoly\/templates\/service\/ \(1 file\(s\)\)/);
+    assert.match(output, /Template uploaded: syncpoly\/templates\/real-estate\/ \(1 file\(s\)\)/);
+  });
+
   it("generates outreach text from site input", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "syncpoly-outreach-test-"));
     const siteDir = path.join(dir, "sites", "harbor-house");

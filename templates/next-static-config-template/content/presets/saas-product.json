@@ -1,0 +1,207 @@
+{
+  "$schema": "../site.schema.json",
+  "deployment": { "basePath": "", "assetPrefix": "" },
+  "site": {
+    "name": "Acme Product",
+    "shortName": "Acme",
+    "url": "https://example.com",
+    "locale": "en_US",
+    "description": "A SaaS product landing page preset for teams selling software online.",
+    "updatedAt": "2026-05-28",
+    "keywords": ["SaaS", "software", "product"],
+    "author": { "name": "Acme Product", "url": "https://example.com" },
+    "manifest": {
+      "display": "standalone",
+      "orientation": "portrait",
+      "backgroundColor": "#f7faf9",
+      "themeColor": "#174d5a",
+      "icon": "/images/icon.svg",
+      "categories": ["business", "productivity"]
+    },
+    "pwa": {
+      "enabled": true,
+      "serviceWorker": "/sw.js",
+      "offlinePath": "/offline/",
+      "cacheName": "acme-product-v1"
+    },
+    "llms": {
+      "summary": "Concise map for the SaaS product site.",
+      "notes": ["Replace product claims with verified customer-ready copy."]
+    }
+  },
+  "seo": {
+    "titleTemplate": "%s | Acme Product",
+    "defaultTitle": "Acme Product",
+    "defaultImage": "/images/og-default.svg",
+    "robots": { "index": true, "follow": true, "allow": ["/"], "disallow": [] },
+    "structuredData": {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Acme Product",
+      "applicationCategory": "BusinessApplication",
+      "url": "https://example.com"
+    }
+  },
+  "theme": {
+    "mode": "light",
+    "colors": {
+      "background": "#f7faf9",
+      "surface": "#ffffff",
+      "surfaceAlt": "#e8f3f1",
+      "text": "#152329",
+      "muted": "#5d6b70",
+      "primary": "#174d5a",
+      "primaryContrast": "#ffffff",
+      "accent": "#f0a53a",
+      "accentContrast": "#1f1910",
+      "border": "#d9e2df"
+    },
+    "fonts": {
+      "heading": "Inter, ui-sans-serif, system-ui, sans-serif",
+      "body": "Inter, ui-sans-serif, system-ui, sans-serif"
+    },
+    "radius": "8px",
+    "maxWidth": "1160px",
+    "background": { "type": "solid", "value": "#f7faf9" },
+    "customCss": ""
+  },
+  "navigation": {
+    "logoText": "Acme Product",
+    "links": [
+      { "label": "Home", "href": "/" },
+      { "label": "Features", "href": "/#features" },
+      { "label": "Pricing", "href": "/pricing/" },
+      { "label": "Contact", "href": "/contact/" }
+    ],
+    "cta": { "label": "Request Demo", "href": "/contact/", "style": "primary" }
+  },
+  "blocks": {
+    "defaultFaq": {
+      "id": "faq",
+      "type": "faq",
+      "kicker": "FAQ",
+      "title": "Common buying questions",
+      "items": [
+        { "question": "Is this production copy?", "answer": "No. Replace every placeholder with verified product and pricing details." },
+        { "question": "Can pricing be static?", "answer": "Yes. Static pricing is easy to cache and fast to serve." }
+      ]
+    },
+    "defaultContact": {
+      "id": "contact-options",
+      "type": "contact",
+      "title": "Talk to sales",
+      "body": "Point these methods at your sales inbox, calendar, or static form provider.",
+      "methods": [
+        { "label": "Email", "value": "sales@example.com", "href": "mailto:sales@example.com" },
+        { "label": "Calendar", "value": "Book a demo", "href": "https://example.com/demo" }
+      ],
+      "form": { "enabled": true, "action": "mailto:sales@example.com", "method": "POST", "encType": "text/plain" }
+    }
+  },
+  "pages": [
+    {
+      "path": "/",
+      "title": "Home",
+      "layout": "landing",
+      "description": "SaaS product overview page.",
+      "seo": {
+        "title": "Launch Faster With Acme Product",
+        "description": "A static SaaS landing page layout with hero, features, proof, FAQ, and CTA.",
+        "image": "/images/og-default.svg"
+      },
+      "sections": [
+        {
+          "id": "hero",
+          "type": "hero",
+          "variant": "split",
+          "kicker": "SaaS preset",
+          "title": "Turn scattered workflows into one calm operating system.",
+          "body": "Use this layout for software products that need a clear promise, feature proof, pricing route, and demo conversion path.",
+          "badges": ["Fast static export", "SEO-ready", "PWA-ready"],
+          "actions": [
+            { "label": "Request demo", "href": "/contact/", "style": "primary" },
+            { "label": "See pricing", "href": "/pricing/", "style": "secondary" }
+          ],
+          "media": { "src": "/images/hero-placeholder.svg", "alt": "Product dashboard placeholder" }
+        },
+        {
+          "id": "features",
+          "type": "featureGrid",
+          "kicker": "Features",
+          "title": "Everything the buyer needs to understand quickly",
+          "columns": 3,
+          "items": [
+            { "title": "Unified data", "body": "Describe the system of record or dashboard value." },
+            { "title": "Automated workflows", "body": "Describe the repetitive work removed by the product." },
+            { "title": "Team visibility", "body": "Describe reporting, permissions, and collaboration." }
+          ]
+        },
+        {
+          "id": "proof",
+          "type": "stats",
+          "items": [
+            { "value": "42%", "label": "Example efficiency gain" },
+            { "value": "3x", "label": "Example faster rollout" },
+            { "value": "99.9%", "label": "Example uptime target" }
+          ]
+        },
+        { "use": "defaultFaq" }
+      ]
+    },
+    {
+      "path": "/pricing/",
+      "title": "Pricing",
+      "layout": "content",
+      "description": "Static pricing page preset.",
+      "seo": { "title": "Pricing", "description": "Compare static pricing packages.", "image": "/images/og-default.svg" },
+      "sections": [
+        {
+          "id": "pricing-hero",
+          "type": "hero",
+          "variant": "centered",
+          "kicker": "Pricing",
+          "title": "Simple packages for static buyers.",
+          "body": "Replace these cards with verified plans, terms, and CTAs."
+        },
+        {
+          "id": "plans",
+          "type": "cardGrid",
+          "columns": 3,
+          "items": [
+            { "title": "Starter", "body": "For small teams validating the workflow.", "href": "/contact/" },
+            { "title": "Growth", "body": "For teams that need collaboration and reporting.", "href": "/contact/" },
+            { "title": "Enterprise", "body": "For procurement, security review, and custom support.", "href": "/contact/" }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/contact/",
+      "title": "Contact",
+      "layout": "content",
+      "description": "Demo request contact page.",
+      "seo": { "title": "Contact Sales", "description": "Request a product demo.", "image": "/images/og-default.svg" },
+      "sections": [
+        { "id": "contact-hero", "type": "hero", "variant": "centered", "kicker": "Contact", "title": "Request a demo.", "body": "Connect this page to your preferred sales workflow." },
+        { "use": "defaultContact" }
+      ]
+    },
+    {
+      "path": "/offline/",
+      "title": "Offline",
+      "layout": "content",
+      "description": "Offline fallback page.",
+      "sections": [
+        { "id": "offline-message", "type": "hero", "variant": "centered", "kicker": "Offline", "title": "You are offline.", "body": "Reconnect to view the latest product details." }
+      ]
+    }
+  ],
+  "footer": {
+    "tagline": "SaaS static site preset.",
+    "links": [
+      { "label": "Sitemap", "href": "/sitemap.xml" },
+      { "label": "LLMs", "href": "/llms.txt" }
+    ],
+    "copyright": "(c) 2026 Acme Product."
+  }
+}

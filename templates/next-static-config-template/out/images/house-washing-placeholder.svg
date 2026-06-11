@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" role="img" aria-labelledby="title desc">
+  <title id="title">House washing placeholder</title>
+  <desc id="desc">House exterior soft washing placeholder.</desc>
+  <rect width="900" height="540" rx="24" fill="#e5f5f8"/>
+  <path d="M130 270L450 88l320 182v188H130z" fill="#ffffff"/>
+  <path d="M450 88l320 182H130z" fill="#075f73"/>
+  <rect x="210" y="308" width="140" height="110" rx="12" fill="#d8f7ef"/>
+  <rect x="550" y="308" width="140" height="110" rx="12" fill="#d8f7ef"/>
+  <path d="M670 154l96-58 24 40-106 44z" fill="#29b6a8"/>
+  <path d="M700 190c-80 56-176 86-288 88" stroke="#29b6a8" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <circle cx="298" cy="200" r="24" fill="#ffffff" opacity=".75"/>
+  <circle cx="352" cy="174" r="12" fill="#ffffff" opacity=".7"/>
+  <text x="82" y="500" fill="#075f73" font-family="Arial, sans-serif" font-size="30" font-weight="700">House washing image placeholder</text>
+</svg>
+

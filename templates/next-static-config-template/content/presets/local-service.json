@@ -1,0 +1,175 @@
+{
+  "$schema": "../site.schema.json",
+  "deployment": { "basePath": "", "assetPrefix": "" },
+  "site": {
+    "name": "Northside Studio",
+    "shortName": "Northside",
+    "url": "https://example.com",
+    "locale": "en_US",
+    "description": "A local service business preset with services, trust proof, FAQ, and contact details.",
+    "updatedAt": "2026-05-28",
+    "keywords": ["local business", "service", "booking"],
+    "author": { "name": "Northside Studio", "url": "https://example.com" },
+    "manifest": {
+      "display": "standalone",
+      "orientation": "portrait",
+      "backgroundColor": "#fbf8f2",
+      "themeColor": "#34524a",
+      "icon": "/images/icon.svg",
+      "categories": ["business", "lifestyle"]
+    },
+    "pwa": { "enabled": true, "serviceWorker": "/sw.js", "offlinePath": "/offline/", "cacheName": "northside-studio-v1" },
+    "llms": { "summary": "Local service business page map.", "notes": ["Replace hours, service area, and contact methods before launch."] }
+  },
+  "seo": {
+    "titleTemplate": "%s | Northside Studio",
+    "defaultTitle": "Northside Studio",
+    "defaultImage": "/images/og-default.svg",
+    "robots": { "index": true, "follow": true, "allow": ["/"], "disallow": [] },
+    "structuredData": {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Northside Studio",
+      "url": "https://example.com"
+    }
+  },
+  "theme": {
+    "mode": "light",
+    "colors": {
+      "background": "#fbf8f2",
+      "surface": "#ffffff",
+      "surfaceAlt": "#edf2ed",
+      "text": "#1e2725",
+      "muted": "#66716d",
+      "primary": "#34524a",
+      "primaryContrast": "#ffffff",
+      "accent": "#c76f4d",
+      "accentContrast": "#201712",
+      "border": "#ded8cc"
+    },
+    "fonts": { "heading": "Inter, ui-sans-serif, system-ui, sans-serif", "body": "Inter, ui-sans-serif, system-ui, sans-serif" },
+    "radius": "8px",
+    "maxWidth": "1120px",
+    "background": { "type": "solid", "value": "#fbf8f2" },
+    "customCss": ""
+  },
+  "navigation": {
+    "logoText": "Northside Studio",
+    "links": [
+      { "label": "Home", "href": "/" },
+      { "label": "Services", "href": "/services/" },
+      { "label": "Contact", "href": "/contact/" }
+    ],
+    "cta": { "label": "Book Now", "href": "/contact/", "style": "primary" }
+  },
+  "blocks": {
+    "defaultFaq": {
+      "id": "faq",
+      "type": "faq",
+      "kicker": "FAQ",
+      "title": "Before you book",
+      "items": [
+        { "question": "What areas do you serve?", "answer": "Replace this answer with your real service area." },
+        { "question": "How soon can I book?", "answer": "Replace this with your scheduling policy." }
+      ]
+    },
+    "defaultContact": {
+      "id": "contact-options",
+      "type": "contact",
+      "title": "Visit or book",
+      "body": "Use accurate local contact details before launch.",
+      "methods": [
+        { "label": "Email", "value": "hello@example.com", "href": "mailto:hello@example.com" },
+        { "label": "Phone", "value": "+1 555 0100", "href": "tel:+15550100" },
+        { "label": "Address", "value": "123 Main Street", "href": "https://example.com/map" }
+      ],
+      "form": { "enabled": true, "action": "mailto:hello@example.com", "method": "POST", "encType": "text/plain" }
+    }
+  },
+  "pages": [
+    {
+      "path": "/",
+      "title": "Home",
+      "layout": "landing",
+      "description": "Local service homepage preset.",
+      "seo": { "title": "Local Service Website Preset", "description": "A local service layout with services, proof, FAQ, and booking.", "image": "/images/og-default.svg" },
+      "sections": [
+        {
+          "id": "hero",
+          "type": "hero",
+          "variant": "split",
+          "kicker": "Local service preset",
+          "title": "A clear homepage for appointment-driven service businesses.",
+          "body": "Use this for clinics, studios, contractors, consultants, and local teams that need trust and easy booking.",
+          "actions": [
+            { "label": "Book now", "href": "/contact/", "style": "primary" },
+            { "label": "View services", "href": "/services/", "style": "secondary" }
+          ],
+          "media": { "src": "/images/hero-placeholder.svg", "alt": "Local business image placeholder" }
+        },
+        {
+          "id": "services-preview",
+          "type": "featureGrid",
+          "kicker": "Services",
+          "title": "Lead with the services people search for",
+          "columns": 3,
+          "items": [
+            { "title": "Consultation", "body": "Describe the first step and expected outcome." },
+            { "title": "Core service", "body": "Describe the primary revenue-driving service." },
+            { "title": "Follow-up", "body": "Describe ongoing support or maintenance." }
+          ]
+        },
+        { "use": "defaultFaq" }
+      ]
+    },
+    {
+      "path": "/services/",
+      "title": "Services",
+      "layout": "content",
+      "description": "Service list page.",
+      "seo": { "title": "Services", "description": "Browse local services.", "image": "/images/og-default.svg" },
+      "sections": [
+        { "id": "services-hero", "type": "hero", "variant": "centered", "kicker": "Services", "title": "Services built for local trust.", "body": "Replace cards with real service names, details, and links." },
+        {
+          "id": "service-list",
+          "type": "cardGrid",
+          "columns": 2,
+          "items": [
+            { "title": "Service one", "body": "Add who it is for, duration, and price range if useful." },
+            { "title": "Service two", "body": "Add the primary outcome and next step." },
+            { "title": "Service three", "body": "Add constraints, location notes, or prerequisites." },
+            { "title": "Service four", "body": "Add booking or consultation details." }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/contact/",
+      "title": "Contact",
+      "layout": "content",
+      "description": "Contact and booking page.",
+      "seo": { "title": "Contact", "description": "Book or contact the local service business.", "image": "/images/og-default.svg" },
+      "sections": [
+        { "id": "contact-hero", "type": "hero", "variant": "centered", "kicker": "Contact", "title": "Book the next available opening.", "body": "Replace with real response-time and booking expectations." },
+        { "use": "defaultContact" }
+      ]
+    },
+    {
+      "path": "/offline/",
+      "title": "Offline",
+      "layout": "content",
+      "description": "Offline fallback page.",
+      "sections": [
+        { "id": "offline-message", "type": "hero", "variant": "centered", "kicker": "Offline", "title": "You are offline.", "body": "Reconnect to view current availability." }
+      ]
+    }
+  ],
+  "footer": {
+    "tagline": "Local service static site preset.",
+    "links": [
+      { "label": "Sitemap", "href": "/sitemap.xml" },
+      { "label": "LLMs", "href": "/llms.txt" }
+    ],
+    "copyright": "(c) 2026 Northside Studio."
+  }
+}

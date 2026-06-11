@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" role="img" aria-labelledby="title desc">
+  <title id="title">Commercial pressure washing placeholder</title>
+  <desc id="desc">Commercial storefront and walkway cleaning placeholder.</desc>
+  <rect width="900" height="540" rx="24" fill="#edf8fb"/>
+  <rect x="108" y="118" width="684" height="284" rx="18" fill="#ffffff"/>
+  <rect x="148" y="168" width="178" height="142" rx="10" fill="#d8f7ef"/>
+  <rect x="362" y="168" width="178" height="142" rx="10" fill="#d8f7ef"/>
+  <rect x="576" y="168" width="178" height="142" rx="10" fill="#d8f7ef"/>
+  <rect x="108" y="370" width="684" height="68" rx="12" fill="#075f73"/>
+  <path d="M166 438h568" stroke="#cfe5eb" stroke-width="16" stroke-linecap="round"/>
+  <path d="M666 328c-90 52-200 76-330 72" stroke="#29b6a8" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <text x="82" y="500" fill="#075f73" font-family="Arial, sans-serif" font-size="30" font-weight="700">Commercial cleaning image placeholder</text>
+</svg>
+

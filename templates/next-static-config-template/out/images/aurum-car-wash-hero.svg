@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+  <title id="title">Aurum Eco Power Wash car wash hero</title>
+  <desc id="desc">Dark vehicle silhouette with aqua wash spray and gold lighting accents.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06070a"/>
+      <stop offset=".52" stop-color="#11151b"/>
+      <stop offset="1" stop-color="#061c18"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c5b23"/>
+      <stop offset=".5" stop-color="#d7ae5b"/>
+      <stop offset="1" stop-color="#ffe2a2"/>
+    </linearGradient>
+    <linearGradient id="spray" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#32e6b8"/>
+      <stop offset="1" stop-color="#a9fff0"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="820" rx="30" fill="url(#bg)"/>
+  <path d="M68 128h1064M68 696h1064" stroke="#2b3440" stroke-width="2" opacity=".72"/>
+  <path d="M110 602c154-82 340-118 558-106 160 9 298 42 414 100" fill="none" stroke="#16212a" stroke-width="102" stroke-linecap="round"/>
+  <path d="M178 486c44-98 114-161 212-190h248c103 20 194 79 274 176l87 20c55 13 93 45 112 96l-26 56H152l-38-62c9-50 30-82 64-96Z" fill="#090c12" stroke="#d7ae5b" stroke-width="5"/>
+  <path d="M300 342h306c57 14 106 49 146 104H225c16-42 41-77 75-104Z" fill="#182029" stroke="#42505d" stroke-width="4"/>
+  <path d="M344 356h122l-42 90H260c18-39 46-69 84-90Zm158 0h96c50 13 91 43 124 90H464l38-90Z" fill="#0d1218"/>
+  <circle cx="302" cy="624" r="78" fill="#050608" stroke="#2b3440" stroke-width="16"/>
+  <circle cx="302" cy="624" r="34" fill="none" stroke="url(#gold)" stroke-width="12"/>
+  <circle cx="902" cy="624" r="78" fill="#050608" stroke="#2b3440" stroke-width="16"/>
+  <circle cx="902" cy="624" r="34" fill="none" stroke="url(#gold)" stroke-width="12"/>
+  <path d="M178 548h856" stroke="url(#gold)" stroke-width="10" stroke-linecap="round"/>
+  <path d="M848 185l194 108" stroke="url(#gold)" stroke-width="30" stroke-linecap="round"/>
+  <path d="M1016 286l-68 119" stroke="url(#gold)" stroke-width="40" stroke-linecap="round"/>
+  <path d="M928 420c-100 34-209 61-328 82-134 24-268 30-402 18" fill="none" stroke="url(#spray)" stroke-width="26" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M910 458c-172 42-384 64-636 46" fill="none" stroke="#eafffb" stroke-width="32" stroke-linecap="round" opacity=".82"/>
+  <path d="M720 214c-82 18-176 48-282 90" stroke="#32e6b8" stroke-width="10" stroke-linecap="round" opacity=".75"/>
+  <path d="M770 256c-76 16-164 44-262 84" stroke="#a9fff0" stroke-width="6" stroke-linecap="round" opacity=".82"/>
+  <circle cx="164" cy="202" r="42" fill="#32e6b8" opacity=".16"/>
+  <circle cx="224" cy="166" r="18" fill="#d7ae5b" opacity=".36"/>
+  <circle cx="1010" cy="146" r="22" fill="#32e6b8" opacity=".2"/>
+</svg>

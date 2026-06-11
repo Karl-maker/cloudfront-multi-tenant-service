@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="title desc">
+  <title id="title">Static hosting diagram</title>
+  <desc id="desc">Static files moving from a build folder to object storage and a CDN.</desc>
+  <rect width="960" height="720" rx="32" fill="#214e5b"/>
+  <rect x="72" y="84" width="232" height="180" rx="24" fill="#f6f0e8"/>
+  <rect x="364" y="84" width="232" height="180" rx="24" fill="#ffffff"/>
+  <rect x="656" y="84" width="232" height="180" rx="24" fill="#e8f2f0"/>
+  <path d="M314 174h40" stroke="#d96c4a" stroke-width="16" stroke-linecap="round"/>
+  <path d="M606 174h40" stroke="#d96c4a" stroke-width="16" stroke-linecap="round"/>
+  <rect x="112" y="132" width="152" height="20" rx="10" fill="#214e5b"/>
+  <rect x="112" y="172" width="112" height="16" rx="8" fill="#5e6c72" opacity=".7"/>
+  <rect x="404" y="126" width="152" height="28" rx="14" fill="#214e5b"/>
+  <rect x="404" y="174" width="72" height="18" rx="9" fill="#d96c4a"/>
+  <rect x="404" y="210" width="128" height="14" rx="7" fill="#5e6c72" opacity=".7"/>
+  <rect x="704" y="128" width="136" height="20" rx="10" fill="#214e5b"/>
+  <rect x="704" y="174" width="96" height="16" rx="8" fill="#5e6c72" opacity=".7"/>
+  <rect x="72" y="340" width="816" height="260" rx="28" fill="#ffffff"/>
+  <rect x="128" y="396" width="160" height="36" rx="18" fill="#214e5b"/>
+  <rect x="128" y="464" width="704" height="18" rx="9" fill="#5e6c72" opacity=".34"/>
+  <rect x="128" y="512" width="560" height="18" rx="9" fill="#5e6c72" opacity=".34"/>
+  <rect x="128" y="560" width="420" height="18" rx="9" fill="#5e6c72" opacity=".34"/>
+</svg>
+

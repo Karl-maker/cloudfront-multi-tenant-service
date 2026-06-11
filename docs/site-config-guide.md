@@ -578,24 +578,27 @@ Use versioned filenames for long-lived media when possible:
 
 ## Uploading The Shared Template
 
-The Next static config template is deployed as the shared CloudFront template named `service`.
+The Next static config template is vendored in this repo under `templates/next-static-config-template`.
 
-Build the template export, then upload the `out/` folder with the CLI:
+Template types are registered in `templates/templates.json`. The current `service`, `real-estate`, and `pressure-washer` template types share the same export but upload to separate S3 prefixes under `syncpoly/templates/<template-type>/`.
+
+Build or refresh the template export, then upload the registered template types with the CLI:
 
 ```bash
-cd /workspace/templates/next-static-config-template
+cd /workspace/web-builder/templates/next-static-config-template
 npm run build
 cd /workspace/web-builder
-syncpoly-site upload-template --template-name service --source /workspace/templates/next-static-config-template/out --profile prod
+syncpoly-site upload-templates --templates service,real-estate
 ```
 
-The successful proof string is:
+The successful proof strings are:
 
 ```text
 Template uploaded: syncpoly/templates/service/ (... file(s))
+Template uploaded: syncpoly/templates/real-estate/ (... file(s))
 ```
 
-The template upload includes its static shell files and generated static discovery files in `out/`. Tenant-specific `site.config.json`, media, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt` are still uploaded per site with `upload-config`, `upload-media`, and `upload-seo`.
+The template upload includes its static shell files, route pages such as `/amenities/index.html`, and generated static discovery files in `out/`. Tenant-specific `site.config.json`, media, `robots.txt`, `sitemap.xml`, `llms.txt`, and `llm.txt` are still uploaded per site with `upload-config`, `upload-media`, and `upload-seo`. `syncpoly-site publish` uploads the selected shared template before tenant files unless `--skip-template-upload` or `--skip-upload` is used.
 
 ## Adding A New Site
 

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Configurable Static Site</title>
+  <desc id="desc">Default Open Graph placeholder image for the static template.</desc>
+  <rect width="1200" height="630" fill="#f6f0e8"/>
+  <rect x="70" y="70" width="1060" height="490" rx="34" fill="#214e5b"/>
+  <circle cx="176" cy="176" r="48" fill="#d96c4a"/>
+  <rect x="260" y="148" width="420" height="36" rx="18" fill="#ffffff"/>
+  <rect x="260" y="214" width="680" height="28" rx="14" fill="#e8f2f0" opacity=".82"/>
+  <rect x="260" y="268" width="560" height="28" rx="14" fill="#e8f2f0" opacity=".82"/>
+  <rect x="142" y="392" width="240" height="74" rx="37" fill="#ffffff"/>
+  <rect x="420" y="392" width="240" height="74" rx="37" fill="#f7d6c7"/>
+  <rect x="698" y="392" width="240" height="74" rx="37" fill="#e8f2f0"/>
+</svg>
+

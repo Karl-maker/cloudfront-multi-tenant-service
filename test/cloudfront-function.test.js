@@ -27,6 +27,21 @@ describe("cloudfront domain-folder-router", () => {
     assert.equal(result.uri, "/syncpoly/templates/pressure-washer/dashboard/index.html");
   });
 
+  it("rewrites Atlantic Villa extensionless pages to the real-estate template", () => {
+    assert.equal(
+      handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/amenities")).uri,
+      "/syncpoly/templates/real-estate/amenities/index.html"
+    );
+    assert.equal(
+      handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/amenities/")).uri,
+      "/syncpoly/templates/real-estate/amenities/index.html"
+    );
+    assert.equal(
+      handler(eventFor("atlantic-villa-tt.syncpoly.com", "/faq")).uri,
+      "/syncpoly/templates/real-estate/faq/index.html"
+    );
+  });
+
   it("rewrites non-tenant static files under the matched template", () => {
     const result = handler(eventFor("customco.com", "/assets/app.css"));
 

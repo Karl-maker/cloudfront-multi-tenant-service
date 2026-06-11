@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">AquaBright logo placeholder</title>
+  <desc id="desc">Water drop and pressure wand logo placeholder for a pressure washing company.</desc>
+  <rect width="512" height="512" rx="112" fill="#075f73"/>
+  <path d="M256 86c52 72 104 138 104 208 0 68-46 118-104 118s-104-50-104-118c0-70 52-136 104-208z" fill="#e5f5f8"/>
+  <path d="M206 314c18 24 48 38 84 31" fill="none" stroke="#29b6a8" stroke-width="22" stroke-linecap="round"/>
+  <path d="M322 146l72-46 22 34-78 36z" fill="#29b6a8"/>
+  <path d="M348 170l-82 130" fill="none" stroke="#075f73" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="196" cy="184" r="12" fill="#29b6a8"/>
+  <circle cx="178" cy="230" r="8" fill="#29b6a8"/>
+</svg>
+

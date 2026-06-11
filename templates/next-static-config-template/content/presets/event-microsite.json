@@ -1,0 +1,144 @@
+{
+  "$schema": "../site.schema.json",
+  "deployment": { "basePath": "", "assetPrefix": "" },
+  "site": {
+    "name": "Signal Summit",
+    "shortName": "Summit",
+    "url": "https://example.com",
+    "locale": "en_US",
+    "description": "An event microsite preset with schedule, speakers, FAQ, and registration CTA.",
+    "updatedAt": "2026-05-28",
+    "keywords": ["event", "conference", "summit"],
+    "author": { "name": "Signal Summit", "url": "https://example.com" },
+    "manifest": {
+      "display": "standalone",
+      "orientation": "portrait",
+      "backgroundColor": "#f8f7fb",
+      "themeColor": "#334064",
+      "icon": "/images/icon.svg",
+      "categories": ["events", "business"]
+    },
+    "pwa": { "enabled": true, "serviceWorker": "/sw.js", "offlinePath": "/offline/", "cacheName": "signal-summit-v1" },
+    "llms": { "summary": "Event microsite map.", "notes": ["Replace dates, venue, speakers, and registration details before publishing."] }
+  },
+  "seo": {
+    "titleTemplate": "%s | Signal Summit",
+    "defaultTitle": "Signal Summit",
+    "defaultImage": "/images/og-default.svg",
+    "robots": { "index": true, "follow": true, "allow": ["/"], "disallow": [] },
+    "structuredData": {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "name": "Signal Summit",
+      "url": "https://example.com",
+      "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode"
+    }
+  },
+  "theme": {
+    "mode": "light",
+    "colors": {
+      "background": "#f8f7fb",
+      "surface": "#ffffff",
+      "surfaceAlt": "#eceffa",
+      "text": "#171b28",
+      "muted": "#626b7e",
+      "primary": "#334064",
+      "primaryContrast": "#ffffff",
+      "accent": "#e18253",
+      "accentContrast": "#1e1711",
+      "border": "#dce0ec"
+    },
+    "fonts": { "heading": "Inter, ui-sans-serif, system-ui, sans-serif", "body": "Inter, ui-sans-serif, system-ui, sans-serif" },
+    "radius": "8px",
+    "maxWidth": "1160px",
+    "background": { "type": "solid", "value": "#f8f7fb" },
+    "customCss": ""
+  },
+  "navigation": {
+    "logoText": "Signal Summit",
+    "links": [
+      { "label": "Schedule", "href": "/#schedule" },
+      { "label": "Speakers", "href": "/#speakers" },
+      { "label": "FAQ", "href": "/#faq" }
+    ],
+    "cta": { "label": "Register", "href": "https://example.com/register", "style": "primary" }
+  },
+  "blocks": {
+    "defaultFaq": {
+      "id": "faq",
+      "type": "faq",
+      "kicker": "FAQ",
+      "title": "Event details",
+      "items": [
+        { "question": "Where is the event?", "answer": "Replace with venue, online link, or hybrid details." },
+        { "question": "Can I transfer my ticket?", "answer": "Replace with the actual ticketing policy." }
+      ]
+    }
+  },
+  "pages": [
+    {
+      "path": "/",
+      "title": "Home",
+      "layout": "landing",
+      "description": "Event microsite homepage preset.",
+      "seo": { "title": "Signal Summit Event Microsite", "description": "An event preset with schedule, speakers, and registration CTA.", "image": "/images/og-default.svg" },
+      "sections": [
+        {
+          "id": "hero",
+          "type": "hero",
+          "variant": "split",
+          "kicker": "Event preset",
+          "title": "A focused static microsite for your next gathering.",
+          "body": "Use this layout for conferences, workshops, launches, and community events.",
+          "badges": ["Date placeholder", "Venue placeholder", "Registration ready"],
+          "actions": [
+            { "label": "Register", "href": "https://example.com/register", "style": "primary" },
+            { "label": "View schedule", "href": "/#schedule", "style": "secondary" }
+          ],
+          "media": { "src": "/images/static-hosting-placeholder.svg", "alt": "Event venue placeholder" }
+        },
+        {
+          "id": "schedule",
+          "type": "timeline",
+          "kicker": "Schedule",
+          "title": "Event flow",
+          "items": [
+            { "title": "Doors open", "body": "Replace with the real arrival window." },
+            { "title": "Main session", "body": "Replace with the headline talk or activity." },
+            { "title": "Reception", "body": "Replace with networking or closing details." }
+          ]
+        },
+        {
+          "id": "speakers",
+          "type": "cardGrid",
+          "kicker": "Speakers",
+          "title": "Featured voices",
+          "columns": 3,
+          "items": [
+            { "title": "Speaker One", "body": "Replace with title, company, and topic." },
+            { "title": "Speaker Two", "body": "Replace with title, company, and topic." },
+            { "title": "Speaker Three", "body": "Replace with title, company, and topic." }
+          ]
+        },
+        { "use": "defaultFaq" }
+      ]
+    },
+    {
+      "path": "/offline/",
+      "title": "Offline",
+      "layout": "content",
+      "description": "Offline fallback page.",
+      "sections": [
+        { "id": "offline-message", "type": "hero", "variant": "centered", "kicker": "Offline", "title": "You are offline.", "body": "Reconnect to view the latest event details." }
+      ]
+    }
+  ],
+  "footer": {
+    "tagline": "Event microsite static preset.",
+    "links": [
+      { "label": "Sitemap", "href": "/sitemap.xml" },
+      { "label": "LLMs", "href": "/llms.txt" }
+    ],
+    "copyright": "(c) 2026 Signal Summit."
+  }
+}
