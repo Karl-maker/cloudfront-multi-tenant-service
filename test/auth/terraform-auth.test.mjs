@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const authTf = readFileSync(new URL("../../infra/auth.tf", import.meta.url), "utf8");
+const mainTf = readFileSync(new URL("../../infra/main.tf", import.meta.url), "utf8");
+const terraformWorkflow = readFileSync(new URL("../../.github/workflows/terraform.yml", import.meta.url), "utf8");
 
 test("auth Terraform keeps secrets out of state values", () => {
   assert.match(authTf, /data "aws_secretsmanager_secret" "auth_google_oauth"/);
@@ -105,4 +107,15 @@ test("auth Terraform defines unauthenticated OPTIONS routes for CORS preflight",
 test("auth Terraform protects API traffic through CloudFront WAF and rate limiting", () => {
   assert.match(authTf, /resource "aws_cloudfront_distribution" "auth_api"[\s\S]*web_acl_id\s+=\s+aws_wafv2_web_acl\.sites\.arn/);
   assert.doesNotMatch(authTf, /resource "aws_wafv2_web_acl_association" "auth_api_stage"/);
+});
+
+test("sites CloudFront forwards API paths to API Gateway before the static router", () => {
+  assert.match(mainTf, /auth_api_path_patterns\s+=\s+\[[\s\S]*"\/auth\/\*"[\s\S]*"\/billing\/\*"[\s\S]*"\/websites"[\s\S]*"\/websites\/\*"[\s\S]*\]/);
+  assert.match(mainTf, /origin\s+\{[\s\S]*domain_name\s+=\s+replace\(aws_apigatewayv2_api\.auth\.api_endpoint,\s+"https:\/\/",\s+""\)[\s\S]*origin_id\s+=\s+local\.auth_api_cloudfront_origin_id[\s\S]*custom_origin_config/s);
+  assert.match(mainTf, /dynamic "ordered_cache_behavior"[\s\S]*for_each\s+=\s+local\.auth_api_path_patterns[\s\S]*target_origin_id\s+=\s+local\.auth_api_cloudfront_origin_id[\s\S]*allowed_methods\s+=\s+\["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"\][\s\S]*origin_request_policy_id\s+=\s+data\.aws_cloudfront_origin_request_policy\.api_all_viewer_except_host\.id/s);
+});
+
+test("Terraform workflow applies infra changes pushed to main", () => {
+  assert.match(terraformWorkflow, /push:[\s\S]*branches:[\s\S]*-\s+main[\s\S]*paths:[\s\S]*-\s+"infra\/\*\*"/);
+  assert.match(terraformWorkflow, /if:\s+github\.event_name == 'push' \|\| inputs\.action == 'apply'[\s\S]*run: terraform -chdir=infra apply -auto-approve tfplan/);
 });
