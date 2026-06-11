@@ -5,14 +5,16 @@
   "description": "CloudFront Function that maps domains to S3 client folders.",
   "main": "cloudfront/domain-folder-router.js",
   "bin": {
+    "find-no-website-companies": "bin/find-no-website-companies.js",
     "syncpoly-site": "bin/syncpoly-site.js"
   },
   "scripts": {
-    "build": "node --check cloudfront/domain-folder-router.js && node --check lib/site-config-schema.js && node --check lib/site-upload.js && node --check lib/godaddy-dns.js && node --check bin/syncpoly-site.js && node --check lambdas/auth/google-login/index.mjs && node --check lambdas/auth/authorizer/index.mjs && node --check lambdas/auth/me/index.mjs && node --check lambdas/auth/billing-summary/index.mjs && node --check lambdas/auth/pricing/index.mjs && node --check lambdas/auth/websites/index.mjs && node --check lambdas/auth/stripe-webhook/index.mjs && node --check test/cloudfront-function.test.js && node --check test/site-upload.test.js",
+    "build": "node --check cloudfront/domain-folder-router.js && node --check lib/site-config-schema.js && node --check lib/site-upload.js && node --check lib/godaddy-dns.js && node --check lib/google-places-no-website.js && node --check bin/syncpoly-site.js && node --check bin/find-no-website-companies.js && node --check lambdas/auth/google-login/index.mjs && node --check lambdas/auth/authorizer/index.mjs && node --check lambdas/auth/me/index.mjs && node --check lambdas/auth/billing-summary/index.mjs && node --check lambdas/auth/pricing/index.mjs && node --check lambdas/auth/websites/index.mjs && node --check lambdas/auth/stripe-webhook/index.mjs && node --check test/cloudfront-function.test.js && node --check test/site-upload.test.js && node --check test/google-places-no-website.test.js",
     "clawbot:start": "./bin/start-clawbot.sh",
     "clawbot:check": "docker compose config --quiet",
     "clawbot:openclaw": "./bin/openclaw-clawbot.sh",
     "deploy:global-404": "./bin/upload-global-404.sh",
+    "companies:no-website": "node bin/find-no-website-companies.js",
     "site": "node bin/syncpoly-site.js",
     "site:upload-config": "node bin/syncpoly-site.js upload-config",
     "site:upload-folder": "node bin/syncpoly-site.js upload-folder",
@@ -33,8 +35,8 @@
     "site:screenshot-audit": "node bin/syncpoly-site.js screenshot-audit",
     "site:publish": "node bin/syncpoly-site.js publish",
     "godaddy:add-cname": "node bin/syncpoly-site.js add-cname",
-    "test": "node --test test/cloudfront-function.test.js test/site-upload.test.js test/auth/*.unit.test.mjs test/auth/terraform-auth.test.mjs test/auth/*.integration.test.mjs test/auth/*.e2e.test.mjs",
-    "test:unit": "node --test test/cloudfront-function.test.js test/site-upload.test.js test/auth/*.unit.test.mjs test/auth/terraform-auth.test.mjs",
+    "test": "node --test test/cloudfront-function.test.js test/site-upload.test.js test/google-places-no-website.test.js test/auth/*.unit.test.mjs test/auth/terraform-auth.test.mjs test/auth/*.integration.test.mjs test/auth/*.e2e.test.mjs",
+    "test:unit": "node --test test/cloudfront-function.test.js test/site-upload.test.js test/google-places-no-website.test.js test/auth/*.unit.test.mjs test/auth/terraform-auth.test.mjs",
     "test:integration": "LOCALSTACK_ENDPOINT=${LOCALSTACK_ENDPOINT:-http://localhost:4566} node --test test/auth/*.integration.test.mjs",
     "test:e2e": "LOCALSTACK_ENDPOINT=${LOCALSTACK_ENDPOINT:-http://localhost:4566} LOCALSTACK_E2E=1 node --test test/auth/*.e2e.test.mjs",
     "test:localstack": "npm run test:integration && npm run test:e2e",
