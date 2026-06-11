@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title>Atlantic Villa Tobago icon</title>
+  <rect width="128" height="128" rx="18" fill="#0e7894"/>
+  <path d="M20 83c12-10 24-15 38-15 19 0 30 13 50 13v15c-19 0-32-12-50-12-14 0-25 5-38 15V83z" fill="#ffffff" opacity=".92"/>
+  <path d="M20 93c13-9 26-13 40-13 18 0 30 10 48 10v14c-18 0-31-10-48-10-14 0-27 4-40 13V93z" fill="#d77a3a"/>
+  <circle cx="94" cy="33" r="14" fill="#fff4df"/>
+  <text x="23" y="56" fill="#ffffff" font-family="Georgia, serif" font-size="26" font-weight="700">AV</text>
+</svg>
