@@ -29,6 +29,8 @@ test("auth Terraform serves API Gateway through the default stage", () => {
 test("auth Terraform avoids wildcard credentialed CORS and enables DynamoDB protections", () => {
   assert.match(authTf, /allow_credentials\s+=\s+true/);
   assert.match(authTf, /https:\/\/www\.syncpoly\.com/);
+  assert.match(authTf, /auth_cors_allow_headers\s+=\s+\[[^\]]*"x-requested-with"[^\]]*"x-amz-security-token"[^\]]*\]/);
+  assert.match(authTf, /allow_headers\s+=\s+local\.auth_cors_allow_headers/);
   assert.match(authTf, /AUTH_ALLOWED_ORIGINS\s+=\s+join\(",", var\.auth_allowed_origins\)/);
   assert.doesNotMatch(authTf, /allow_origins\s+=\s+\["\*"\]/);
   assert.match(authTf, /deletion_protection_enabled\s+=\s+true/);

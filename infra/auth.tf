@@ -32,6 +32,7 @@ locals {
   auth_users_table_name                = "syncpoly-builder-users"
   auth_logins_table_name               = "syncpoly-builder-logins"
   auth_websites_table_name             = "syncpoly-builder-websites"
+  auth_cors_allow_headers              = ["authorization", "content-type", "accept", "origin", "x-requested-with", "x-api-key", "x-amz-date", "x-amz-security-token", "x-csrf-token", "x-syncpoly-client", "x-syncpoly-site"]
   website_folders_table_name           = "syncpoly-builder-website-folders"
   website_media_table_name             = "syncpoly-builder-website-media"
   billing_catalog_table_name           = "syncpoly-builder-billing-catalog"
@@ -1136,7 +1137,7 @@ resource "aws_apigatewayv2_api" "auth" {
 
   cors_configuration {
     allow_credentials = true
-    allow_headers     = ["authorization", "content-type"]
+    allow_headers     = local.auth_cors_allow_headers
     allow_methods     = ["GET", "POST", "PUT", "OPTIONS"]
     allow_origins     = var.auth_allowed_origins
     max_age           = 300
