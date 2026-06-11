@@ -64,7 +64,7 @@ export async function handleBillingSummary(event, deps = {}) {
       nowMs
     });
 
-    const [customer, invoices, subscriptions, paymentMethods, events] = await Promise.all([
+    const [customerResult, invoicesResult, subscriptionsResult, paymentMethodsResult, eventsResult] = await Promise.allSettled([
       stripe.get(`/customers/${encodeURIComponent(stripeCustomerId)}`),
       stripe.get("/invoices", {
         customer: stripeCustomerId,
@@ -74,7 +74,7 @@ export async function handleBillingSummary(event, deps = {}) {
         customer: stripeCustomerId,
         status: "all",
         limit: "10",
-        "expand[]": ["data.default_payment_method", "data.latest_invoice.payment_intent", "data.items.data.price.product"]
+        "expand[]": ["data.default_payment_method", "data.latest_invoice.payment_intent"]
       }),
       stripe.get(`/customers/${encodeURIComponent(stripeCustomerId)}/payment_methods`, {
         limit: "20"
@@ -82,8 +82,17 @@ export async function handleBillingSummary(event, deps = {}) {
       getBillingEvents(dynamodbClient, stripeCustomerId)
     ]);
 
-    const sanitizedInvoices = (invoices.data || []).map(sanitizeInvoice);
-    const sanitizedSubscriptions = (subscriptions.data || []).map(sanitizeSubscription);
+    rethrowIfStripeAuthFailed([customerResult, invoicesResult, subscriptionsResult, paymentMethodsResult]);
+
+    const partialFailures = [];
+    const customer = valueOrFallback(customerResult, fallbackCustomer(user, stripeCustomerId), "customer", partialFailures);
+    const invoices = listOrEmpty(invoicesResult, "invoices", partialFailures);
+    const subscriptions = listOrEmpty(subscriptionsResult, "subscriptions", partialFailures);
+    const paymentMethods = listOrEmpty(paymentMethodsResult, "paymentMethods", partialFailures);
+    const events = valueOrFallback(eventsResult, [], "billingEvents", partialFailures);
+    const productsById = await getSubscriptionProducts(stripe, subscriptions, partialFailures);
+    const sanitizedInvoices = invoices.map(sanitizeInvoice);
+    const sanitizedSubscriptions = subscriptions.map((subscription) => sanitizeSubscription(subscription, productsById));
 
     return jsonResponse(
       200,
@@ -91,9 +100,11 @@ export async function handleBillingSummary(event, deps = {}) {
         customer: sanitizeCustomer(customer),
         invoices: sanitizedInvoices,
         subscriptions: sanitizedSubscriptions,
-        paymentMethods: (paymentMethods.data || []).map(sanitizePaymentMethod),
+        paymentMethods: paymentMethods.map(sanitizePaymentMethod),
         paymentInfo: buildPaymentInfo(customer, sanitizedSubscriptions, sanitizedInvoices),
         dunning: buildDunningSummary(sanitizedInvoices, sanitizedSubscriptions, events),
+        isPartial: partialFailures.length > 0,
+        partialFailures,
         retrievedAt: new Date(nowMs()).toISOString()
       },
       event
@@ -188,6 +199,34 @@ async function getBillingEvents(dynamodbClient, stripeCustomerId) {
     nextPaymentAttempt: item.next_payment_attempt?.N ? Number(item.next_payment_attempt.N) : null,
     createdAt: item.created_at?.S
   }));
+}
+
+async function getSubscriptionProducts(stripe, subscriptions, partialFailures) {
+  const productIds = [
+    ...new Set(
+      subscriptions
+        .flatMap((subscription) => subscription.items?.data || [])
+        .map((item) => getExpandableId(item.price?.product))
+        .filter(Boolean)
+    )
+  ];
+  if (productIds.length === 0) {
+    return new Map();
+  }
+
+  const results = await Promise.allSettled(
+    productIds.map((productId) => stripe.get(`/products/${encodeURIComponent(productId)}`))
+  );
+  const productsById = new Map();
+  results.forEach((result, index) => {
+    const productId = productIds[index];
+    if (result.status === "fulfilled") {
+      productsById.set(productId, result.value);
+    } else {
+      partialFailures.push(safeFailure(`product:${productId}`, result.reason));
+    }
+  });
+  return productsById;
 }
 
 function createStripeClient(secretKey, fetchImpl) {
@@ -295,7 +334,7 @@ function sanitizeInvoice(invoice) {
   };
 }
 
-function sanitizeSubscription(subscription) {
+function sanitizeSubscription(subscription, productsById = new Map()) {
   const latestInvoice = typeof subscription.latest_invoice === "object" ? subscription.latest_invoice : null;
 
   return {
@@ -310,18 +349,19 @@ function sanitizeSubscription(subscription) {
     defaultPaymentMethodId: getExpandableId(subscription.default_payment_method),
     latestInvoiceId: getExpandableId(subscription.latest_invoice),
     latestPaymentIntentStatus: latestInvoice?.payment_intent?.status || null,
-    items: (subscription.items?.data || []).map(sanitizeSubscriptionItem)
+    items: (subscription.items?.data || []).map((item) => sanitizeSubscriptionItem(item, productsById))
   };
 }
 
-function sanitizeSubscriptionItem(item) {
+function sanitizeSubscriptionItem(item, productsById = new Map()) {
   const price = item.price || {};
-  const product = typeof price.product === "object" ? price.product : null;
+  const productId = getExpandableId(price.product);
+  const product = typeof price.product === "object" ? price.product : productsById.get(productId) || null;
 
   return {
     id: item.id,
     priceId: price.id || null,
-    productId: getExpandableId(price.product),
+    productId,
     productName: product?.name || null,
     productDescription: product?.description || null,
     nickname: price.nickname || null,
@@ -362,6 +402,55 @@ function buildPaymentInfo(customer, subscriptions, invoices) {
     activeSubscriptionCount: subscriptions.filter((subscription) => subscription.status === "active" || subscription.status === "trialing").length,
     openInvoiceCount: invoices.filter((invoice) => invoice.status === "open").length
   };
+}
+
+function fallbackCustomer(user, stripeCustomerId) {
+  return {
+    id: stripeCustomerId,
+    email: user.email || null,
+    name: user.name || null,
+    balance: 0,
+    currency: null,
+    delinquent: false,
+    invoice_settings: {
+      default_payment_method: null
+    }
+  };
+}
+
+function valueOrFallback(result, fallbackValue, section, partialFailures) {
+  if (result.status === "fulfilled") {
+    return result.value;
+  }
+
+  partialFailures.push(safeFailure(section, result.reason));
+  return fallbackValue;
+}
+
+function listOrEmpty(result, section, partialFailures) {
+  const value = valueOrFallback(result, { data: [] }, section, partialFailures);
+  return value.data || [];
+}
+
+function safeFailure(section, error) {
+  return {
+    section,
+    message: error?.publicMessage || "Billing data is temporarily unavailable.",
+    statusCode: error?.statusCode || 500,
+    stripeStatus: error?.stripeStatus || null
+  };
+}
+
+function rethrowIfStripeAuthFailed(results) {
+  const failures = results.filter((result) => result.status === "rejected");
+  if (failures.length !== results.length) {
+    return;
+  }
+
+  const authFailures = failures.filter((result) => result.reason?.stripeStatus === 401 || result.reason?.stripeStatus === 403);
+  if (authFailures.length === failures.length) {
+    throw authFailures[0].reason;
+  }
 }
 
 function buildDunningSummary(invoices, subscriptions, events) {

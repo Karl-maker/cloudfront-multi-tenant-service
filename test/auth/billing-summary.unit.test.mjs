@@ -108,7 +108,10 @@ test("billing summary creates a Stripe customer, persists it, sanitizes billing 
   assert.equal(createCustomer.options.method, "POST");
   assert.equal(new URLSearchParams(createCustomer.options.body).get("metadata[syncpoly_user_id]"), "google:subject");
   const subscriptionsCall = fetchCalls.find((call) => call.path === "/v1/subscriptions");
-  assert.equal(new URL(subscriptionsCall.url).searchParams.getAll("expand[]").includes("data.items.data.price.product"), true);
+  const subscriptionExpansions = new URL(subscriptionsCall.url).searchParams.getAll("expand[]");
+  assert.equal(subscriptionExpansions.includes("data.items.data.price.product"), false);
+  assert.equal(subscriptionExpansions.includes("data.latest_invoice.payment_intent"), true);
+  assert.ok(fetchCalls.some((call) => call.path === "/v1/products/prod_1"));
 });
 
 test("billing summary uses existing Stripe customer id and does not allow client-supplied customer ids", async () => {
@@ -190,6 +193,42 @@ test("billing summary maps Stripe auth failures to a non-secret 502 response", a
   assert.equal(response.body.includes("sk_test_secret"), false);
 });
 
+test("billing summary returns partial data when product detail lookup fails", async () => {
+  const handler = createBillingSummaryHandler({
+    dynamodbClient: createMockClient((command) => {
+      if (command instanceof GetItemCommand) {
+        return {
+          Item: {
+            user_id: { S: "google:subject" },
+            email: { S: "user@example.test" },
+            name: { S: "Test User" },
+            stripe_customer_id: { S: "cus_existing" }
+          }
+        };
+      }
+
+      if (command instanceof QueryCommand) {
+        return { Items: [] };
+      }
+
+      assert.fail("unexpected dynamodb command");
+    }),
+    secretsClient: createStripeSecretClient(),
+    fetchImpl: createStripeFetch([], { failProduct: true }),
+    secretCache: {}
+  });
+
+  const response = await handler(authEvent());
+  const body = decodeJsonBody(response);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(body.isPartial, true);
+  assert.equal(body.partialFailures[0].section, "product:prod_1");
+  assert.equal(body.subscriptions[0].items[0].productId, "prod_1");
+  assert.equal(body.subscriptions[0].items[0].productName, null);
+  assert.equal(body.paymentMethods[0].card.last4, "4242");
+});
+
 function authEvent() {
   return {
     requestContext: {
@@ -214,7 +253,7 @@ function createStripeSecretClient() {
   });
 }
 
-function createStripeFetch(calls) {
+function createStripeFetch(calls, { failProduct = false } = {}) {
   return async (url, options = {}) => {
     const parsed = new URL(String(url));
     calls.push({
@@ -295,14 +334,7 @@ function createStripeFetch(calls) {
                   quantity: 1,
                   price: {
                     id: "price_1",
-                    product: {
-                      id: "prod_1",
-                      name: "Builder Pro",
-                      description: "Professional website subscription",
-                      metadata: {
-                        internal_note: "should-not-leak"
-                      }
-                    },
+                    product: "prod_1",
                     nickname: "Builder Pro Monthly",
                     unit_amount: 2900,
                     currency: "usd",
@@ -316,6 +348,28 @@ function createStripeFetch(calls) {
             }
           }
         ]
+      });
+    }
+
+    if (parsed.pathname === "/v1/products/prod_1") {
+      if (failProduct) {
+        return createJsonResponse(
+          {
+            error: {
+              message: "Product details are temporarily unavailable."
+            }
+          },
+          { ok: false, status: 500 }
+        );
+      }
+
+      return createJsonResponse({
+        id: "prod_1",
+        name: "Builder Pro",
+        description: "Professional website subscription",
+        metadata: {
+          internal_note: "should-not-leak"
+        }
       });
     }
 
