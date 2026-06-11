@@ -7,12 +7,6 @@ function handler(event) {
   }
 
   var sitesByHost = {
-    "hello.com": { folder: "hello-site", template: "pressure-washer" },
-    "www.hello.com": { folder: "hello-site", template: "pressure-washer" },
-    "acme.syncpoly.com": { folder: "acme-site", template: "pressure-washer" },
-    "customco.com": { folder: "customco-site", template: "pressure-washer" },
-    "www.customco.com": { folder: "customco-site", template: "pressure-washer" },
-    // real
     "atlantic-villa-tobago.syncpoly.com": { folder: "atlantic-villa-tobago", template: "real-estate" },
   };
 

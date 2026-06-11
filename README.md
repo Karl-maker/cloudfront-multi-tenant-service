@@ -5,13 +5,13 @@ CloudFront Function setup for serving many domains from different folders in one
 The browser keeps the original URL:
 
 ```text
-https://hello.com/about
+https://atlantic-villa-tobago.syncpoly.com/faq
 ```
 
 CloudFront rewrites the origin request to:
 
 ```text
-s3://syncpoly-web-builder-sites/syncpoly/templates/pressure-washer/about/index.html
+s3://syncpoly-web-builder-sites/syncpoly/templates/real-estate/faq/index.html
 ```
 
 Tenant-owned public files are mapped to the tenant folder instead of the shared template. Requests for:
@@ -64,8 +64,7 @@ For now, edit this object directly in `cloudfront/domain-folder-router.js`:
 
 ```js
 var sitesByHost = {
-  "hello.com": { folder: "hello-site", template: "pressure-washer" },
-  "www.hello.com": { folder: "hello-site", template: "pressure-washer" }
+  "atlantic-villa-tobago.syncpoly.com": { folder: "atlantic-villa-tobago", template: "real-estate" }
 };
 ```
 

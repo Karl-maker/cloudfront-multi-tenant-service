@@ -9,22 +9,22 @@ const { describe, it } = require("node:test");
 const handler = loadCloudFrontFunction();
 
 describe("cloudfront domain-folder-router", () => {
-  it("rewrites a custom domain root to its template index", () => {
-    const result = handler(eventFor("hello.com", "/"));
+  it("rewrites the configured domain root to its template index", () => {
+    const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/"));
 
-    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/index.html");
+    assert.equal(result.uri, "/syncpoly/templates/real-estate/index.html");
   });
 
-  it("rewrites a custom domain page route to a template index document", () => {
-    const result = handler(eventFor("www.hello.com", "/about"));
+  it("rewrites a configured domain page route to a template index document", () => {
+    const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/faq"));
 
-    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/about/index.html");
+    assert.equal(result.uri, "/syncpoly/templates/real-estate/faq/index.html");
   });
 
-  it("rewrites syncpoly subdomains to the configured template", () => {
-    const result = handler(eventFor("acme.syncpoly.com", "/dashboard/"));
+  it("rewrites the Atlantic Villa syncpoly subdomain to the real-estate template", () => {
+    const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/location/"));
 
-    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/dashboard/index.html");
+    assert.equal(result.uri, "/syncpoly/templates/real-estate/location/index.html");
   });
 
   it("rewrites Atlantic Villa extensionless pages to the real-estate template", () => {
@@ -37,62 +37,62 @@ describe("cloudfront domain-folder-router", () => {
       "/syncpoly/templates/real-estate/amenities/index.html"
     );
     assert.equal(
-      handler(eventFor("atlantic-villa-tt.syncpoly.com", "/faq")).uri,
+      handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/faq")).uri,
       "/syncpoly/templates/real-estate/faq/index.html"
     );
   });
 
   it("rewrites non-tenant static files under the matched template", () => {
-    const result = handler(eventFor("customco.com", "/assets/app.css"));
+    const result = handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/logo.svg"));
 
-    assert.equal(result.uri, "/customco-site/assets/app.css");
+    assert.equal(result.uri, "/syncpoly/templates/real-estate/logo.svg");
   });
 
   it("rewrites tenant-owned public files to the mapped site folder", () => {
     const cases = [
-      ["/site.config.json", "/customco-site/site.config.json"],
-      ["/public/site.config.json", "/customco-site/site.config.json"],
-      ["/llm.txt", "/customco-site/llm.txt"],
-      ["/llms.txt", "/customco-site/llms.txt"],
-      ["/sitemap.xml", "/customco-site/sitemap.xml"],
-      ["/robot.txt", "/customco-site/robot.txt"],
-      ["/robots.txt", "/customco-site/robots.txt"],
-      ["/favicon.ico", "/customco-site/media/favicon.ico"],
-      ["/favicon.png", "/customco-site/media/favicon.png"],
-      ["/favicon.svg", "/customco-site/media/favicon.svg"],
-      ["/public/favicon.ico", "/customco-site/media/favicon.ico"],
-      ["/public/favicon.png", "/customco-site/media/favicon.png"],
-      ["/public/favicon.svg", "/customco-site/media/favicon.svg"]
+      ["/site.config.json", "/atlantic-villa-tobago/site.config.json"],
+      ["/public/site.config.json", "/atlantic-villa-tobago/site.config.json"],
+      ["/llm.txt", "/atlantic-villa-tobago/llm.txt"],
+      ["/llms.txt", "/atlantic-villa-tobago/llms.txt"],
+      ["/sitemap.xml", "/atlantic-villa-tobago/sitemap.xml"],
+      ["/robot.txt", "/atlantic-villa-tobago/robot.txt"],
+      ["/robots.txt", "/atlantic-villa-tobago/robots.txt"],
+      ["/favicon.ico", "/atlantic-villa-tobago/media/favicon.ico"],
+      ["/favicon.png", "/atlantic-villa-tobago/media/favicon.png"],
+      ["/favicon.svg", "/atlantic-villa-tobago/media/favicon.svg"],
+      ["/public/favicon.ico", "/atlantic-villa-tobago/media/favicon.ico"],
+      ["/public/favicon.png", "/atlantic-villa-tobago/media/favicon.png"],
+      ["/public/favicon.svg", "/atlantic-villa-tobago/media/favicon.svg"]
     ];
 
     for (const [requestUri, expectedUri] of cases) {
-      assert.equal(handler(eventFor("customco.com", requestUri)).uri, expectedUri);
+      assert.equal(handler(eventFor("atlantic-villa-tobago.syncpoly.com", requestUri)).uri, expectedUri);
     }
   });
 
   it("rewrites media and asset routes to the mapped site folder", () => {
     const cases = [
-      ["/assets/syncpoly-icon.png", "/customco-site/assets/syncpoly-icon.png"],
-      ["/public/assets/syncpoly-icon.png", "/customco-site/assets/syncpoly-icon.png"],
-      ["/media/gallery/truck.jpg", "/customco-site/media/gallery/truck.jpg"],
-      ["/public/media/gallery/truck.jpg", "/customco-site/media/gallery/truck.jpg"],
-      ["/media/videos/walkthrough.mp4", "/customco-site/media/videos/walkthrough.mp4"]
+      ["/assets/syncpoly-icon.png", "/atlantic-villa-tobago/assets/syncpoly-icon.png"],
+      ["/public/assets/syncpoly-icon.png", "/atlantic-villa-tobago/assets/syncpoly-icon.png"],
+      ["/media/gallery/truck.jpg", "/atlantic-villa-tobago/media/gallery/truck.jpg"],
+      ["/public/media/gallery/truck.jpg", "/atlantic-villa-tobago/media/gallery/truck.jpg"],
+      ["/media/videos/walkthrough.mp4", "/atlantic-villa-tobago/media/videos/walkthrough.mp4"]
     ];
 
     for (const [requestUri, expectedUri] of cases) {
-      assert.equal(handler(eventFor("customco.com", requestUri)).uri, expectedUri);
+      assert.equal(handler(eventFor("atlantic-villa-tobago.syncpoly.com", requestUri)).uri, expectedUri);
     }
   });
 
   it("matches hosts case-insensitively", () => {
-    const result = handler(eventFor("WWW.CUSTOMCO.COM", "/logo.svg"));
+    const result = handler(eventFor("ATLANTIC-VILLA-TOBAGO.SYNCPOLY.COM", "/logo.svg"));
 
-    assert.equal(result.uri, "/syncpoly/templates/pressure-washer/logo.svg");
+    assert.equal(result.uri, "/syncpoly/templates/real-estate/logo.svg");
   });
 
   it("leaves global 404 assets at the bucket root", () => {
-    assert.equal(handler(eventFor("hello.com", "/404.html")).uri, "/404.html");
-    assert.equal(handler(eventFor("hello.com", "/404.css")).uri, "/404.css");
+    assert.equal(handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/404.html")).uri, "/404.html");
+    assert.equal(handler(eventFor("atlantic-villa-tobago.syncpoly.com", "/404.css")).uri, "/404.css");
   });
 
   it("returns 404 for unknown hosts", () => {
