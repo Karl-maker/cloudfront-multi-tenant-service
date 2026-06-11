@@ -38,6 +38,14 @@ The template intentionally ships with no active `site.config.json`. `next build`
 
 On S3, upload a project-specific `site.config.json` next to `index.html` in the bucket root. The live site fetches that file to render visible copy, sections, colors, images, contact details, navigation, footer links, social links, and trial banner settings. Replacing only that JSON file updates the website content without rebuilding the Next.js template.
 
+Social preview crawlers such as WhatsApp, iMessage, Slack, and Facebook read the initial static HTML and usually do not run the browser-side runtime config fetch. To make link previews site-specific, build the static export with the project config available at build time:
+
+```bash
+SITE_CONFIG=/path/to/site.config.json npm run build
+```
+
+`BUILD_SITE_CONFIG` is also supported. The exported HTML then contains that site's `<title>`, description, Open Graph, Twitter card, canonical URL, icons, manifest link, JSON-LD, and page routes. Deploy those generated HTML files as the HTML served for that site, not as a shared template for multiple unrelated sites.
+
 S3 cannot dynamically compute files like `sitemap.xml`, `robots.txt`, `manifest.webmanifest`, or `llms.txt` from JSON at request time. The build therefore emits generic shell versions. To make those discovery files match a project config, run this after `npm run build`:
 
 ```bash

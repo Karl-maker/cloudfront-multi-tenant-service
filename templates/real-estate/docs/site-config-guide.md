@@ -38,6 +38,14 @@ This template supports a static build and a runtime config file.
 
 For local development, `public/site.config.json` is used as the current website config. The app also fetches `/site.config.json` in the browser. While that runtime config is loading, the site shows a skeleton instead of flashing a default page.
 
+For social sharing previews, the config must also be available when the static HTML is built. Crawlers such as WhatsApp read the exported `<head>` tags and usually do not run the runtime fetch. Build with the project config before upload:
+
+```bash
+SITE_CONFIG=/path/to/site.config.json npm run build
+```
+
+Use `BUILD_SITE_CONFIG` instead of `SITE_CONFIG` if the deployment environment already reserves `SITE_CONFIG` for another step. The generated HTML should be served for that specific site; otherwise a shared template export will keep sharing one site's Open Graph title, description, image, canonical URL, and JSON-LD across every site that uses it.
+
 For deployment, run a normal build:
 
 ```bash
