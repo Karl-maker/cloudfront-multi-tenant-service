@@ -1,0 +1,211 @@
+{
+  "site": {
+    "name": "Atlantic Villa Tobago",
+    "shortName": "Atlantic Villa",
+    "url": "https://atlantic-villa-tobago.syncpoly.com",
+    "locale": "en_TT",
+    "description": "Atlantic Villa Tobago is a 5 bedroom, 5 bathroom ocean-view villa in Bacolet, Tobago with a private pool, terraces, self-contained suites, and space for birthdays, anniversaries, yoga retreats, reconnecting, and relaxed group stays.",
+    "keywords": [
+      "Atlantic Villa Tobago",
+      "Atlantic Villa",
+      "Tobago villa rental",
+      "Bacolet villa",
+      "Bacolet Tobago villa",
+      "Tobago vacation rental",
+      "Tobago private pool villa",
+      "ocean view villa Tobago",
+      "five bedroom villa Tobago",
+      "Tobago family villa",
+      "Tobago group accommodation",
+      "Scarborough Tobago accommodation",
+      "Tobago retreat villa",
+      "birthday villa Tobago",
+      "anniversary getaway Tobago",
+      "self-contained suite Tobago",
+      "Bosom of Bacolet"
+    ]
+  },
+  "business": {
+    "industry": "Tobago villa rental",
+    "location": "Bacolet, Tobago",
+    "story": "Atlantic Villa Tobago is positioned around the theme What's Your Occasion? for birthdays, anniversaries, yoga retreats, new life, reconnection, and relaxed group stays."
+  },
+  "contact": {
+    "phone": "+18686821750",
+    "whatsapp": "+18686821750",
+    "email": "atlanticvillatt@gmail.com",
+    "ctaLabel": "Book Your Stay",
+    "bookingHref": "https://wa.me/18686821750?text=Hi%20Atlantic%20Villa%20Tobago%2C%20I%27d%20like%20to%20ask%20about%20availability."
+  },
+  "booking": {
+    "label": "Book Your Stay",
+    "href": "https://wa.me/18686821750?text=Hi%20Atlantic%20Villa%20Tobago%2C%20I%27d%20like%20to%20ask%20about%20availability."
+  },
+  "media": {
+    "hero": "/media/atlantic-villa-beach.jpg",
+    "heroAlt": "Daytime Bacolet beach near Atlantic Villa Tobago",
+    "favicon": "/media/favicon.svg",
+    "ogImage": "/media/atlantic-villa-beach.jpg",
+    "gallery": [
+      {
+        "src": "/media/atlantic-villa-tobago-sunrise-rocks.webp",
+        "alt": "Sunrise over the Bacolet shoreline near Atlantic Villa Tobago",
+        "caption": "Warm sunrise on the Bacolet coast."
+      },
+      {
+        "src": "/media/atlantic-villa-pool-terrace.jpg",
+        "alt": "Atlantic Villa Tobago pool terrace with white lounge chairs",
+        "caption": "Cool pool time and terrace lounging."
+      },
+      {
+        "src": "/media/atlantic-villa-terrace-pool.jpg",
+        "alt": "Terrace dining area overlooking the pool at Atlantic Villa Tobago",
+        "caption": "Terrace spaces for meals, conversation, and easy afternoons."
+      },
+      {
+        "src": "/media/atlantic-villa-tobago-sunset-beach-wide.jpg",
+        "alt": "Sunset light over Bacolet beach near Atlantic Villa Tobago",
+        "caption": "Sunset color beside the sea."
+      },
+      {
+        "src": "/media/atlantic-villa-primary-bedroom.jpg",
+        "alt": "Primary bedroom with wood ceiling and turquoise accents at Atlantic Villa Tobago",
+        "caption": "Restful bedrooms with wood ceilings and island color."
+      },
+      {
+        "src": "/media/atlantic-villa-blue-bedroom.jpg",
+        "alt": "Bedroom with blue bedding, wood ceiling, and natural light",
+        "caption": "Spacious rooms for quiet sleep."
+      },
+      {
+        "src": "/media/atlantic-villa-pool-wide.jpg",
+        "alt": "Wide pool view with palms and blue sky at Atlantic Villa Tobago",
+        "caption": "Pool, terrace, or beach from sunrise to sunset."
+      },
+      {
+        "src": "/media/atlantic-villa-sea-terrace.jpg",
+        "alt": "Terrace seating with ocean view and tropical greenery",
+        "caption": "Ocean-view corners for reconnecting."
+      },
+      {
+        "src": "/media/atlantic-villa-dining-room.jpg",
+        "alt": "Dining room with wood furniture and blue curtains",
+        "caption": "Shared meals in a warm island interior."
+      },
+      {
+        "src": "/media/atlantic-villa-sunny-patio.jpg",
+        "alt": "Sunny patio with dining table and ocean view",
+        "caption": "Bright patio space for slow Tobago days."
+      },
+      {
+        "src": "/media/atlantic-villa-white-bedroom.jpg",
+        "alt": "White bedroom with wood ceiling and folded towel accent",
+        "caption": "Simple, comfortable bedrooms."
+      },
+      {
+        "src": "/media/atlantic-villa-bedroom-desk.jpg",
+        "alt": "Bedroom with wood floor, desk, dresser, and turquoise curtains",
+        "caption": "Room to unpack and settle in."
+      },
+      {
+        "src": "/media/atlantic-villa-sunlit-pool.jpg",
+        "alt": "Sunlit private pool at Atlantic Villa Tobago",
+        "caption": "A private pool for unhurried days."
+      },
+      {
+        "src": "/media/atlantic-villa-tobago-palm-sunset.jpg",
+        "alt": "Palm-lined sunset at the Bacolet shoreline",
+        "caption": "Evening retreats by the shore."
+      },
+      {
+        "src": "/media/atlantic-villa-sunset-beach.jpg",
+        "alt": "Warm sunset over the Bacolet shoreline",
+        "caption": "Nature's canvas at sunset."
+      },
+      {
+        "src": "/media/atlantic-villa-sunset-shore.jpg",
+        "alt": "Sunset shoreline with palms and reflected color",
+        "caption": "Rest, sleep, and repeat."
+      },
+      {
+        "src": "/media/atlantic-villa-beach.jpg",
+        "alt": "Beach near Atlantic Villa Tobago in Bacolet",
+        "caption": "Beach moments close to the villa."
+      }
+    ],
+    "logo": "/media/atlantic-villa-tobago-logo.svg"
+  },
+  "copy": {
+    "kicker": "Atlantic Villa Tobago | Bacolet, Tobago",
+    "headline": "Stay awhile in Bacolet.",
+    "subheadline": "Pool, terrace or beach, from sunrise to sunset, the beauty of Bacolet awaits.",
+    "secondaryCtaLabel": "Explore the Villa",
+    "secondaryCtaHref": "/availabilities/"
+  },
+  "map": {
+    "query": "Bacolet, Tobago",
+    "address": "Bacolet, Tobago",
+    "label": "Open in Google Maps"
+  },
+  "faqs": [
+    {
+      "question": "Please tell me a little about the villa.",
+      "answer": "We are a 5 bedroom, 5 bathroom, ocean view villa located in Bacolet, just five minutes drive from the port."
+    },
+    {
+      "question": "How many people can the villa accommodate?",
+      "answer": "We can accommodate a maximum of thirteen guests."
+    },
+    {
+      "question": "Where are you located?",
+      "answer": "We are in Bacolet, Tobago, just five minutes drive from Scarborough."
+    },
+    {
+      "question": "How can I book the villa?",
+      "answer": "Please reach out via WhatsApp at 868-682-1750 to discuss further and complete your booking."
+    },
+    {
+      "question": "Can a small group or individual stay?",
+      "answer": "Our one bedroom self-contained suite option is ideal for up to four guests."
+    },
+    {
+      "question": "Can payments be made in installments?",
+      "answer": "Sure. Ask about our payment plan at booking."
+    },
+    {
+      "question": "What are check-in and check-out times?",
+      "answer": "Check-in is 3:00pm and check-out is 11:00am. The team can try to accommodate other times when bookings permit; check-outs after 3:00pm incur an additional charge."
+    },
+    {
+      "question": "What amenities are included?",
+      "answer": "The villa offers a smoke-free environment, free WiFi, cable TV, a private pool, air-conditioned bedrooms, linens, toiletries, pool and bath towels, first aid kits, fire extinguishers, emergency contacts, an outdoor grill, irons, hair dryers, and drying racks."
+    },
+    {
+      "question": "Are events or commercial activities allowed?",
+      "answer": "Events or commercial activities require prior agreement from villa management and charges may apply. The villa is in a residential area, so music and noise should be considerate and loud music should stop by 11:00pm."
+    },
+    {
+      "question": "What cancellation policy applies?",
+      "answer": "More than 60 days before arrival: loss of 10% of the rental cost. 30-60 days: loss of 50%. 14-30 days: loss of 80%. Less than 14 days: loss of 100%."
+    }
+  ],
+  "llms": {
+    "summary": "Official site map for Atlantic Villa Tobago, a 5 bedroom, 5 bathroom ocean-view villa in Bacolet, Tobago with a private pool, terraces, beach moments nearby, self-contained suites, and booking by WhatsApp at 868-682-1750.",
+    "notes": [
+      "Canonical SyncPoly URL: https://atlantic-villa-tobago.syncpoly.com.",
+      "Primary booking contact: WhatsApp 868-682-1750. Email is atlanticvillatt@gmail.com.",
+      "The villa accommodates up to 13 guests across the main floor and two adjoining self-contained ground-floor suites.",
+      "Main floor: three bedrooms, three bathrooms, fully equipped kitchen, dining room, wrap-around verandah, terrace, and gazebo. Maximum 6 guests.",
+      "Ground floor: two self-contained adjoining suites that may be joined to form one two-bedroom suite. Maximum 7 guests.",
+      "Use the positioning: What's Your Occasion? Birthday, anniversary, yoga retreat, new life, reconnecting, or meeting, celebrate it here.",
+      "Guest experience language: relax, reconnect, and renew.",
+      "Location: Bacolet, Tobago, about five minutes from Scarborough and the port.",
+      "Do not invent nightly rates, availability, reviews, or policies beyond the public booking guide and the FAQ."
+    ]
+  },
+  "seo": {
+    "title": "Atlantic Villa Tobago | Bacolet Tobago Villa Rental",
+    "description": "Book Atlantic Villa Tobago, a 5 bedroom ocean-view Bacolet villa with private pool, terraces, self-contained suites, beach moments nearby, and space for up to 13 guests.",
+    "image": "/media/atlantic-villa-beach.jpg"
+  }
+}

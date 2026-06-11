@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 92" role="img" aria-labelledby="title">
+  <title>Atlantic Villa Tobago</title>
+  <g fill="#0e7894">
+    <text x="0" y="35" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700">Atlantic Villa</text>
+    <text x="2" y="68" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="800" letter-spacing="4">TOBAGO</text>
+  </g>
+  <path d="M268 63c18-12 36-17 53-17 25 0 39 14 72 14" fill="none" stroke="#d77a3a" stroke-width="7" stroke-linecap="round"/>
+  <path d="M270 74c18-10 36-14 54-14 24 0 39 10 69 10" fill="none" stroke="#0e7894" stroke-width="5" stroke-linecap="round" opacity=".82"/>
+</svg>
