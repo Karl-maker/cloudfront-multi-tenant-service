@@ -74,7 +74,7 @@ export async function handleBillingSummary(event, deps = {}) {
         customer: stripeCustomerId,
         status: "all",
         limit: "10",
-        "expand[]": ["data.default_payment_method", "data.latest_invoice.payment_intent"]
+        "expand[]": ["data.default_payment_method", "data.latest_invoice.payment_intent", "data.items.data.price.product"]
       }),
       stripe.get(`/customers/${encodeURIComponent(stripeCustomerId)}/payment_methods`, {
         limit: "20"
@@ -310,15 +310,27 @@ function sanitizeSubscription(subscription) {
     defaultPaymentMethodId: getExpandableId(subscription.default_payment_method),
     latestInvoiceId: getExpandableId(subscription.latest_invoice),
     latestPaymentIntentStatus: latestInvoice?.payment_intent?.status || null,
-    items: (subscription.items?.data || []).map((item) => ({
-      id: item.id,
-      priceId: item.price?.id || null,
-      productId: item.price?.product || null,
-      nickname: item.price?.nickname || null,
-      interval: item.price?.recurring?.interval || null,
-      quantity: item.quantity || 1,
-      unitAmount: item.price?.unit_amount || null
-    }))
+    items: (subscription.items?.data || []).map(sanitizeSubscriptionItem)
+  };
+}
+
+function sanitizeSubscriptionItem(item) {
+  const price = item.price || {};
+  const product = typeof price.product === "object" ? price.product : null;
+
+  return {
+    id: item.id,
+    priceId: price.id || null,
+    productId: getExpandableId(price.product),
+    productName: product?.name || null,
+    productDescription: product?.description || null,
+    nickname: price.nickname || null,
+    interval: price.recurring?.interval || null,
+    intervalCount: price.recurring?.interval_count || 1,
+    quantity: item.quantity || 1,
+    unitAmount: price.unit_amount || null,
+    currency: price.currency || null,
+    lookupKey: price.lookup_key || null
   };
 }
 

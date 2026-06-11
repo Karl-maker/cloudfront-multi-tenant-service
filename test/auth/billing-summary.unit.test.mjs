@@ -98,11 +98,17 @@ test("billing summary creates a Stripe customer, persists it, sanitizes billing 
   assert.equal(body.dunning.status, "action_required");
   assert.equal(body.dunning.failedInvoiceCount, 1);
   assert.equal(body.subscriptions[0].latestPaymentIntentStatus, "requires_payment_method");
+  assert.equal(body.subscriptions[0].items[0].productId, "prod_1");
+  assert.equal(body.subscriptions[0].items[0].productName, "Builder Pro");
+  assert.equal(body.subscriptions[0].items[0].productDescription, "Professional website subscription");
+  assert.equal(body.subscriptions[0].items[0].intervalCount, 1);
   assert.equal(JSON.stringify(body).includes("sk_test_secret"), false);
 
   const createCustomer = fetchCalls.find((call) => call.path === "/v1/customers");
   assert.equal(createCustomer.options.method, "POST");
   assert.equal(new URLSearchParams(createCustomer.options.body).get("metadata[syncpoly_user_id]"), "google:subject");
+  const subscriptionsCall = fetchCalls.find((call) => call.path === "/v1/subscriptions");
+  assert.equal(new URL(subscriptionsCall.url).searchParams.getAll("expand[]").includes("data.items.data.price.product"), true);
 });
 
 test("billing summary uses existing Stripe customer id and does not allow client-supplied customer ids", async () => {
@@ -289,11 +295,20 @@ function createStripeFetch(calls) {
                   quantity: 1,
                   price: {
                     id: "price_1",
-                    product: "prod_1",
-                    nickname: "Builder Pro",
+                    product: {
+                      id: "prod_1",
+                      name: "Builder Pro",
+                      description: "Professional website subscription",
+                      metadata: {
+                        internal_note: "should-not-leak"
+                      }
+                    },
+                    nickname: "Builder Pro Monthly",
                     unit_amount: 2900,
+                    currency: "usd",
                     recurring: {
-                      interval: "month"
+                      interval: "month",
+                      interval_count: 1
                     }
                   }
                 }

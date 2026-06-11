@@ -40,6 +40,7 @@ locals {
   billing_events_table_name            = "syncpoly-builder-billing-events"
   billing_checkout_success_url         = "https://syncpoly.com/billing/success"
   billing_checkout_cancel_url          = "https://syncpoly.com/billing/cancel"
+  billing_portal_return_url            = "https://syncpoly.com/billing"
   billing_custom_solution_email        = "hello@syncpoly.com"
   auth_jwt_issuer                      = "syncpoly-builder"
   auth_jwt_audience                    = "syncpoly-builder-api"
@@ -1044,6 +1045,7 @@ resource "aws_lambda_function" "auth_pricing" {
       BILLING_CHECKOUT_REQUEST_TTL_SECONDS = tostring(local.billing_checkout_request_ttl_seconds)
       BILLING_CHECKOUT_SUCCESS_URL         = local.billing_checkout_success_url
       BILLING_CUSTOM_SOLUTION_EMAIL        = local.billing_custom_solution_email
+      BILLING_PORTAL_RETURN_URL            = local.billing_portal_return_url
       STRIPE_SECRET_ARN                    = data.aws_secretsmanager_secret.auth_stripe.arn
       USERS_TABLE_NAME                     = aws_dynamodb_table.auth_users.name
     }
@@ -1304,6 +1306,20 @@ resource "aws_apigatewayv2_route" "auth_billing_checkout" {
 resource "aws_apigatewayv2_route" "auth_billing_checkout_options" {
   api_id    = aws_apigatewayv2_api.auth.id
   route_key = "OPTIONS /billing/checkout"
+  target    = "integrations/${aws_apigatewayv2_integration.auth_pricing.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_billing_portal" {
+  api_id             = aws_apigatewayv2_api.auth.id
+  route_key          = "POST /billing/portal"
+  authorization_type = "CUSTOM"
+  authorizer_id      = aws_apigatewayv2_authorizer.auth_jwt.id
+  target             = "integrations/${aws_apigatewayv2_integration.auth_pricing.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_billing_portal_options" {
+  api_id    = aws_apigatewayv2_api.auth.id
+  route_key = "OPTIONS /billing/portal"
   target    = "integrations/${aws_apigatewayv2_integration.auth_pricing.id}"
 }
 

@@ -8,6 +8,7 @@ const secrets = new SecretsManagerClient({});
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 const STRIPE_API_VERSION = process.env.STRIPE_API_VERSION || "2025-06-30.basil";
 const YEARLY_DISCOUNT_PERCENT = 20;
+const DEFAULT_BILLING_PORTAL_RETURN_URL = "https://syncpoly.com/billing";
 
 let stripeSecretCache;
 
@@ -58,6 +59,20 @@ export async function handlePricing(event, deps = {}) {
     const userId = event.requestContext?.authorizer?.lambda?.userId;
     if (!userId) {
       return jsonResponse(401, { message: "Unauthorized." }, event);
+    }
+
+    if (isBillingPortalRoute(event)) {
+      const body = parseJsonBody(event.body, event.isBase64Encoded);
+      const portal = await createBillingPortalSession({
+        dynamodbClient,
+        secretsClient,
+        fetchImpl,
+        secretCache,
+        userId,
+        returnUrl: cleanString(body.returnUrl),
+        nowMs
+      });
+      return jsonResponse(200, portal, event);
     }
 
     const body = parseJsonBody(event.body, event.isBase64Encoded);
@@ -308,6 +323,55 @@ async function getUser(dynamodbClient, userId) {
     email: response.Item.email?.S,
     name: response.Item.name?.S,
     stripeCustomerId: response.Item.stripe_customer_id?.S
+  };
+}
+
+async function createBillingPortalSession({
+  dynamodbClient,
+  secretsClient,
+  fetchImpl,
+  secretCache,
+  userId,
+  returnUrl,
+  nowMs
+}) {
+  const user = await getUser(dynamodbClient, userId);
+  if (!user) {
+    const error = new Error("User not found.");
+    error.statusCode = 404;
+    error.publicMessage = "User not found.";
+    throw error;
+  }
+
+  const stripeSecret = await getStripeSecret(secretsClient, secretCache);
+  if (!stripeSecret.secret_key) {
+    const error = new Error("Stripe secret is not configured.");
+    error.statusCode = 500;
+    error.publicMessage = "Stripe secret is not configured.";
+    throw error;
+  }
+
+  const stripe = createStripeClient(stripeSecret.secret_key, fetchImpl);
+  const customerId = await ensureStripeCustomer({
+    dynamodbClient,
+    stripe,
+    user,
+    nowMs,
+    idempotencyKey: `syncpoly_portal_customer_${hashParts([userId])}`
+  });
+  const portalReturnUrl = validatedBillingPortalReturnUrl(returnUrl);
+  const session = await stripe.post("/billing_portal/sessions", {
+    customer: customerId,
+    return_url: portalReturnUrl
+  });
+
+  return {
+    portal: {
+      id: session.id,
+      url: session.url,
+      returnUrl: portalReturnUrl
+    },
+    stripeCustomerId: customerId
   };
 }
 
@@ -852,6 +916,32 @@ function hashParts(parts) {
 
 function cleanString(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function isBillingPortalRoute(event) {
+  const path = event.rawPath || event.requestContext?.http?.path || "";
+  return event.routeKey === "POST /billing/portal" || path === "/billing/portal";
+}
+
+function validatedBillingPortalReturnUrl(value) {
+  const fallback = process.env.BILLING_PORTAL_RETURN_URL || DEFAULT_BILLING_PORTAL_RETURN_URL;
+  if (!value) {
+    return fallback;
+  }
+
+  try {
+    const parsed = new URL(value);
+    if (allowedOrigins().has(parsed.origin) && parsed.pathname.startsWith("/billing")) {
+      return parsed.toString();
+    }
+  } catch {
+    // fall through to public validation error
+  }
+
+  const error = new Error("Billing portal return URL is not allowed.");
+  error.statusCode = 400;
+  error.publicMessage = "Billing portal return URL is not allowed.";
+  throw error;
 }
 
 function jsonResponse(statusCode, body, event) {

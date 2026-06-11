@@ -42,6 +42,7 @@ jobs:
           has_authorizer=false
           has_me=false
           has_billing_summary=false
+          has_pricing=false
           has_stripe_webhook=false
 
           if grep -q '^lambdas/auth/google-login/' <<< "$changed_files"; then
@@ -60,6 +61,10 @@ jobs:
             has_billing_summary=true
           fi
 
+          if grep -q '^lambdas/auth/pricing/' <<< "$changed_files"; then
+            has_pricing=true
+          fi
+
           if grep -q '^lambdas/auth/stripe-webhook/' <<< "$changed_files"; then
             has_stripe_webhook=true
           fi
@@ -69,6 +74,7 @@ jobs:
             echo "authorizer=$has_authorizer"
             echo "me=$has_me"
             echo "billing_summary=$has_billing_summary"
+            echo "pricing=$has_pricing"
             echo "stripe_webhook=$has_stripe_webhook"
           } >> "$GITHUB_OUTPUT"
 
@@ -100,6 +106,7 @@ jobs:
           check_function authorizer syncpoly-builder-auth-authorizer "${{ steps.changes.outputs.authorizer }}"
           check_function me syncpoly-builder-auth-me "${{ steps.changes.outputs.me }}"
           check_function billing_summary syncpoly-builder-billing-summary "${{ steps.changes.outputs.billing_summary }}"
+          check_function pricing syncpoly-builder-billing-pricing "${{ steps.changes.outputs.pricing }}"
           check_function stripe_webhook syncpoly-builder-stripe-webhook "${{ steps.changes.outputs.stripe_webhook }}"
 
       - name: Deploy Google login Lambda
@@ -140,6 +147,16 @@ jobs:
           aws lambda update-function-code \
             --function-name syncpoly-builder-billing-summary \
             --zip-file "fileb://$RUNNER_TEMP/billing-summary.zip" \
+            --publish
+
+      - name: Deploy billing pricing Lambda
+        if: steps.changes.outputs.pricing == 'true' && steps.existing.outputs.pricing == 'true'
+        run: |
+          cd lambdas/auth/pricing
+          zip -qr "$RUNNER_TEMP/pricing.zip" .
+          aws lambda update-function-code \
+            --function-name syncpoly-builder-billing-pricing \
+            --zip-file "fileb://$RUNNER_TEMP/pricing.zip" \
             --publish
 
       - name: Deploy Stripe webhook Lambda

@@ -124,6 +124,33 @@ test("pricing custom solution returns email conversation instead of checkout", a
   assert.equal(body.contactEmail, "sales@example.test");
 });
 
+test("pricing creates a Stripe customer portal session for the authenticated user", async () => {
+  process.env.BILLING_PORTAL_RETURN_URL = "https://syncpoly.com/billing";
+  const fetchCalls = [];
+  const handler = createPricingHandler({
+    dynamodbClient: createMockClient((command) => {
+      if (command instanceof GetItemCommand) {
+        return { Item: userItem({ stripeCustomerId: "cus_existing" }) };
+      }
+      assert.fail(`unexpected command ${command.constructor.name}`);
+    }),
+    secretsClient: createStripeSecretClient(),
+    fetchImpl: createStripePricingFetch(fetchCalls, { hasDefaultPaymentMethod: false }),
+    secretCache: {}
+  });
+
+  const response = await handler(portalEvent({ returnUrl: "https://www.syncpoly.com/billing?tab=subscription" }));
+  const body = decodeJsonBody(response);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(body.portal.url, "https://billing.stripe.example.test/session");
+  assert.equal(body.stripeCustomerId, "cus_existing");
+  const portalCall = fetchCalls.find((call) => call.path === "/v1/billing_portal/sessions");
+  const params = new URLSearchParams(portalCall.options.body);
+  assert.equal(params.get("customer"), "cus_existing");
+  assert.equal(params.get("return_url"), "https://www.syncpoly.com/billing?tab=subscription");
+});
+
 test("pricing creates Stripe product with monthly and yearly prices then charges saved payment method directly", async () => {
   const fetchCalls = [];
   const updates = [];
@@ -503,6 +530,22 @@ function checkoutEvent(body) {
   };
 }
 
+function portalEvent(body = {}) {
+  return {
+    body: JSON.stringify(body),
+    rawPath: "/billing/portal",
+    routeKey: "POST /billing/portal",
+    requestContext: {
+      http: { method: "POST", path: "/billing/portal" },
+      authorizer: {
+        lambda: {
+          userId: "google:subject"
+        }
+      }
+    }
+  };
+}
+
 function createStripeSecretClient() {
   return createMockClient((command) => {
     assert.ok(command instanceof GetSecretValueCommand);
@@ -587,6 +630,12 @@ function createStripePricingFetch(calls, { hasDefaultPaymentMethod, savedPayment
       return createJsonResponse({
         id: "cs_created",
         url: "https://checkout.example.test/session"
+      });
+    }
+    if (parsed.pathname === "/v1/billing_portal/sessions") {
+      return createJsonResponse({
+        id: "bps_created",
+        url: "https://billing.stripe.example.test/session"
       });
     }
 

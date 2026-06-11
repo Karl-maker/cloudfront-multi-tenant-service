@@ -41,6 +41,7 @@ test("auth Terraform avoids wildcard credentialed CORS and enables DynamoDB prot
 test("auth Terraform protects billing summary with JWT auth and leaves Stripe webhook unsigned by JWT", () => {
   assert.match(authTf, /route_key\s+=\s+"GET \/billing\/summary"[\s\S]*authorization_type\s+=\s+"CUSTOM"[\s\S]*authorizer_id\s+=\s+aws_apigatewayv2_authorizer\.auth_jwt\.id/);
   assert.match(authTf, /route_key\s+=\s+"POST \/billing\/checkout"[\s\S]*authorization_type\s+=\s+"CUSTOM"[\s\S]*authorizer_id\s+=\s+aws_apigatewayv2_authorizer\.auth_jwt\.id/);
+  assert.match(authTf, /route_key\s+=\s+"POST \/billing\/portal"[\s\S]*authorization_type\s+=\s+"CUSTOM"[\s\S]*authorizer_id\s+=\s+aws_apigatewayv2_authorizer\.auth_jwt\.id/);
   assert.match(authTf, /route_key\s+=\s+"GET \/websites"[\s\S]*authorization_type\s+=\s+"CUSTOM"[\s\S]*authorizer_id\s+=\s+aws_apigatewayv2_authorizer\.auth_jwt\.id/);
   assert.match(authTf, /route_key\s+=\s+"POST \/websites"[\s\S]*authorization_type\s+=\s+"CUSTOM"[\s\S]*authorizer_id\s+=\s+aws_apigatewayv2_authorizer\.auth_jwt\.id/);
   assert.match(authTf, /route_key\s+=\s+"GET \/websites\/\{websiteId\}"[\s\S]*authorization_type\s+=\s+"CUSTOM"[\s\S]*authorizer_id\s+=\s+aws_apigatewayv2_authorizer\.auth_jwt\.id/);
@@ -76,6 +77,7 @@ test("auth Terraform lets pricing read catalog, update Stripe ids, and use Strip
   assert.match(authTf, /data "aws_iam_policy_document" "auth_pricing_lambda"[\s\S]*"dynamodb:PutItem"[\s\S]*aws_dynamodb_table\.billing_checkout_requests\.arn/);
   assert.match(authTf, /resource "aws_lambda_function" "auth_pricing"/);
   assert.match(authTf, /BILLING_CHECKOUT_REQUESTS_TABLE_NAME\s+=\s+aws_dynamodb_table\.billing_checkout_requests\.name/);
+  assert.match(authTf, /BILLING_PORTAL_RETURN_URL\s+=\s+local\.billing_portal_return_url/);
   assert.match(authTf, /data "aws_iam_policy_document" "auth_websites_lambda"[\s\S]*"dynamodb:TransactWriteItems"[\s\S]*aws_dynamodb_table\.auth_users\.arn/);
   assert.match(authTf, /data "aws_iam_policy_document" "auth_websites_lambda"[\s\S]*"dynamodb:Query"[\s\S]*aws_dynamodb_table\.auth_websites\.arn[\s\S]*aws_dynamodb_table\.website_folders\.arn[\s\S]*aws_dynamodb_table\.website_media\.arn/);
   assert.match(authTf, /resource "aws_lambda_function" "auth_websites"/);
@@ -90,6 +92,7 @@ test("auth Terraform defines unauthenticated OPTIONS routes for CORS preflight",
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/summary"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/catalog"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/checkout"/);
+  assert.match(authTf, /route_key\s+=\s+"OPTIONS \/billing\/portal"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/websites"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/websites\/\{websiteId\}"/);
   assert.match(authTf, /route_key\s+=\s+"OPTIONS \/websites\/\{websiteId\}\/config"/);
