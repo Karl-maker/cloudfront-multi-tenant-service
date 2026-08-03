@@ -108,6 +108,8 @@ async function main() {
     await addCname(args);
   } else if (command === "preview") {
     await previewSite(args);
+  } else if (command === "build-client") {
+    await buildClient(args);
   } else if (command === "screenshot") {
     await screenshotSite(args);
   } else {
@@ -590,6 +592,55 @@ async function previewSite(args) {
     });
   });
   console.log(`Serving local preview at ${url}`);
+}
+
+async function buildClient(args) {
+  const siteDir = resolveExistingOrNamedSiteDir(args);
+  const configPath = requirePath(args.config || path.join(siteDir, "site.config.json"), "config");
+  const config = validateAndReadConfig(configPath);
+  const folder = resolveFolder({
+    env: {},
+    args: { folder: args.folder || args._[0] },
+    config
+  });
+  const templateName = args.template || args.templateName || config.syncpoly?.template || process.env.SITE_TEMPLATE || "real-estate";
+  const templateRoot = resolveTemplateRoot(args, templateName, args.templateRoot || args.templateDir);
+
+  const templateOut = buildSiteHtmlExport({ args, configPath, templateName });
+  if (!fs.existsSync(templateOut)) {
+    throw new Error(`Template static output does not exist after build: ${templateOut}`);
+  }
+
+  const clientRoot = path.resolve(args.out || args.clientRoot || path.join("tmp", "next-client", folder));
+  const clientOut = path.join(clientRoot, "out");
+  fs.rmSync(clientOut, { recursive: true, force: true });
+  fs.mkdirSync(clientRoot, { recursive: true });
+  fs.cpSync(templateOut, clientOut, { recursive: true });
+  copySitePreviewFiles(siteDir, clientOut);
+  fs.copyFileSync(configPath, path.join(clientOut, "site.config.json"));
+
+  const host = args.host || process.env.HOST || "127.0.0.1";
+  const port = parsePreviewPort(args.port || process.env.PORT || 4173);
+  const url = `http://${host}:${port}`;
+
+  console.log(`Built site-specific Next client in ${clientOut}`);
+  console.log(`Template: ${templateName} (${templateRoot})`);
+  console.log(`Config: ${configPath}`);
+
+  if (args.noServe) {
+    console.log(`Run without --no-serve to serve ${url}`);
+    return;
+  }
+
+  const server = createPreviewServer(clientOut);
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, host, () => {
+      server.off("error", reject);
+      resolve();
+    });
+  });
+  console.log(`Serving built client at ${url}`);
 }
 
 async function screenshotSite(args) {
@@ -1517,6 +1568,7 @@ function printHelp() {
   syncpoly-site add-cname aurum-eco-power-wash --domain syncpoly.com --value d111111abcdef8.cloudfront.net
   syncpoly-site add-cname --config ./site.config.json --value d111111abcdef8.cloudfront.net
   syncpoly-site preview --site ./sites/example --template /workspace/web-builder/templates/real-estate --port 4173
+  syncpoly-site build-client --site ./sites/example --template real-estate --out ./tmp/next-client/example --port 4173
   syncpoly-site screenshot --site ./sites/example --url http://127.0.0.1:4173/ --out ./sites/example/screenshots
   syncpoly-site screenshot-audit --site ./sites/example
   syncpoly-site publish --site ./sites/example --template real-estate [--skip-upload] [--skip-dns]

@@ -35,6 +35,7 @@
     "site:make-outreach": "node bin/syncpoly-site.js make-outreach",
     "site:screenshot": "node bin/syncpoly-site.js screenshot",
     "site:screenshot-audit": "node bin/syncpoly-site.js screenshot-audit",
+    "site:build-client": "node bin/syncpoly-site.js build-client",
     "site:publish": "node bin/syncpoly-site.js publish",
     "godaddy:add-cname": "node bin/syncpoly-site.js add-cname",
     "test": "node --test test/cloudfront-function.test.js test/site-upload.test.js test/google-places-no-website.test.js test/auth/*.unit.test.mjs test/auth/terraform-auth.test.mjs test/auth/*.integration.test.mjs test/auth/*.e2e.test.mjs",

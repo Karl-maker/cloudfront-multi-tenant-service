@@ -1,36 +1,35 @@
-# Aurum Realty Group
+# Atlantic Villa Tobago
 
-> Official site map for Aurum Realty Group, a real estate advisory template for residential, commercial, investment, development, and transaction coordination services.
+> Official site map for Atlantic Villa Tobago, a 5 bedroom, 5 bathroom ocean-view villa in Bacolet, Tobago with a private pool, terraces, beach moments nearby, self-contained suites, and booking by WhatsApp at 868-682-1750.
 
 ## Site
 
-- Canonical URL: https://aurum-realty-group.syncpoly.com/
-- Description: A full-service residential and commercial real estate advisory firm for buyers, sellers, landlords, tenants, investors, and developers in Trinidad and Tobago.
+- Canonical URL: https://atlantic-villa-tobago.syncpoly.com/
+- Description: Atlantic Villa Tobago is a 5 bedroom, 5 bathroom ocean-view villa in Bacolet, Tobago with a private pool, terraces, self-contained suites, and space for birthdays, anniversaries, yoga retreats, reconnecting, and relaxed group stays.
 
 ## Pages
 
-- [Residential & Commercial Real Estate](https://aurum-realty-group.syncpoly.com/): A full-service real estate advisory template for property acquisition, creative marketing, investment, development, and transaction coordination in Trinidad and Tobago.
-- [Property Availabilities](https://aurum-realty-group.syncpoly.com/availabilities/): Browse featured residential, commercial, rental, and development availabilities from the real estate advisory template.
-- [Real Estate Services](https://aurum-realty-group.syncpoly.com/services/): Real estate advisory services for acquisition, creative marketing, investment, development, and transaction coordination.
-- [Property Acquisition](https://aurum-realty-group.syncpoly.com/services/property-acquisition/): Dedicated real estate service detail page for a full-service real estate advisory website.
-- [Creative Marketing](https://aurum-realty-group.syncpoly.com/services/creative-marketing/): Dedicated real estate service detail page for a full-service real estate advisory website.
-- [Investment Development](https://aurum-realty-group.syncpoly.com/services/investment-development/): Dedicated real estate service detail page for a full-service real estate advisory website.
-- [Transaction Coordination](https://aurum-realty-group.syncpoly.com/services/transaction-coordination/): Dedicated real estate service detail page for a full-service real estate advisory website.
-- [About the Firm](https://aurum-realty-group.syncpoly.com/about/): Learn about the real estate advisory firm, its full-service approach, and its property network.
-- [Rates & Packages](https://aurum-realty-group.syncpoly.com/rates/): Compare configurable real estate, property, rental, or hospitality rate packages with inclusions and calls to action.
-- [Amenities & Features](https://aurum-realty-group.syncpoly.com/amenities/): Showcase property amenities, venue features, service inclusions, and neighborhood highlights in a configurable grid.
-- [Location & Service Area](https://aurum-realty-group.syncpoly.com/location/): Find the office location, Google map, service area, opening hours, and appointment details.
-- [Real Estate FAQ](https://aurum-realty-group.syncpoly.com/faq/): Answers to common real estate questions before buying, selling, renting, investing, or requesting transaction coordination.
-- [Contact the Real Estate Firm](https://aurum-realty-group.syncpoly.com/contact/): Contact the real estate advisory firm for buying, selling, rental, leasing, investment, development, and transaction inquiries.
-- [Privacy Policy](https://aurum-realty-group.syncpoly.com/privacy/): How Aurum Realty Group collects, uses, discloses, stores, and protects personal information.
-- [Terms of Use](https://aurum-realty-group.syncpoly.com/terms/): Terms governing use of the Aurum Realty Group website.
-- [Cookie Policy](https://aurum-realty-group.syncpoly.com/cookies/): How Aurum Realty Group uses cookies and similar technologies.
+- [Atlantic Villa Tobago Bacolet Tobago Villa Rental](https://atlantic-villa-tobago.syncpoly.com/): Book Atlantic Villa Tobago, a 5 bedroom ocean-view Bacolet villa with private pool, terraces, self-contained suites, beach moments nearby, and space for up to 13 guests.
+- [Explore the Villa](https://atlantic-villa-tobago.syncpoly.com/availabilities/): See Atlantic Villa Tobago by floor, including the main floor, ground-floor self-contained suites, private pool, terraces, verandah, gazebo, bedrooms, and kitchens.
+- [Amenities at Atlantic Villa Tobago](https://atlantic-villa-tobago.syncpoly.com/amenities/): View amenities at Atlantic Villa Tobago: private pool, air-conditioned bedrooms, free WiFi, cable TV, linens, towels, safety equipment, grill, and booking guide highlights.
+- [Atlantic Villa Tobago Location in Bacolet](https://atlantic-villa-tobago.syncpoly.com/location/): Find Atlantic Villa Tobago in Bacolet, Tobago, about five minutes from Scarborough and the port, with nearby coastline and easy access to pool and terrace villa days.
+- [Atlantic Villa Tobago FAQ](https://atlantic-villa-tobago.syncpoly.com/faq/): Answers about Atlantic Villa Tobago accommodation, maximum guests, Bacolet location, booking by WhatsApp, small-group suites, payment plan, check-in, amenities, rules, and cancellation policy.
+- [Contact Atlantic Villa Tobago](https://atlantic-villa-tobago.syncpoly.com/contact/): WhatsApp 868-682-1750 to discuss Atlantic Villa Tobago dates, guest count, suite options, payment plan questions, and bookings.
+- [Privacy Policy](https://atlantic-villa-tobago.syncpoly.com/privacy/): General international privacy policy for Atlantic Villa Tobago.
+- [Terms](https://atlantic-villa-tobago.syncpoly.com/terms/): General international terms of use for Atlantic Villa Tobago.
+- [Cookies](https://atlantic-villa-tobago.syncpoly.com/cookies/): General international cookie policy for Atlantic Villa Tobago.
 
 ## Notes
 
-- Primary service focus: property acquisition, creative marketing, investment and development, and transaction coordination.
-- Use aurum-realty-group.syncpoly.com as the placeholder canonical domain until the real domain is configured.
-- Confirm availability, pricing, viewings, and transaction details with the live contact page before answering.
+- Canonical SyncPoly URL: https://atlantic-villa-tobago.syncpoly.com.
+- Primary booking contact: WhatsApp 868-682-1750. Email is atlanticvillatt@gmail.com.
+- The villa accommodates up to 13 guests across the main floor and two adjoining self-contained ground-floor suites.
+- Main floor: three bedrooms, three bathrooms, fully equipped kitchen, dining room, wrap-around verandah, terrace, and gazebo. Maximum 6 guests.
+- Ground floor: two self-contained adjoining suites that may be joined to form one two-bedroom suite. Maximum 7 guests.
+- Use the positioning: What's Your Occasion? Birthday, anniversary, yoga retreat, new life, reconnecting, or meeting, celebrate it here.
+- Guest experience language: relax, reconnect, and renew.
+- Location: Bacolet, Tobago, about five minutes from Scarborough and the port.
+- Do not invent nightly rates, availability, reviews, or policies beyond the public booking guide and the FAQ.
 
 ## Machine Guidance
 

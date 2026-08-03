@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[90414,["/_next/static/chunks/0js144q98njfp.js","/_next/static/chunks/15ah33yo81bc_.js","/_next/static/chunks/0jmmeys3liya5.js","/_next/static/chunks/0r3thwma2xzhb.js"],""]
-3:I[37435,["/_next/static/chunks/0js144q98njfp.js","/_next/static/chunks/15ah33yo81bc_.js","/_next/static/chunks/0jmmeys3liya5.js","/_next/static/chunks/0r3thwma2xzhb.js"],"OutletBoundary"]
+2:I[8500,["500","static/chunks/500-c99b8dfd3de17c86.js","345","static/chunks/app/not-found-193d87f914abf013.js"],""]
+3:I[484,[],"OutletBoundary"]
 4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","main",null,{"id":"main","className":"not-found","children":["$","div",null,{"className":"not-found__inner","children":[["$","p",null,{"className":"kicker","children":"404"}],["$","h1",null,{"children":"Page not found"}],["$","p",null,{"children":["Aurum Realty Group"," does not have a static page for this route."]}],["$","$L2",null,{"className":"button button--primary","href":"/","children":"Go home"}]]}]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"3UMwTAP8rRZMj5DuzTfJl"}
+0:{"rsc":["$","$1","c",{"children":[["$","main",null,{"id":"main","className":"not-found","children":["$","div",null,{"className":"not-found__inner","children":[["$","p",null,{"className":"kicker","children":"404"}],["$","h1",null,{"children":"Page not found"}],["$","p",null,{"children":["Aurum Realty Group"," does not have a static page for this route."]}],["$","$L2",null,{"className":"button button--primary","href":"/","children":"Go home"}]]}]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"IvjvVF1hUA7ksR8UYoe57"}
 5:null
