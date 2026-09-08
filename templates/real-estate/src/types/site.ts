@@ -116,6 +116,7 @@ export interface SiteConfig {
   blocks?: Record<string, SiteSection>;
   pages: SitePage[];
   footer: {
+    logo?: SiteImage;
     tagline?: string;
     links?: SiteLink[];
     socialLinks?: FooterSocialLink[];

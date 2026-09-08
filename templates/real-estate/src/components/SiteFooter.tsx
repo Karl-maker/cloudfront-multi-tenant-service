@@ -15,7 +15,7 @@ import {
   FaXTwitter,
   FaYoutube
 } from "react-icons/fa6";
-import { getFooterLinksForConfig, getFooterSocialLinksForConfig } from "@/lib/site";
+import { assetPath, getFooterLinksForConfig, getFooterSocialLinksForConfig } from "@/lib/site";
 import { useRuntimeSiteConfig } from "@/components/RuntimeConfigProvider";
 import { SmartLink } from "@/components/SmartLink";
 
@@ -23,12 +23,26 @@ export function SiteFooter() {
   const siteConfig = useRuntimeSiteConfig();
   const links = getFooterLinksForConfig(siteConfig);
   const socialLinks = getFooterSocialLinksForConfig(siteConfig);
+  const footerLogo = siteConfig.footer.logo;
 
   return (
     <footer className="site-footer">
       <div className="site-footer__inner">
         <div className="site-footer__brand">
-          <strong>{siteConfig.site.name}</strong>
+          {footerLogo ? (
+            <SmartLink aria-label={`${siteConfig.site.name} home`} className="site-footer__brand-link" href="/">
+              <img
+                className="site-footer__logo"
+                src={assetPath(footerLogo.src)}
+                alt={footerLogo.alt || siteConfig.site.name}
+                width={320}
+                height={96}
+                loading="lazy"
+              />
+            </SmartLink>
+          ) : (
+            <strong>{siteConfig.site.name}</strong>
+          )}
           {siteConfig.footer.tagline ? <p>{siteConfig.footer.tagline}</p> : null}
           {socialLinks.length ? (
             <nav className="site-footer__social" aria-label="Social media links">
