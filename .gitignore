@@ -31,8 +31,14 @@ openclaw-data/config/update-check.json
 coverage/
 tmp/
 sites
-sites/*/assets/
-sites/*/media/
+!sites/
+sites/*
+!sites/atlantic-villa-tobago/
+sites/atlantic-villa-tobago/*
+!sites/atlantic-villa-tobago/media/
+sites/atlantic-villa-tobago/media/*
+!sites/atlantic-villa-tobago/media/atlantic-villa-logo-header.png
+!sites/atlantic-villa-tobago/media/atlantic-villa-logo-footer.png
 templates/*/.next/
 templates/*/.swc/
 templates/*/node_modules/
