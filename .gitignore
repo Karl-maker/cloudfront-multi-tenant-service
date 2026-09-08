@@ -34,11 +34,7 @@ sites
 !sites/
 sites/*
 !sites/atlantic-villa-tobago/
-sites/atlantic-villa-tobago/*
-!sites/atlantic-villa-tobago/media/
-sites/atlantic-villa-tobago/media/*
-!sites/atlantic-villa-tobago/media/atlantic-villa-logo-header.png
-!sites/atlantic-villa-tobago/media/atlantic-villa-logo-footer.png
+!sites/atlantic-villa-tobago/**
 templates/*/.next/
 templates/*/.swc/
 templates/*/node_modules/
