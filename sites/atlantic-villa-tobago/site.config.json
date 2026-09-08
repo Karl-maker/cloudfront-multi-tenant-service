@@ -643,6 +643,32 @@
           ]
         },
         {
+          "id": "celebrations",
+          "type": "cardGrid",
+          "kicker": "For Celebrations",
+          "title": "Big moments look good in Bacolet.",
+          "body": "From birthday weekends to anniversaries and year-end escapes, Atlantic Villa Tobago gives your group room to celebrate - poolside, on the terrace, or with the coastline close by.",
+          "columns": 1,
+          "items": [
+            {
+              "title": "Bring the sparkle",
+              "body": "Make it a weekend: arrive, settle in, toast the moment, and let the day stretch out.",
+              "media": {
+                "src": "/media/atlantic-villa-celebration-1.jpg",
+                "alt": "Celebration collage for Atlantic Villa Tobago"
+              }
+            },
+            {
+              "title": "Finish with fireworks",
+              "body": "A villa stay that feels like an occasion - whether you're celebrating something big or just celebrating being together.",
+              "media": {
+                "src": "/media/atlantic-villa-celebration-2.jpg",
+                "alt": "Fireworks celebration artwork for Atlantic Villa Tobago"
+              }
+            }
+          ]
+        },
+        {
           "id": "services",
           "type": "featureGrid",
           "kicker": "Stay Highlights",
