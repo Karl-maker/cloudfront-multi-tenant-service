@@ -271,6 +271,10 @@
     "logo": {
       "src": "/media/atlantic-villa-logo-header.png",
       "alt": "Atlantic Villa Tobago"
+    },
+    "logoOnTop": {
+      "src": "/media/atlantic-villa-logo-header-white.png",
+      "alt": "Atlantic Villa Tobago"
     }
   },
   "blocks": {

@@ -15,8 +15,9 @@ export function SiteHeader() {
   const [logoFailed, setLogoFailed] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const menuId = useId();
-  const logoSrc = siteConfig.navigation.logo?.src;
-  const hasLogo = Boolean(siteConfig.navigation.logo);
+  const activeLogo = isAtTop && siteConfig.navigation.logoOnTop ? siteConfig.navigation.logoOnTop : siteConfig.navigation.logo;
+  const logoSrc = activeLogo?.src;
+  const hasLogo = Boolean(siteConfig.navigation.logo || siteConfig.navigation.logoOnTop);
   const showLogo = hasLogo && logoLoaded && !logoFailed;
   const showTextBrand = !hasLogo || logoFailed;
   const logoText = siteConfig.navigation.logoText || siteConfig.site.shortName || siteConfig.site.name;
@@ -49,7 +50,7 @@ export function SiteHeader() {
             <img
               aria-hidden="true"
               className={showLogo ? "site-header__logo" : "site-header__logo site-header__logo--loading"}
-              src={assetPath(siteConfig.navigation.logo?.src || "")}
+              src={assetPath(activeLogo?.src || "")}
               alt=""
               width={160}
               height={48}

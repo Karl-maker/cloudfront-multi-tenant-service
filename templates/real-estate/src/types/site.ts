@@ -110,6 +110,7 @@ export interface SiteConfig {
   navigation: {
     logoText: string;
     logo?: SiteImage;
+    logoOnTop?: SiteImage;
     links: SiteLink[];
     cta?: SiteAction;
   };
