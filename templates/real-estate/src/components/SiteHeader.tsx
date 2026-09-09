@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { assetPath, getNavigationCtaForConfig, getNavigationLinksForConfig } from "@/lib/site";
 import { useRuntimeSiteConfig } from "@/components/RuntimeConfigProvider";
@@ -11,23 +11,36 @@ export function SiteHeader() {
   const links = getNavigationLinksForConfig(siteConfig);
   const cta = getNavigationCtaForConfig(siteConfig);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [logoLoaded, setLogoLoaded] = useState(false);
-  const [logoFailed, setLogoFailed] = useState(false);
+  const loadedLogoSrcs = useRef(new Set<string>());
+  const failedLogoSrcs = useRef(new Set<string>());
+  const [, forceLogoUpdate] = useState(0);
   const [isAtTop, setIsAtTop] = useState(true);
   const menuId = useId();
   const activeLogo = isAtTop && siteConfig.navigation.logoOnTop ? siteConfig.navigation.logoOnTop : siteConfig.navigation.logo;
   const logoSrc = activeLogo?.src;
   const hasLogo = Boolean(siteConfig.navigation.logo || siteConfig.navigation.logoOnTop);
-  const showLogo = hasLogo && logoLoaded && !logoFailed;
-  const showTextBrand = !hasLogo || logoFailed;
+  const showLogo = hasLogo && !logoSrc ? false : hasLogo && !failedLogoSrcs.current.has(logoSrc || "") && loadedLogoSrcs.current.has(logoSrc || "");
+  const showTextBrand = !hasLogo || failedLogoSrcs.current.has(logoSrc || "");
   const logoText = siteConfig.navigation.logoText || siteConfig.site.shortName || siteConfig.site.name;
   const brandLabel = `${siteConfig.site.name} home`;
 
   const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
-    setLogoLoaded(false);
-    setLogoFailed(false);
+    if (!logoSrc) return;
+    if (loadedLogoSrcs.current.has(logoSrc) || failedLogoSrcs.current.has(logoSrc)) return;
+
+    const img = new Image();
+    img.decoding = "async";
+    img.src = assetPath(logoSrc);
+    img.onload = () => {
+      loadedLogoSrcs.current.add(logoSrc);
+      forceLogoUpdate((value) => value + 1);
+    };
+    img.onerror = () => {
+      failedLogoSrcs.current.add(logoSrc);
+      forceLogoUpdate((value) => value + 1);
+    };
   }, [logoSrc]);
 
   useEffect(() => {
@@ -54,8 +67,17 @@ export function SiteHeader() {
               alt=""
               width={160}
               height={48}
-              onLoad={() => setLogoLoaded(true)}
-              onError={() => setLogoFailed(true)}
+              onLoad={() => {
+                if (!logoSrc) return;
+                loadedLogoSrcs.current.add(logoSrc);
+                failedLogoSrcs.current.delete(logoSrc);
+                forceLogoUpdate((value) => value + 1);
+              }}
+              onError={() => {
+                if (!logoSrc) return;
+                failedLogoSrcs.current.add(logoSrc);
+                forceLogoUpdate((value) => value + 1);
+              }}
             />
             {showTextBrand ? <span>{logoText}</span> : null}
           </SmartLink>
