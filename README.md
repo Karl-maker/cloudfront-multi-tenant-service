@@ -1,6 +1,6 @@
-# Syncpoly CloudFront Folder Router
+# Website Builder
 
-CloudFront Function setup for serving many domains from different folders in one private S3 bucket.
+This projects easily allows AI agents to utilize the cli to deploy simple static websites with multitenant setup utilizing cloudfront and s3.
 
 The browser keeps the original URL:
 
